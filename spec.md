@@ -1,35 +1,45 @@
 # 77mobiles.pro
 
 ## Current State
-Fully built B2B auction marketplace with Buyer/Seller portals, admin dashboard, wallet, listing detail with bidding, market trends, activity, and watchlist pages. Royal Blue (#1D4ED8) theme, glassmorphic UI, single-column seller listings, existing bidding card in ListingDetail, market trends list with basic data.
+Full B2B electronics auction marketplace with Seller and Buyer portals, listing detail, alerts, wallet, activity, and market trends pages. Data uses demo listings with shared state. Currency rendered via unicode escapes in some places. Sparklines in Market Trends. No view toggle for listing grids. Market Demand lacks View All. Watchlist exists in Activity. Listing detail has a sticky quick-bid footer with increment buttons. Alerts page buttons are styled but not wired to navigation.
 
 ## Requested Changes (Diff)
 
 ### Add
-- 2-column grid layout for My Listings in SellerPortal with skeleton loaders, status/auction-type badge overlays on images, countdown timers on active cards
-- Increment buttons (+₹100, +₹500, +₹1,000) in bidding interface with haptic feedback
-- Storage, age, condition details to each MarketTrends item; sparkline trend indicator + price delta; "Why this is moving" micro-label
-- Watchlist section in ActivityPage showing starred/watched listings with star icon
-- Functional IMEI/barcode scanner in CreateListing (wire up the camera icon)
+- View toggle (List/Grid) at top of Seller "My Listings" and Buyer search/listing results
+- "View All →" link in Market Demand section header (matching Recent Sales style)
+- Market Demand "View All" full page (MarketDemandPage) listing all demand leads
+- Dynamic bid input: pre-fill with base price (no bids) or highBid + 100 (if bids exist)
+- Bid input validation: red border + disabled button if amount < current high bid
+- Route /market-demand page for all leads
 
 ### Modify
-- SellerPortal My Listings: vertical list → 2-column card grid; square image top, badges overlaid corners, bold price in blue, condensed timer
-- ListingDetail BiddingCard: reorganize input + increment buttons + Place Bid CTA with visual hierarchy
-- MarketTrendsPage: expand each row with config details, right-aligned price, colored delta indicator
-- BuyerPortal listing cards: show full (unmasked) IMEI where displayed
-- All listing cards in category screens: ensure every card is tappable/navigates to ListingDetail
-- SellerPortal FULFILL LEAD cards: reduce card height/padding by ~30%
-- All timers/counters/bids/wallet data: use setInterval polling to simulate real-time updates
-- ActivityPage: add "Watchlist" sub-tab with star icon showing items added to watchlist
+- Replace ALL \u20b9 and \u20B9 unicode escapes with literal ₹ symbol throughout: WalletPage, MarketTrendsPage, SellerPortal, BuyerPortal, ListingDetail, RecentSalesSlider, demoListings, ActivityPage
+- MarketTrendsPage: Remove sparkline graphs and Sparkline component, remove price-change delta text (+₹X) from each card
+- ListingDetail: Remove the sticky bottom footer bar with quick-increment buttons (+₹100, +₹500, +₹1,000) and secondary Place Bid button. Add 24px bottom padding so content can scroll fully. Implement smart bid input placeholder.
+- AlertsPage: Wire all action buttons to navigate to relevant routes ("View Auction" → /listing/b-1, "View Lead" → /app, "View Receipt" → /app, "Place Bid" → /listing/b-2 etc.)
+- ActivityPage: Remove the Watchlist sub-tab and watchlist section entirely from both buyer and seller mode
+- AppContext: Remove watchlist-related state (watchlist, toggleWatchlist, isWatchlisted) OR keep but just hide from UI
+- SellerPortal: Add "View All →" button to Market Demand section header. Add listing count "8 total" secondary text next to "My Listings". Add List/Grid view toggle.
+- BuyerPortal: Add List/Grid view toggle for auction listings. 
+- RecentSalesSlider / SellerPortal: Wire recently sold data to use SELLER_LISTINGS with status=="Sold" dynamically, plus any new listings created in session
+- AppContext: Add shared listings state so newly created listings appear in buyer portal immediately
+- CreateListing: On submit success, add the new listing to the shared listings state
 
 ### Remove
-- Nothing to remove
+- Watchlist tab from Activity page (both buyer and seller)
+- Sparkline component and sparkline rendering from MarketTrendsPage
+- Price delta text (e.g., "+₹3,200") from MarketTrendsPage cards
+- Sticky quick-bid footer from ListingDetail
 
 ## Implementation Plan
-1. **SellerPortal.tsx** — Replace single-column My Listings with 2-col responsive grid. Each card: square image with badge overlays (top-left status, top-right auction type), below: bold title, condition+verified line, blue price, countdown timer for active. Add skeleton loader (6 shimmer cards) that shows for 1.2s on mount. Reduce DEMAND_FEED card height (less padding, smaller text).
-2. **ListingDetail.tsx** — Restructure BiddingCard: label + input top, then horizontal row of 3 outline buttons (+₹100/+₹500/+₹1K) that add to bid amount + haptic, then full-width solid "Place Bid →" button at bottom.
-3. **MarketTrendsPage.tsx** — Expand each card to show: model|storage on main line, then "Condition • Age • X months" metadata line. Right-aligned bold price. Below price: sparkline SVG (5-point path, green/red) + delta badge (e.g. "+₹3,200" in green). "Why this is moving" small chip (e.g. "High Demand").
-4. **BuyerPortal.tsx** — In listing cards where IMEI is shown, render full 15-digit IMEI. Ensure every bento card, category card, and listing row has onClick → navigate to /listing/$id.
-5. **ActivityPage.tsx** — Add "Watchlist" tab (star icon) alongside existing tabs. When selected, show the user's watchlist items (from context) as compact cards with device image, title, current price, and a star icon. Wire from same watchlist context as WatchlistPage.
-6. **All countdown/timer components** — Add useEffect with setInterval(1000ms) refresh to ensure real-time ticking. Wire bid counts with a simulated +1 increment every 30-45s for demo realism.
-7. **CreateListing.tsx** — Wire the camera/scanner icon on the IMEI field to actually invoke the browser's camera (getUserMedia or input[capture]) or use a BarcodeDetector API approach. Show scan overlay UI. Fallback to file input with capture=environment.
+1. Fix all \u20b9 → ₹ in all files
+2. Update MarketTrendsPage: remove Sparkline, remove price delta row, remove TrendingUp/TrendingDown delta display
+3. Remove watchlist tab from ActivityPage
+4. Add view toggle state + List/Grid rendering to SellerPortal (My Listings) and BuyerPortal (auction listings)
+5. Add "View All →" to Market Demand section in SellerPortal and BuyerPortal
+6. Create MarketDemandPage at /market-demand with all leads
+7. Wire alerts buttons in AlertsPage using useNavigate
+8. Remove sticky footer from ListingDetail, add bottom padding, implement smart bid input
+9. Add shared listings context in AppContext, wire CreateListing to add to it, wire BuyerPortal to show shared listings
+10. Update RecentSalesSlider to use SELLER_LISTINGS Sold items + shared sold items as data source

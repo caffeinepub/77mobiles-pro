@@ -1,8 +1,10 @@
 import { useNavigate } from "@tanstack/react-router";
 import { CheckCircle } from "lucide-react";
 import { Smartphone } from "lucide-react";
+import { useApp } from "../contexts/AppContext";
+import { SELLER_LISTINGS } from "../data/demoListings";
 
-const RECENT_SALES = [
+const STATIC_RECENT_SALES = [
   {
     id: "1",
     model: "iPhone 15 Pro",
@@ -71,6 +73,34 @@ const RECENT_SALES = [
 
 export default function RecentSalesSlider() {
   const navigate = useNavigate();
+  const { sharedListings } = useApp();
+
+  // Build real-time sold data from sharedListings + static sold listings
+  const soldFromShared = sharedListings
+    .filter((l) => l.status === "Sold")
+    .map((l, i) => ({
+      id: `shared-${i}`,
+      model: l.model,
+      storage: l.storage ? `${Number(l.storage)}GB` : "N/A",
+      condition: l.condition,
+      age: "Just listed",
+      price: Number(l.basePrice) / 100,
+    }));
+
+  const soldFromStatic = SELLER_LISTINGS.filter((l) => l.status === "Sold").map(
+    (l, i) => ({
+      id: `static-${i}`,
+      model: l.model,
+      storage: l.storage ? `${Number(l.storage)}GB` : "N/A",
+      condition: l.condition,
+      age: "Recent",
+      price: Number(l.basePrice) / 100,
+    }),
+  );
+
+  const derivedSales = [...soldFromShared, ...soldFromStatic];
+  const displaySales =
+    derivedSales.length > 0 ? derivedSales : STATIC_RECENT_SALES;
 
   return (
     <div
@@ -128,7 +158,7 @@ export default function RecentSalesSlider() {
           scrollbarWidth: "none",
         }}
       >
-        {RECENT_SALES.map((sale) => (
+        {displaySales.map((sale) => (
           <button
             type="button"
             key={sale.id}

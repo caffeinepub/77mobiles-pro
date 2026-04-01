@@ -1,3 +1,4 @@
+import { useNavigate } from "@tanstack/react-router";
 import { Bell, CheckCircle, Package, ShoppingBag, Zap } from "lucide-react";
 import { useApp } from "../contexts/AppContext";
 
@@ -8,6 +9,7 @@ const SELLER_ALERTS = [
     text: "New bid received on iPhone 17 Pro — ₹1,12,500 by Dealer #217",
     time: "2m ago",
     action: "View Auction",
+    route: "/listing/s-1",
   },
   {
     id: "a2",
@@ -15,6 +17,7 @@ const SELLER_ALERTS = [
     text: "Matching buying lead: Wanted 5x iPhone 16 by Dealer #341",
     time: "15m ago",
     action: "View Lead",
+    route: "/market-demand",
   },
   {
     id: "a3",
@@ -22,6 +25,7 @@ const SELLER_ALERTS = [
     text: "New bid on Samsung S24 Ultra — ₹87,000 by Dealer #189",
     time: "1h ago",
     action: "View Auction",
+    route: "/listing/s-1",
   },
   {
     id: "a4",
@@ -29,6 +33,7 @@ const SELLER_ALERTS = [
     text: "iPhone 15 Pro sold! Payment of ₹65,000 is being processed.",
     time: "2h ago",
     action: "View Receipt",
+    route: "/app",
   },
 ];
 
@@ -39,6 +44,7 @@ const BUYER_ALERTS = [
     text: "You've been outbid on Samsung S24 Ultra. Current bid: ₹87,500",
     time: "5m ago",
     action: "Place Bid",
+    route: "/listing/b-2",
   },
   {
     id: "b2",
@@ -46,6 +52,7 @@ const BUYER_ALERTS = [
     text: "Direct Buy confirmed for iPhone 15 Pro. Payment received.",
     time: "30m ago",
     action: "View Receipt",
+    route: "/app",
   },
   {
     id: "b3",
@@ -53,6 +60,7 @@ const BUYER_ALERTS = [
     text: "Outbid on iPhone 16 Pro. New high: ₹78,500",
     time: "1h ago",
     action: "Place Bid",
+    route: "/listing/b-2",
   },
   {
     id: "b4",
@@ -60,6 +68,7 @@ const BUYER_ALERTS = [
     text: "New listing matching your lead: iPhone 16 Pro 256GB available at ₹75,000",
     time: "2h ago",
     action: "View Listing",
+    route: "/listing/b-3",
   },
 ];
 
@@ -85,6 +94,7 @@ const AlertIcon = ({ type }: { type: AlertType }) => {
 
 export default function AlertsPage() {
   const { mode } = useApp();
+  const navigate = useNavigate();
   const alerts = mode === "seller" ? SELLER_ALERTS : BUYER_ALERTS;
 
   return (
@@ -135,10 +145,13 @@ export default function AlertsPage() {
                   <button
                     type="button"
                     data-ocid={`alerts.action.button.${idx + 1}`}
+                    onClick={() => navigate({ to: alert.route as any })}
                     className="text-[11px] font-bold px-3 py-1 rounded-full"
                     style={{
-                      background: `${borderColor(alert.type)}15`,
+                      background: `${borderColor(alert.type)}20`,
                       color: borderColor(alert.type),
+                      border: `1px solid ${borderColor(alert.type)}40`,
+                      cursor: "pointer",
                     }}
                   >
                     {alert.action}

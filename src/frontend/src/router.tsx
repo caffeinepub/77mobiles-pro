@@ -13,6 +13,7 @@ import AuthPage from "./pages/AuthPage";
 import CreateListing from "./pages/CreateListing";
 import DiagnosticTest from "./pages/DiagnosticTest";
 import ListingDetail from "./pages/ListingDetail";
+import MarketDemandPage from "./pages/MarketDemandPage";
 import MarketTrendsPage from "./pages/MarketTrendsPage";
 import PaymentCheckout from "./pages/PaymentCheckout";
 import PaymentSuccess from "./pages/PaymentSuccess";
@@ -130,6 +131,12 @@ const sendOfferRoute = createRoute({
   component: SendOfferScreen,
 });
 
+const marketDemandRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/market-demand",
+  component: MarketDemandPage,
+});
+
 const marketTrendsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/market-trends",
@@ -179,6 +186,7 @@ const routeTree = rootRoute.addChildren([
   paymentSuccessRoute,
   sendOfferRoute,
   marketTrendsRoute,
+  marketDemandRoute,
   myAdsRoute,
   accountRoute,
   chatsRoute,

@@ -18,7 +18,7 @@ export type AppTab =
 export interface CheckoutItem {
   model: string;
   condition: string;
-  price: number; // INR value (not paise)
+  price: number;
 }
 
 interface AppContextType {
@@ -37,6 +37,8 @@ interface AppContextType {
   isWatchlisted: (id: string) => boolean;
   activeCategory: string;
   setActiveCategory: (c: string) => void;
+  sharedListings: any[];
+  addSharedListing: (listing: any) => void;
 }
 
 const AppContext = createContext<AppContextType>({
@@ -55,6 +57,8 @@ const AppContext = createContext<AppContextType>({
   isWatchlisted: () => false,
   activeCategory: "smartphones",
   setActiveCategory: () => {},
+  sharedListings: [],
+  addSharedListing: () => {},
 });
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -67,6 +71,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [unreadAlerts, setUnreadAlerts] = useState(4);
   const [showPostLead, setShowPostLead] = useState(false);
   const [activeCategory, setActiveCategory] = useState("smartphones");
+  const [sharedListings, setSharedListings] = useState<any[]>([]);
   const [watchlistIds, setWatchlistIds] = useState<Set<string>>(() => {
     try {
       const stored = localStorage.getItem("77m_watchlist");
@@ -99,6 +104,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const isWatchlisted = (id: string) => watchlistIds.has(id);
 
+  const addSharedListing = (listing: any) => {
+    setSharedListings((prev) => [listing, ...prev]);
+  };
+
   useEffect(() => {
     const stored = localStorage.getItem("77m_mode");
     if (stored === "seller" || stored === "buyer") {
@@ -124,6 +133,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         isWatchlisted,
         activeCategory,
         setActiveCategory,
+        sharedListings,
+        addSharedListing,
       }}
     >
       {children}

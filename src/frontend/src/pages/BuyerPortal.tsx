@@ -3,10 +3,13 @@ import {
   ArrowLeft,
   Calendar,
   Clock,
+  Flame,
   Gamepad2,
   Headphones,
   Heart,
   Laptop,
+  LayoutGrid,
+  LayoutList,
   Search,
   Tablet,
   Watch,
@@ -857,6 +860,7 @@ export default function BuyerPortal() {
     isWatchlisted,
     activeCategory,
     setActiveCategory,
+    sharedListings,
   } = useApp();
   const [category, setCategory] = useState<CategoryTab>("live");
   const [filterPill, setFilterPill] = useState<FilterPill>("all");
@@ -875,6 +879,7 @@ export default function BuyerPortal() {
     }
   };
   const [loading, setLoading] = useState(true);
+  const [listView, setListView] = useState<"list" | "grid">("list");
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 1500);
     return () => clearTimeout(t);
@@ -936,8 +941,25 @@ export default function BuyerPortal() {
     navigate({ to: `/listing/${listingId}` });
   };
 
+  /* Merge shared (newly posted) listings into bento display */
+  const sharedBentoItems = sharedListings.map((l: any, i: number) => ({
+    id: `shared-${i}`,
+    listingId: l.listingId ?? `shared-${i}`,
+    model: l.model ?? "New Device",
+    brand: l.brand ?? "",
+    emoji: "📱",
+    condition: l.condition ?? "Good",
+    price: Number(l.basePrice) / 100,
+    originalPrice: Number(l.basePrice) / 100,
+    bids: 0,
+    timer: "20:00",
+    isLive: l.auctionType === "Live20min",
+    warrantyMonths: 0,
+  }));
+
   /* Filtered bento items — filter by filterPill and search, dismiss swipes */
-  const filteredBento = BENTO_12.filter((item) => {
+  const allBentoItems = [...sharedBentoItems, ...BENTO_12];
+  const filteredBento = allBentoItems.filter((item) => {
     if (dismissedCards.has(item.id)) return false;
     const q = searchQuery.toLowerCase();
     if (
@@ -1089,6 +1111,34 @@ export default function BuyerPortal() {
               </button>
             ))}
             {/* Task 7A: Bulk select toggle */}
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                data-ocid="buyer.listings.list_view.toggle"
+                onClick={() => setListView("list")}
+                className="w-7 h-7 flex items-center justify-center rounded-lg transition-all"
+                style={{
+                  background: listView === "list" ? "#1D4ED8" : "white",
+                  border: "1px solid #e5e7eb",
+                  color: listView === "list" ? "white" : "#9CA3AF",
+                }}
+              >
+                <LayoutList className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                data-ocid="buyer.listings.grid_view.toggle"
+                onClick={() => setListView("grid")}
+                className="w-7 h-7 flex items-center justify-center rounded-lg transition-all"
+                style={{
+                  background: listView === "grid" ? "#1D4ED8" : "white",
+                  border: "1px solid #e5e7eb",
+                  color: listView === "grid" ? "white" : "#9CA3AF",
+                }}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+              </button>
+            </div>
             <button
               type="button"
               data-ocid="buyer.bulk_select.toggle"
@@ -1130,13 +1180,95 @@ export default function BuyerPortal() {
                 </p>
               </div>
             ) : (
-              <div>
+              <div
+                className={
+                  listView === "grid" ? "grid grid-cols-2 gap-2.5" : ""
+                }
+              >
                 {filteredBento.map((item, idx) => {
                   const cond = condColor(item.condition);
                   const saved = isWatchlisted(item.listingId);
                   const isAnimating = heartAnim === item.listingId;
                   const isPressed = pressedCard === item.id;
                   const isSelected = selectedForBulk.has(item.id);
+
+                  if (listView === "grid") {
+                    return (
+                      <div
+                        key={item.id}
+                        data-ocid={`buyer.listing.item.${idx + 1}`}
+                        className="bg-white rounded-xl overflow-hidden cursor-pointer active:scale-[0.98] transition-transform"
+                        style={{
+                          border: "1px solid #e5e7eb",
+                          boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+                        }}
+                        onClick={() => handleCardTap(item.id, item.listingId)}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" &&
+                          handleCardTap(item.id, item.listingId)
+                        }
+                      >
+                        <div
+                          className="relative w-full"
+                          style={{
+                            aspectRatio: "1/1",
+                            background: "#F4F7FF",
+                            overflow: "hidden",
+                          }}
+                        >
+                          <img
+                            src={getDeviceImage(item.model)}
+                            alt={item.model}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                          {item.isLive && (
+                            <span
+                              className="absolute top-1.5 left-1.5 text-[8px] font-bold px-1 py-0.5 rounded-full flex items-center gap-0.5"
+                              style={{
+                                background: "#FEF2F2",
+                                color: "#DC2626",
+                              }}
+                            >
+                              <Zap className="w-2 h-2" strokeWidth={1.5} /> Live
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleHeartTap(item.listingId);
+                            }}
+                            className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-white flex items-center justify-center"
+                            style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.15)" }}
+                          >
+                            <Heart
+                              className="w-2.5 h-2.5"
+                              style={{
+                                fill: saved ? "#1D4ED8" : "none",
+                                stroke: saved ? "#1D4ED8" : "#9CA3AF",
+                                strokeWidth: 2,
+                              }}
+                            />
+                          </button>
+                        </div>
+                        <div className="p-2">
+                          <p className="font-bold text-[11px] text-[#1E293B] truncate leading-tight">
+                            {item.model}
+                          </p>
+                          <p
+                            className="font-black text-[13px] mt-0.5"
+                            style={{ color: "#1D4ED8" }}
+                          >
+                            ₹{item.price.toLocaleString("en-IN")}
+                          </p>
+                          <p className="text-[9px] text-gray-400">
+                            {item.bids} bids · {item.timer}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  }
 
                   return (
                     <div

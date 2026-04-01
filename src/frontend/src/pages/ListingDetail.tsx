@@ -250,7 +250,10 @@ function BiddingCard({
   const m = Math.floor(secs / 60);
   const s = secs % 60;
   const timerStr = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-  const minBid = currentBid + 10000;
+  const basePrice = Number(listing.basePrice) / 100;
+  const minBid =
+    currentBid > Number(listing.basePrice) ? currentBid / 100 + 100 : basePrice;
+  const [bidValid, setBidValid] = useState(true);
 
   const handleBid = async () => {
     const amount = Number.parseFloat(bidAmount);
@@ -315,16 +318,35 @@ function BiddingCard({
         </span>
       </div>
       <p className="text-xs font-bold text-gray-700 mb-2">Place Your Bid</p>
-      <div className="bg-white rounded-xl border border-gray-200 px-3 py-2.5 mb-2">
+      <div
+        className="bg-white rounded-xl px-3 py-2.5 mb-1"
+        style={{
+          border: bidValid ? "1px solid #e5e7eb" : "1.5px solid #EF4444",
+        }}
+      >
         <input
           data-ocid="listing.bid.input"
           type="number"
           className="w-full bg-transparent outline-none text-sm text-gray-800"
-          placeholder={`Min \u20b9${(minBid / 100).toLocaleString("en-IN")}`}
+          placeholder={`Min ₹${minBid.toLocaleString("en-IN")}`}
           value={bidAmount}
-          onChange={(e) => setBidAmount(e.target.value)}
+          onChange={(e) => {
+            const v = e.target.value;
+            setBidAmount(v);
+            const num = Number.parseFloat(v);
+            if (v === "" || Number.isNaN(num)) {
+              setBidValid(true);
+              return;
+            }
+            setBidValid(num >= minBid);
+          }}
         />
       </div>
+      {!bidValid && (
+        <p className="text-[10px] text-red-500 mb-2">
+          Min bid: ₹{minBid.toLocaleString("en-IN")}
+        </p>
+      )}
       {/* Increment buttons */}
       <div className="flex gap-2 mb-3">
         {[100, 500, 1000].map((inc) => (
@@ -353,7 +375,7 @@ function BiddingCard({
         type="button"
         data-ocid="listing.bid.submit_button"
         onClick={handleBid}
-        disabled={placing}
+        disabled={placing || !bidValid}
         className="w-full py-3 rounded-xl text-white font-black text-sm"
         // Task 1: #007AFF → #1D4ED8
         style={{ background: placing ? "#6b7280" : "#1D4ED8" }}
@@ -502,7 +524,7 @@ export default function ListingDetail() {
         </button>
       </header>
 
-      <div className="overflow-y-auto pb-8">
+      <div className="overflow-y-auto pb-6">
         {/* Image Carousel */}
         <ImageCarousel images={carouselImages} />
 
@@ -933,61 +955,6 @@ export default function ListingDetail() {
           })()}
         </div>
       </div>
-
-      {/* Sticky quick-bid footer */}
-      {listing.status === "Active" && mode !== "seller" && (
-        <div
-          style={{
-            position: "sticky",
-            bottom: 0,
-            background: "white",
-            borderTop: "1px solid #e5e7eb",
-            padding: "12px 16px",
-            display: "flex",
-            gap: "8px",
-            alignItems: "center",
-            zIndex: 10,
-          }}
-        >
-          {[100, 500, 1000].map((inc) => (
-            <button
-              key={inc}
-              type="button"
-              data-ocid={`listing.quick_bid.${inc}.button`}
-              style={{
-                flex: 1,
-                padding: "8px 4px",
-                borderRadius: "10px",
-                border: "1.5px solid #1D4ED8",
-                background: "white",
-                color: "#1D4ED8",
-                fontSize: "12px",
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
-            >
-              +₹{inc.toLocaleString("en-IN")}
-            </button>
-          ))}
-          <button
-            type="button"
-            data-ocid="listing.place_bid.primary_button"
-            style={{
-              flex: 2,
-              padding: "10px",
-              borderRadius: "10px",
-              background: "#1D4ED8",
-              color: "white",
-              fontSize: "13px",
-              fontWeight: 800,
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
-            Place Bid
-          </button>
-        </div>
-      )}
     </div>
   );
 }
