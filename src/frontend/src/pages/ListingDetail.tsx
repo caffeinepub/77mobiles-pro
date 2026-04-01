@@ -367,7 +367,7 @@ function BiddingCard({
               background: "white",
             }}
           >
-            +\u20B9{inc.toLocaleString("en-IN")}
+            +₹{inc.toLocaleString("en-IN")}
           </button>
         ))}
       </div>
@@ -583,38 +583,76 @@ export default function ListingDetail() {
           {/* 2. Bidding Card or Seller Management Panel */}
           {listing.status === "Active" && mode === "seller" && (
             <div
-              className="rounded-2xl p-4 space-y-3"
+              className="rounded-2xl p-4"
               style={{ background: "#EFF6FF", border: "1px solid #bfdbfe" }}
             >
-              <p className="font-black text-sm text-gray-900">
-                Manage This Listing
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                Current Bids
               </p>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  data-ocid="listing.edit.button"
-                  className="py-2.5 rounded-xl text-sm font-bold text-white"
-                  // Task 1: #007AFF → #1D4ED8
-                  style={{ background: "#1D4ED8" }}
-                >
-                  {"\u270F\uFE0F"} Edit Listing
-                </button>
-                <button
-                  type="button"
-                  data-ocid="listing.promote.button"
-                  className="py-2.5 rounded-xl text-sm font-bold text-gray-900"
-                  style={{ background: "#fbbf24" }}
-                >
-                  {"\uD83D\uDCC5"} Promote Listing
-                </button>
-              </div>
-              <div className="bg-white rounded-xl p-3 border border-blue-100">
-                <p className="text-xs text-gray-500 mb-1">Current Bids</p>
-                {/* Task 1: #007AFF → #1D4ED8 */}
-                <p className="font-black text-lg" style={{ color: "#1D4ED8" }}>
-                  {bidCount} bids
-                </p>
-              </div>
+              {bidCount === 0 ? (
+                <div className="text-center py-3">
+                  <p
+                    className="font-black text-2xl"
+                    style={{ color: "#1D4ED8" }}
+                  >
+                    0 Bids
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Waiting for first bid...
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <p
+                    className="font-black text-2xl mb-2"
+                    style={{ color: "#1D4ED8" }}
+                  >
+                    {bidCount} Bids
+                  </p>
+                  <div className="space-y-2">
+                    {[
+                      {
+                        dealer: "Dealer #402",
+                        amount: currentBid / 100,
+                        time: "2m ago",
+                      },
+                      {
+                        dealer: "Dealer #217",
+                        amount: currentBid / 100 - 500,
+                        time: "5m ago",
+                      },
+                      {
+                        dealer: "Dealer #85",
+                        amount: currentBid / 100 - 1200,
+                        time: "9m ago",
+                      },
+                    ]
+                      .slice(0, Math.min(bidCount, 3))
+                      .map((bid) => (
+                        <div
+                          key={bid.dealer}
+                          className="bg-white rounded-xl px-3 py-2 flex items-center justify-between"
+                          style={{ border: "1px solid #bfdbfe" }}
+                        >
+                          <div>
+                            <p className="text-xs font-bold text-gray-700">
+                              {bid.dealer}
+                            </p>
+                            <p className="text-[9px] text-gray-400">
+                              {bid.time}
+                            </p>
+                          </div>
+                          <p
+                            className="font-black text-sm"
+                            style={{ color: "#1D4ED8" }}
+                          >
+                            ₹{bid.amount.toLocaleString("en-IN")}
+                          </p>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
           {listing.status === "Active" && mode !== "seller" && (

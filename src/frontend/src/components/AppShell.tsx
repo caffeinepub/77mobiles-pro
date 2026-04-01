@@ -1,4 +1,4 @@
-import { ArrowUp, ScanBarcode, Search, User, X } from "lucide-react";
+import { ArrowUp, Bell, ScanBarcode, Search, User, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "../contexts/AppContext";
 import ActivityPage from "../pages/ActivityPage";
@@ -70,6 +70,7 @@ export default function AppShell() {
     setActiveTab,
     activeCategory,
     setActiveCategory,
+    unreadAlerts,
   } = useApp();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
@@ -177,6 +178,29 @@ export default function AppShell() {
                   </div>
                 )}
 
+                {!isSeller && (
+                  <button
+                    type="button"
+                    data-ocid="header.alerts.button"
+                    onClick={() => setActiveTab("alerts")}
+                    className="flex items-center justify-center rounded-full relative"
+                    style={{
+                      width: "38px",
+                      height: "38px",
+                      border: "1.5px solid #E2E8F0",
+                      background: "#F8FAFC",
+                    }}
+                  >
+                    <Bell
+                      className="w-5 h-5"
+                      style={{ color: "#1E293B" }}
+                      strokeWidth={1.5}
+                    />
+                    {unreadAlerts > 0 && (
+                      <span className="w-2 h-2 bg-red-500 rounded-full absolute -top-0.5 -right-0.5" />
+                    )}
+                  </button>
+                )}
                 <button
                   type="button"
                   data-ocid="header.profile.button"

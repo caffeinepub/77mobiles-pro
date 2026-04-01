@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { Activity, Bell, Home, Plus, Wallet } from "lucide-react";
+import { Activity, Home, Plus, Star, Wallet } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { type AppTab, useApp } from "../contexts/AppContext";
 
@@ -33,7 +33,7 @@ export default function BottomNav() {
     badge?: number;
   }[] = [
     { id: "activity", label: "Activity", Icon: Activity, badge: unreadAlerts },
-    { id: "alerts", label: "Alerts", Icon: Bell },
+    { id: "watchlist", label: "Watchlist", Icon: Star },
   ];
 
   const handleTabClick = (id: AppTab) => {

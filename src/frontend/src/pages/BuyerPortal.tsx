@@ -25,13 +25,11 @@ import { useApp } from "../contexts/AppContext";
 import {
   BUYER_AUCTIONS,
   DEMO_BIDS,
-  DIRECT_BUY_ITEMS,
-  type DirectBuyItem,
   getDeviceImage,
 } from "../data/demoListings";
 import { formatINR } from "../utils/format";
 
-type CategoryTab = "live" | "direct" | "ending";
+type CategoryTab = "live" | "ending";
 type FilterPill = "all" | "live" | "7day";
 
 // Task 5: Added bidding war alert (b4) and price sparkline (b5) slides
@@ -106,7 +104,7 @@ const BENTO_12 = [
   },
   {
     id: "bn4",
-    listingId: "b-3",
+    listingId: "b-4",
     model: "Google Pixel 9",
     brand: "Google",
     emoji: "\uD83D\uDCF1",
@@ -120,7 +118,7 @@ const BENTO_12 = [
   },
   {
     id: "bn5",
-    listingId: "b-4",
+    listingId: "b-5",
     model: "OnePlus 12 Pro",
     brand: "OnePlus",
     emoji: "\uD83D\uDCF1",
@@ -134,7 +132,7 @@ const BENTO_12 = [
   },
   {
     id: "bn6",
-    listingId: "b-1",
+    listingId: "b-6",
     model: "Apple Watch Ultra 2",
     brand: "Apple",
     emoji: "\u231A",
@@ -148,7 +146,7 @@ const BENTO_12 = [
   },
   {
     id: "bn7",
-    listingId: "b-2",
+    listingId: "b-7",
     model: "Sony WH-1000XM5",
     brand: "Sony",
     emoji: "\uD83C\uDFA7",
@@ -162,7 +160,7 @@ const BENTO_12 = [
   },
   {
     id: "bn8",
-    listingId: "b-3",
+    listingId: "b-8",
     model: "iPad Pro M4 13in",
     brand: "Apple",
     emoji: "\uD83D\uDCF1",
@@ -176,7 +174,7 @@ const BENTO_12 = [
   },
   {
     id: "bn9",
-    listingId: "b-4",
+    listingId: "b-9",
     model: "AirPods Pro 3",
     brand: "Apple",
     emoji: "\uD83C\uDFA7",
@@ -218,7 +216,7 @@ const BENTO_12 = [
   },
   {
     id: "bn12",
-    listingId: "b-1",
+    listingId: "b-12",
     model: "Pixel Watch 3 Pro",
     brand: "Google",
     emoji: "\u231A",
@@ -884,9 +882,7 @@ export default function BuyerPortal() {
     const t = setTimeout(() => setLoading(false), 1500);
     return () => clearTimeout(t);
   }, []);
-  const [directBuyState, setDirectBuyState] = useState<
-    Record<string, "idle" | "waiting" | "accepted">
-  >({});
+
   const [heartAnim, setHeartAnim] = useState<string | null>(null);
   const [showWatchlistToast, setShowWatchlistToast] = useState(false);
   const [pressedCard, setPressedCard] = useState<string | null>(null);
@@ -973,32 +969,7 @@ export default function BuyerPortal() {
     return true;
   });
 
-  const filteredDirect = DIRECT_BUY_ITEMS.filter((d) => {
-    const q = searchQuery.toLowerCase();
-    return !q || d.model.toLowerCase().includes(q);
-  });
-
   const condColor = (c: string) => conditionColor(c);
-
-  const handleDirectBuy = (item: DirectBuyItem) => {
-    setDirectBuyState((prev) => ({ ...prev, [item.id]: "waiting" }));
-    toast("Request sent! Waiting for seller to accept.");
-    setTimeout(() => {
-      setDirectBuyState((prev) => ({ ...prev, [item.id]: "accepted" }));
-      toast.success("Seller accepted! Complete payment now.");
-      setTimeout(() => {
-        localStorage.setItem(
-          "77m_checkout",
-          JSON.stringify({
-            model: item.model,
-            condition: item.condition,
-            price: item.price / 100,
-          }),
-        );
-        navigate({ to: "/checkout" });
-      }, 1200);
-    }, 3000);
-  };
 
   const handleHeartTap = (listingId: string) => {
     const wasWatchlisted = isWatchlisted(listingId);
@@ -1045,11 +1016,6 @@ export default function BuyerPortal() {
               id: "live" as const,
               icon: <Zap className="w-3 h-3" strokeWidth={1.5} />,
               label: "Live Auctions",
-            },
-            {
-              id: "direct" as const,
-              icon: null,
-              label: "Direct Buy",
             },
             {
               id: "ending" as const,
@@ -1256,6 +1222,25 @@ export default function BuyerPortal() {
                           <p className="font-bold text-[11px] text-[#1E293B] truncate leading-tight">
                             {item.model}
                           </p>
+                          <p className="text-[9px] text-gray-400 truncate">
+                            {item.brand}
+                          </p>
+                          <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                            <span
+                              style={{
+                                background: condColor(item.condition).bg,
+                                color: condColor(item.condition).text,
+                              }}
+                              className="inline-block text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+                            >
+                              {item.condition}
+                            </span>
+                            {item.warrantyMonths > 0 && (
+                              <span className="text-[9px] text-gray-400">
+                                ~{item.warrantyMonths}mo
+                              </span>
+                            )}
+                          </div>
                           <p
                             className="font-black text-[13px] mt-0.5"
                             style={{ color: "#1D4ED8" }}
@@ -1509,71 +1494,6 @@ export default function BuyerPortal() {
                 })}
               </div>
             )}
-          </div>
-        )}
-
-        {/* DIRECT BUY — 2-column bento grid */}
-        {category === "direct" && (
-          <div className="grid grid-cols-2 gap-2.5">
-            {filteredDirect.map((item, idx) => {
-              const isPressed = pressedCard === item.id;
-              const buyState = directBuyState[item.id];
-              return (
-                <button
-                  type="button"
-                  key={item.id}
-                  data-ocid={`buyer.direct.item.${idx + 1}`}
-                  className="bg-white rounded-xl overflow-hidden flex flex-col text-left"
-                  style={{
-                    border: "1px solid #e5e7eb",
-                    cursor: "pointer",
-                    transform: isPressed ? "scale(0.97)" : "scale(1)",
-                    transition: "transform 0.15s ease",
-                    userSelect: "none",
-                  }}
-                  onClick={() => {
-                    if (buyState !== "waiting" && buyState !== "accepted") {
-                      handleDirectBuy(item);
-                    }
-                  }}
-                  onMouseDown={() => setPressedCard(item.id)}
-                  onMouseUp={() => setPressedCard(null)}
-                  onMouseLeave={() => setPressedCard(null)}
-                  onTouchStart={() => setPressedCard(item.id)}
-                  onTouchEnd={() => setPressedCard(null)}
-                >
-                  <div className="w-full h-24 overflow-hidden">
-                    <img
-                      src={getDeviceImage(item.model)}
-                      alt={item.model}
-                      className="w-full h-full object-cover"
-                      style={{ borderRadius: "12px 12px 0 0" }}
-                    />
-                  </div>
-                  <div className="p-2.5 flex flex-col flex-1">
-                    <p className="font-bold text-xs text-[#002F34] leading-snug mb-0.5 truncate">
-                      {item.model}
-                    </p>
-                    <p className="text-[9px] text-gray-400 mb-1.5">
-                      {item.brand} {"\xB7"} {item.storage}
-                    </p>
-                    <p className="font-black text-sm text-[#002F34]">
-                      {formatINR(item.price)}
-                    </p>
-                    {buyState === "waiting" && (
-                      <p className="text-[9px] text-gray-400 mt-1">
-                        {"\u23F3"} Awaiting seller...
-                      </p>
-                    )}
-                    {buyState === "accepted" && (
-                      <p className="text-[9px] font-bold text-green-600 mt-1">
-                        {"\u2713"} Accepted
-                      </p>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
           </div>
         )}
 

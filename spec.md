@@ -1,45 +1,52 @@
 # 77mobiles.pro
 
 ## Current State
-Full B2B electronics auction marketplace with Seller and Buyer portals, listing detail, alerts, wallet, activity, and market trends pages. Data uses demo listings with shared state. Currency rendered via unicode escapes in some places. Sparklines in Market Trends. No view toggle for listing grids. Market Demand lacks View All. Watchlist exists in Activity. Listing detail has a sticky quick-bid footer with increment buttons. Alerts page buttons are styled but not wired to navigation.
+- BuyerPortal: Has 3-tab switcher (Live Auctions, Direct Buy, Ending Soon). Grid view shows model, price, bids, timer but NOT brand, warranty, or condition. BENTO_12 items share listingIds (e.g., multiple items use 'b-1'). Market Demand cards are narrow (minWidth 105px). Currency artifacts `\u20B9` in GAMING_ITEMS, LAPTOP_ITEMS, etc.
+- SellerPortal: Has a 'Sold History' button that shows sold listings inline. Grid view doesn't show brand, warranty, or condition.
+- ListingDetail (BiddingCard): Increment buttons use template literal `+\u20B9{inc}` which renders as raw unicode. Bottom floating footer was previously removed. Bid input has placeholder `Min ₹{minBid}` and red border validation.
+- BottomNav: Has Activity + Alerts (Bell) on the right side. Order: Home, Wallet, [Sell], Activity, Alerts.
+- AppShell header: No bell icon in header.
+- ListingDetail seller section: Has 'Manage This Listing' card with Edit Listing (blue) and Promote Listing (yellow) buttons + Current Bids section.
 
 ## Requested Changes (Diff)
 
 ### Add
-- View toggle (List/Grid) at top of Seller "My Listings" and Buyer search/listing results
-- "View All →" link in Market Demand section header (matching Recent Sales style)
-- Market Demand "View All" full page (MarketDemandPage) listing all demand leads
-- Dynamic bid input: pre-fill with base price (no bids) or highBid + 100 (if bids exist)
-- Bid input validation: red border + disabled button if amount < current high bid
-- Route /market-demand page for all leads
+- Bell icon with red dot badge in AppShell top header (Buyer portal only, top-right area near profile)
+- Star (Watchlist) icon as 5th nav item replacing Alerts in BottomNav
+- Mini bid history in seller detail card: High Bid, last 2-3 bids with timestamps, 'Waiting for first bid...' empty state
+- Brand Name, Warranty (~8mo), Condition tags in Grid View cards (both portals)
 
 ### Modify
-- Replace ALL \u20b9 and \u20B9 unicode escapes with literal ₹ symbol throughout: WalletPage, MarketTrendsPage, SellerPortal, BuyerPortal, ListingDetail, RecentSalesSlider, demoListings, ActivityPage
-- MarketTrendsPage: Remove sparkline graphs and Sparkline component, remove price-change delta text (+₹X) from each card
-- ListingDetail: Remove the sticky bottom footer bar with quick-increment buttons (+₹100, +₹500, +₹1,000) and secondary Place Bid button. Add 24px bottom padding so content can scroll fully. Implement smart bid input placeholder.
-- AlertsPage: Wire all action buttons to navigate to relevant routes ("View Auction" → /listing/b-1, "View Lead" → /app, "View Receipt" → /app, "Place Bid" → /listing/b-2 etc.)
-- ActivityPage: Remove the Watchlist sub-tab and watchlist section entirely from both buyer and seller mode
-- AppContext: Remove watchlist-related state (watchlist, toggleWatchlist, isWatchlisted) OR keep but just hide from UI
-- SellerPortal: Add "View All →" button to Market Demand section header. Add listing count "8 total" secondary text next to "My Listings". Add List/Grid view toggle.
-- BuyerPortal: Add List/Grid view toggle for auction listings. 
-- RecentSalesSlider / SellerPortal: Wire recently sold data to use SELLER_LISTINGS with status=="Sold" dynamically, plus any new listings created in session
-- AppContext: Add shared listings state so newly created listings appear in buyer portal immediately
-- CreateListing: On submit success, add the new listing to the shared listings state
+- BuyerPortal: Remove 'Direct Buy' tab, keep only 'Live Auctions' and 'Ending Soon'
+- BuyerPortal: BENTO_12 items must use unique listingIds (b-1 through b-12)
+- BuyerPortal Grid View: Add brand, warranty, condition to card body
+- SellerPortal Grid View: Add brand/condition/warranty to card body (use listing.condition, listing.brand or model-derived brand)
+- SellerPortal: Rename 'Sold History' button to 'Activity', onClick -> setActiveTab('activity') via useApp hook (navigate to activity tab, not inline sold history)
+- Market Demand cards: Increase minWidth to ~calc(100vw / 2.5) approx 140-150px, increase internal padding to p-3, make price text larger (text-sm font-bold), make FULFILL LEAD button taller (py-1.5 text-[10px])
+- BiddingCard increment buttons: Change `+\u20B9{inc}` to actual ₹ symbol using template literal with correct unicode or literal ₹
+- ListingDetail seller management card: Remove 'Manage This Listing' header, remove 'Edit Listing' and 'Promote Listing' buttons, expand Current Bids to top with mini bid history
+- BottomNav: Replace Alerts (Bell) with Watchlist (Star) as 5th item. Label = 'Watchlist'. Navigate to 'activity' tab (watchlist sub-section) or dedicated watchlist tab.
 
 ### Remove
-- Watchlist tab from Activity page (both buyer and seller)
-- Sparkline component and sparkline rendering from MarketTrendsPage
-- Price delta text (e.g., "+₹3,200") from MarketTrendsPage cards
-- Sticky quick-bid footer from ListingDetail
+- 'Direct Buy' tab option from BuyerPortal tab switcher
+- 'Direct Buy' rendering block from BuyerPortal
+- 'Edit Listing' and 'Promote Listing' buttons from ListingDetail seller section
+- 'Manage This Listing' header label from ListingDetail
+- Bell icon from BottomNav rightTabs
 
 ## Implementation Plan
-1. Fix all \u20b9 → ₹ in all files
-2. Update MarketTrendsPage: remove Sparkline, remove price delta row, remove TrendingUp/TrendingDown delta display
-3. Remove watchlist tab from ActivityPage
-4. Add view toggle state + List/Grid rendering to SellerPortal (My Listings) and BuyerPortal (auction listings)
-5. Add "View All →" to Market Demand section in SellerPortal and BuyerPortal
-6. Create MarketDemandPage at /market-demand with all leads
-7. Wire alerts buttons in AlertsPage using useNavigate
-8. Remove sticky footer from ListingDetail, add bottom padding, implement smart bid input
-9. Add shared listings context in AppContext, wire CreateListing to add to it, wire BuyerPortal to show shared listings
-10. Update RecentSalesSlider to use SELLER_LISTINGS Sold items + shared sold items as data source
+1. **BottomNav.tsx**: Replace `Bell`/alerts with `Star`/watchlist. Import Star from lucide. Change rightTabs to: activity (Activity), watchlist (Watchlist, Star icon). Clicking watchlist sets activeTab to 'watchlist' or navigates to watchlist.
+2. **AppShell.tsx**: Add Bell icon with red dot to the header branding bar, visible only in buyer mode. Wire to setActiveTab('alerts') or show unread badge.
+3. **BuyerPortal.tsx**: 
+   - Remove 'direct' from CategoryTab type and tab array
+   - Remove Direct Buy rendering block
+   - Fix BENTO_12 listingIds to be unique (b-1 through b-12)
+   - Grid view card: add brand, warrantyMonths, condition
+   - Navigation uses item.listingId (already correct after fix)
+4. **SellerPortal.tsx**:
+   - Change 'Sold History' button to 'Activity', onClick calls setActiveTab('activity') from useApp, remove soldHistoryVisible state logic
+   - Grid view card: add condition badge and warranty
+5. **ListingDetail.tsx**:
+   - BiddingCard: Fix `+\u20B9` to `+₹` using literal rupee symbol
+   - Seller management section: Remove header, remove Edit/Promote buttons, expand Current Bids with mock bid history
+6. **SellerPortal.tsx Market Demand**: Increase card minWidth to 148px, padding to p-3, price text-sm font-black, button py-2 text-[9px] font-bold
