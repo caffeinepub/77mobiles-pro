@@ -509,7 +509,7 @@ export default function CreateListing() {
             <div
               className="h-1 rounded-full transition-all"
               style={{
-                background: "#2C52A2",
+                background: "#1D4ED8",
                 width: `${(displayStep / totalSteps) * 100}%`,
               }}
             />
@@ -607,7 +607,7 @@ export default function CreateListing() {
                     className="w-4 h-4 rounded-full flex-shrink-0 animate-spin"
                     style={{
                       border: "2px solid #e5e7eb",
-                      borderTopColor: "#2C52A2",
+                      borderTopColor: "#1D4ED8",
                     }}
                   />
                 ) : imeiStatus === "success" ? (
@@ -637,7 +637,7 @@ export default function CreateListing() {
                   >
                     <CameraIcon
                       className="w-5 h-5"
-                      style={{ color: "#2C52A2" }}
+                      style={{ color: "#1D4ED8" }}
                     />
                   </button>
                 )}
@@ -711,7 +711,7 @@ export default function CreateListing() {
                   <div
                     className="w-4 h-4 rounded-full flex-shrink-0 animate-spin"
                     style={{
-                      border: "2px solid #2C52A2",
+                      border: "2px solid #1D4ED8",
                       borderTopColor: "transparent",
                     }}
                   />
@@ -818,7 +818,7 @@ export default function CreateListing() {
                 </p>
                 <label
                   className="text-xs font-bold px-3 py-1.5 rounded-lg cursor-pointer"
-                  style={{ background: "#2C52A2", color: "white" }}
+                  style={{ background: "#1D4ED8", color: "white" }}
                 >
                   + Add Photos
                   <input
@@ -850,7 +850,7 @@ export default function CreateListing() {
                           width: "64px",
                           height: "64px",
                           borderColor: uploadedPhotos[i]
-                            ? "#2C52A2"
+                            ? "#1D4ED8"
                             : "#d1d5db",
                           background: uploadedPhotos[i]
                             ? "transparent"
@@ -896,7 +896,7 @@ export default function CreateListing() {
                       {i === 0 && (
                         <span
                           className="text-[8px] font-bold px-1.5 py-0.5 rounded-full"
-                          style={{ background: "#EFF6FF", color: "#2C52A2" }}
+                          style={{ background: "#EFF6FF", color: "#1D4ED8" }}
                         >
                           Cover
                         </span>
@@ -1006,7 +1006,7 @@ export default function CreateListing() {
               disabled={!canContinueStep0}
               className="w-full py-4 text-white font-black text-base transition-all"
               style={{
-                background: canContinueStep0 ? "#2C52A2" : "#9ca3af",
+                background: canContinueStep0 ? "#1D4ED8" : "#9ca3af",
                 cursor: canContinueStep0 ? "pointer" : "not-allowed",
                 borderRadius: "12px",
               }}
@@ -1036,7 +1036,7 @@ export default function CreateListing() {
                 style={{
                   color: "#002F34",
                   border: brandSearch
-                    ? "1.5px solid #2C52A2"
+                    ? "1.5px solid #1D4ED8"
                     : "1px solid #e5e7eb",
                 }}
               />
@@ -1057,7 +1057,7 @@ export default function CreateListing() {
                   className="w-full bg-white rounded-xl px-4 py-3.5 flex items-center justify-between text-left"
                   style={{
                     border:
-                      brand === b ? "2px solid #2C52A2" : "1px solid #e5e7eb",
+                      brand === b ? "2px solid #1D4ED8" : "1px solid #e5e7eb",
                   }}
                 >
                   <span
@@ -1069,7 +1069,7 @@ export default function CreateListing() {
                   {brand === b && (
                     <CheckCircle2
                       className="w-4 h-4"
-                      style={{ color: "#2C52A2" }}
+                      style={{ color: "#1D4ED8" }}
                     />
                   )}
                 </button>
@@ -1098,7 +1098,7 @@ export default function CreateListing() {
                 style={{
                   color: "#002F34",
                   border: modelSearch
-                    ? "1.5px solid #2C52A2"
+                    ? "1.5px solid #1D4ED8"
                     : "1px solid #e5e7eb",
                 }}
               />
@@ -1131,7 +1131,7 @@ export default function CreateListing() {
                     className="w-full bg-white rounded-xl px-4 py-3.5 flex items-center justify-between text-left"
                     style={{
                       border:
-                        model === m ? "2px solid #2C52A2" : "1px solid #e5e7eb",
+                        model === m ? "2px solid #1D4ED8" : "1px solid #e5e7eb",
                     }}
                   >
                     <span
@@ -1143,7 +1143,7 @@ export default function CreateListing() {
                     {model === m && (
                       <CheckCircle2
                         className="w-4 h-4"
-                        style={{ color: "#2C52A2" }}
+                        style={{ color: "#1D4ED8" }}
                       />
                     )}
                   </button>
@@ -1173,11 +1173,11 @@ export default function CreateListing() {
                     onClick={() => setStorage(s)}
                     className="py-4 rounded-xl text-sm font-black"
                     style={{
-                      background: storage === s ? "#2C52A2" : "white",
+                      background: storage === s ? "#1D4ED8" : "white",
                       color: storage === s ? "white" : "#002F34",
                       border:
                         storage === s
-                          ? "2px solid #2C52A2"
+                          ? "2px solid #1D4ED8"
                           : "1px solid #e5e7eb",
                     }}
                   >
@@ -1202,10 +1202,10 @@ export default function CreateListing() {
                     onClick={() => setColor(c)}
                     className="py-3 rounded-xl text-xs font-bold"
                     style={{
-                      background: color === c ? "#2C52A2" : "white",
+                      background: color === c ? "#1D4ED8" : "white",
                       color: color === c ? "white" : "#002F34",
                       border:
-                        color === c ? "2px solid #2C52A2" : "1px solid #e5e7eb",
+                        color === c ? "2px solid #1D4ED8" : "1px solid #e5e7eb",
                     }}
                   >
                     {c}
@@ -1218,7 +1218,7 @@ export default function CreateListing() {
               data-ocid="create.step3.primary_button"
               onClick={() => setStep(4)}
               className="w-full py-4 text-white font-black text-base"
-              style={{ background: "#2C52A2", borderRadius: "12px" }}
+              style={{ background: "#1D4ED8", borderRadius: "12px" }}
             >
               Continue →
             </button>
@@ -1251,11 +1251,11 @@ export default function CreateListing() {
                     disabled={isScrap && c !== "Fair"}
                     className="py-3.5 rounded-xl text-sm font-bold"
                     style={{
-                      background: condition === c ? "#2C52A2" : "white",
+                      background: condition === c ? "#1D4ED8" : "white",
                       color: condition === c ? "white" : "#002F34",
                       border:
                         condition === c
-                          ? "2px solid #2C52A2"
+                          ? "2px solid #1D4ED8"
                           : "1px solid #e5e7eb",
                       opacity: isScrap && c !== "Fair" ? 0.4 : 1,
                     }}
@@ -1291,7 +1291,7 @@ export default function CreateListing() {
               data-ocid="create.step4.primary_button"
               onClick={() => setStep(5)}
               className="w-full py-4 text-white font-black text-base"
-              style={{ background: "#2C52A2", borderRadius: "12px" }}
+              style={{ background: "#1D4ED8", borderRadius: "12px" }}
             >
               Continue →
             </button>
@@ -1311,9 +1311,9 @@ export default function CreateListing() {
                 onClick={() => setAuctionType("Live20min")}
                 className="py-5 rounded-xl flex flex-col items-center gap-2"
                 style={{
-                  background: auctionType === "Live20min" ? "#2C52A2" : "white",
-                  color: auctionType === "Live20min" ? "white" : "#2C52A2",
-                  border: "2px solid #2C52A2",
+                  background: auctionType === "Live20min" ? "#1D4ED8" : "white",
+                  color: auctionType === "Live20min" ? "white" : "#1D4ED8",
+                  border: "2px solid #1D4ED8",
                 }}
               >
                 <Zap className="w-6 h-6" />
@@ -1325,9 +1325,9 @@ export default function CreateListing() {
                 onClick={() => setAuctionType("SevenDay")}
                 className="py-5 rounded-xl flex flex-col items-center gap-2"
                 style={{
-                  background: auctionType === "SevenDay" ? "#2C52A2" : "white",
-                  color: auctionType === "SevenDay" ? "white" : "#2C52A2",
-                  border: "2px solid #2C52A2",
+                  background: auctionType === "SevenDay" ? "#1D4ED8" : "white",
+                  color: auctionType === "SevenDay" ? "white" : "#1D4ED8",
+                  border: "2px solid #1D4ED8",
                 }}
               >
                 <Calendar className="w-6 h-6" />
@@ -1412,7 +1412,7 @@ export default function CreateListing() {
               disabled={publishing || !basePrice}
               className="w-full py-4 text-white font-black text-base transition-all"
               style={{
-                background: publishing || !basePrice ? "#9ca3af" : "#2C52A2",
+                background: publishing || !basePrice ? "#9ca3af" : "#1D4ED8",
                 cursor: publishing || !basePrice ? "not-allowed" : "pointer",
                 borderRadius: "12px",
               }}

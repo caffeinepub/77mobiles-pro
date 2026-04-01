@@ -156,11 +156,11 @@ export default function AuthPage() {
               className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4"
               style={{ background: "#EEF2FF" }}
             >
-              <Smartphone className="w-8 h-8" style={{ color: "#007AFF" }} />
+              <Smartphone className="w-8 h-8" style={{ color: "#1D4ED8" }} />
             </div>
             <h1 className="text-3xl font-black tracking-tight">
               <span className="text-gray-900">77</span>
-              <span style={{ color: "#007AFF" }}>mobiles</span>
+              <span style={{ color: "#1D4ED8" }}>mobiles</span>
               <span className="text-gray-900">.pro</span>
             </h1>
             <p className="text-gray-500 text-sm mt-1">
@@ -169,7 +169,7 @@ export default function AuthPage() {
           </div>
           <div className="bg-white rounded-2xl shadow-card p-6">
             <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
-              <LogIn className="w-5 h-5" style={{ color: "#007AFF" }} /> Login
+              <LogIn className="w-5 h-5" style={{ color: "#1D4ED8" }} /> Login
             </h2>
             <div className="space-y-4">
               <div>
@@ -203,11 +203,11 @@ export default function AuthPage() {
                     style={{
                       borderColor:
                         loginRole === UserRole.sellerDealer
-                          ? "#007AFF"
+                          ? "#1D4ED8"
                           : "#e5e7eb",
                       background:
                         loginRole === UserRole.sellerDealer
-                          ? "#007AFF"
+                          ? "#1D4ED8"
                           : "white",
                       color:
                         loginRole === UserRole.sellerDealer
@@ -225,11 +225,11 @@ export default function AuthPage() {
                     style={{
                       borderColor:
                         loginRole === UserRole.businessBuyer
-                          ? "#007AFF"
+                          ? "#1D4ED8"
                           : "#e5e7eb",
                       background:
                         loginRole === UserRole.businessBuyer
-                          ? "#007AFF"
+                          ? "#1D4ED8"
                           : "white",
                       color:
                         loginRole === UserRole.businessBuyer
@@ -244,7 +244,7 @@ export default function AuthPage() {
               <Button
                 data-ocid="login.submit_button"
                 className="w-full"
-                style={{ background: "#007AFF", border: "none" }}
+                style={{ background: "#1D4ED8", border: "none" }}
                 onClick={handleLogin}
               >
                 Login
@@ -258,7 +258,7 @@ export default function AuthPage() {
               data-ocid="auth.register.link"
               onClick={() => setMode("register")}
               className="font-semibold"
-              style={{ color: "#007AFF" }}
+              style={{ color: "#1D4ED8" }}
             >
               Register
             </button>
@@ -279,11 +279,11 @@ export default function AuthPage() {
             className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-3"
             style={{ background: "#EEF2FF" }}
           >
-            <Smartphone className="w-7 h-7" style={{ color: "#007AFF" }} />
+            <Smartphone className="w-7 h-7" style={{ color: "#1D4ED8" }} />
           </div>
           <h1 className="text-3xl font-black tracking-tight">
             <span className="text-gray-900">77</span>
-            <span style={{ color: "#007AFF" }}>mobiles</span>
+            <span style={{ color: "#1D4ED8" }}>mobiles</span>
             <span className="text-gray-900">.pro</span>
           </h1>
           <p className="text-gray-500 text-sm mt-1">
@@ -448,7 +448,7 @@ export default function AuthPage() {
               <Button
                 data-ocid="buyer.register.submit_button"
                 className="w-full"
-                style={{ background: "#007AFF", border: "none" }}
+                style={{ background: "#1D4ED8", border: "none" }}
                 onClick={handleRegisterBuyer}
                 disabled={loading}
               >
@@ -465,7 +465,7 @@ export default function AuthPage() {
             data-ocid="auth.login.link"
             onClick={() => setMode("login")}
             className="font-semibold"
-            style={{ color: "#007AFF" }}
+            style={{ color: "#1D4ED8" }}
           >
             Login
           </button>
