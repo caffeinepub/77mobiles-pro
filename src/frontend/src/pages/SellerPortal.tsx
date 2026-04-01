@@ -207,10 +207,10 @@ export default function SellerPortal() {
               <div
                 key={item.id}
                 data-ocid={`seller.demand.item.${idx + 1}`}
-                className="bg-white rounded-xl p-3 flex flex-col justify-between flex-shrink-0"
+                className="bg-white rounded-xl p-2 flex flex-col justify-between flex-shrink-0"
                 style={{
-                  minWidth: "140px",
-                  maxWidth: "160px",
+                  minWidth: "120px",
+                  maxWidth: "130px",
                   border: "1px solid #e5e7eb",
                   boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
                 }}
@@ -228,7 +228,7 @@ export default function SellerPortal() {
 
                 <div className="mb-2">
                   <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center mb-2"
+                    className="w-6 h-6 rounded-lg flex items-center justify-center mb-2"
                     style={{ background: "#fff7ed" }}
                   >
                     <Flame className="w-4 h-4 text-orange-500" />
@@ -236,7 +236,7 @@ export default function SellerPortal() {
                   <p className="font-bold text-xs text-gray-900 leading-snug mb-1">
                     {item.text}
                   </p>
-                  <p className="text-[10px] text-gray-500">
+                  <p className="text-[9px] text-gray-500">
                     {"\u20B9"}
                     {item.budget} each
                   </p>
@@ -245,7 +245,7 @@ export default function SellerPortal() {
                   </p>
                   {/* Social proof */}
                   <p
-                    className="text-[9px] font-semibold mt-1"
+                    className="text-[8px] font-semibold mt-1"
                     style={{ color: "#1D4ED8" }}
                   >
                     3 other dealers are viewing this lead
@@ -255,7 +255,7 @@ export default function SellerPortal() {
                   type="button"
                   data-ocid={`seller.fulfill_lead.button.${idx + 1}`}
                   onClick={() => handleFulfillLead(item)}
-                  className="w-full flex items-center justify-center gap-1 py-1.5 rounded-lg text-[10px] font-bold text-white transition-all"
+                  className="w-full flex items-center justify-center gap-1 py-1 rounded-lg text-[9px] font-bold text-white transition-all"
                   style={{ background: "#1D4ED8" }}
                 >
                   FULFILL LEAD

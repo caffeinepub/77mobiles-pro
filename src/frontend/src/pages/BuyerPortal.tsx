@@ -1,5 +1,18 @@
 import { useNavigate } from "@tanstack/react-router";
-import { Calendar, Clock, Heart, Zap } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  Gamepad2,
+  Headphones,
+  Heart,
+  Laptop,
+  Search,
+  Tablet,
+  Watch,
+  Wrench,
+  Zap,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import PortalCarousel from "../components/PortalCarousel";
@@ -594,54 +607,142 @@ function CategoryListingView({
     items: [],
   };
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [condFilter, setCondFilter] = useState("All");
+  const CONDITIONS = ["All", "Like New", "Good", "Fair"];
+
+  const getCategoryIcon = () => {
+    if (category === "macbook-laptops")
+      return <Laptop className="w-10 h-10" style={{ color: "#1D4ED8" }} />;
+    if (category === "ipads")
+      return <Tablet className="w-10 h-10" style={{ color: "#1D4ED8" }} />;
+    if (category === "watches")
+      return <Watch className="w-10 h-10" style={{ color: "#1D4ED8" }} />;
+    if (category === "gaming-consoles")
+      return <Gamepad2 className="w-10 h-10" style={{ color: "#1D4ED8" }} />;
+    if (category === "accessories")
+      return <Headphones className="w-10 h-10" style={{ color: "#1D4ED8" }} />;
+    return <Wrench className="w-10 h-10" style={{ color: "#1D4ED8" }} />;
+  };
+
+  const filteredItems = data.items.filter((item) => {
+    const matchSearch =
+      !searchQuery ||
+      item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchCond = condFilter === "All" || item.tag === condFilter;
+    return matchSearch && matchCond;
+  });
+
   return (
     <div className="bg-[#F8FAFC] min-h-screen pb-24">
-      <div className="px-3 pt-3">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">{data.emoji}</span>
-            <p className="font-black text-base" style={{ color: "#002F34" }}>
+      {/* Header */}
+      <header
+        className="sticky top-0 z-30 bg-white px-4 py-3"
+        style={{ borderBottom: "1px solid #e5e7eb" }}
+      >
+        <div className="flex items-center gap-3 mb-3">
+          <button
+            type="button"
+            data-ocid="category_listing.back.button"
+            onClick={onBack}
+            className="w-9 h-9 rounded-full flex items-center justify-center"
+            style={{ background: "#F4F7FF" }}
+          >
+            <ArrowLeft className="w-5 h-5" style={{ color: "#1D4ED8" }} />
+          </button>
+          <div className="flex-1">
+            <h2 className="font-black text-base" style={{ color: "#1E293B" }}>
               {data.title}
+            </h2>
+            <p className="text-[10px]" style={{ color: "#9CA3AF" }}>
+              Showing {filteredItems.length} results
             </p>
           </div>
-          <span className="text-xs text-gray-400">
-            {data.items.length} listings
-          </span>
         </div>
+        {/* Search */}
+        <div
+          className="flex items-center gap-2 px-3 py-2 rounded-xl"
+          style={{ background: "#F4F7FF", border: "1px solid #E2E8F0" }}
+        >
+          <Search
+            className="w-4 h-4 flex-shrink-0"
+            style={{ color: "#9CA3AF" }}
+          />
+          <input
+            data-ocid="category_listing.search_input"
+            type="text"
+            placeholder={`Search in ${data.title}...`}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1 bg-transparent outline-none text-xs"
+            style={{ color: "#1E293B" }}
+          />
+        </div>
+        {/* Filter pills */}
+        <div
+          className="flex gap-2 mt-2.5 overflow-x-auto pb-0.5"
+          style={{ scrollbarWidth: "none" }}
+        >
+          {CONDITIONS.map((cond) => (
+            <button
+              key={cond}
+              type="button"
+              data-ocid={`category_listing.filter.${cond.toLowerCase().replace(" ", "_")}.tab`}
+              onClick={() => setCondFilter(cond)}
+              className="flex-shrink-0 px-3 py-1 rounded-full text-[11px] font-semibold"
+              style={{
+                background: condFilter === cond ? "#1D4ED8" : "white",
+                color: condFilter === cond ? "white" : "#6B7280",
+                border: condFilter === cond ? "none" : "1px solid #e5e7eb",
+              }}
+            >
+              {cond}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      <div className="px-3 pt-3">
         <div className="grid grid-cols-2 gap-2.5">
-          {data.items.map((item, idx) => {
+          {filteredItems.map((item, idx) => {
             const cond = conditionColor(item.tag);
             return (
               <div
                 key={item.id}
                 data-ocid={`category_listing.${category}.item.${idx + 1}`}
-                className="bg-white rounded-xl overflow-hidden"
-                style={{ border: "1px solid #e5e7eb" }}
+                className="bg-white rounded-2xl overflow-hidden flex flex-col"
+                style={{ border: "1px solid #e5e7eb", borderRadius: "16px" }}
               >
+                {/* Image area: square 1:1 with studio inner stroke */}
                 <div
-                  className="w-full h-28 flex items-center justify-center"
-                  style={{ background: "#F8FAFC" }}
+                  className="w-full flex items-center justify-center relative"
+                  style={{
+                    aspectRatio: "1/1",
+                    background: "#F4F7FF",
+                    borderRadius: "16px 16px 0 0",
+                    boxShadow: "inset 0 0 0 1px #E2E8F0",
+                    overflow: "hidden",
+                  }}
                 >
-                  <span className="text-4xl">
-                    {category === "macbook-laptops"
-                      ? "\uD83D\uDCBB"
-                      : category === "ipads"
-                        ? "\uD83D\uDCF1"
-                        : category === "watches"
-                          ? "\u231A"
-                          : category === "gaming-consoles"
-                            ? "\uD83C\uDFAE"
-                            : category === "accessories"
-                              ? "\uD83C\uDFA7"
-                              : "\uD83D\uDD27"}
+                  {getCategoryIcon()}
+                  {/* AI Verified badge */}
+                  <span
+                    className="absolute top-2 left-2 text-[8px] font-bold px-1.5 py-0.5 rounded-full"
+                    style={{ background: "#D1FAE5", color: "#065F46" }}
+                  >
+                    AI Verified ✓
                   </span>
                 </div>
-                <div className="p-2.5">
-                  <p className="font-bold text-xs text-[#002F34] leading-snug mb-1 truncate">
+                {/* Card body */}
+                <div className="p-2.5 flex flex-col gap-1 flex-1">
+                  <p
+                    className="font-bold text-xs leading-snug truncate"
+                    style={{ color: "#1E293B" }}
+                  >
                     {item.name}
                   </p>
                   <span
-                    className="inline-block text-[9px] font-semibold px-1.5 py-0.5 rounded-full mb-1.5"
+                    className="inline-block text-[9px] font-semibold px-1.5 py-0.5 rounded-full w-fit"
                     style={{ background: cond.bg, color: cond.text }}
                   >
                     {item.tag}
@@ -652,19 +753,25 @@ function CategoryListingView({
                   >
                     {item.price}
                   </p>
+                  <button
+                    type="button"
+                    data-ocid={`category_listing.${category}.bid.${idx + 1}.button`}
+                    className="w-full py-1.5 rounded-lg text-[10px] font-bold text-white mt-auto"
+                    style={{ background: "#1D4ED8" }}
+                  >
+                    Bid Now
+                  </button>
                 </div>
               </div>
             );
           })}
         </div>
-        {data.items.length === 0 && (
+        {filteredItems.length === 0 && (
           <div
             data-ocid={`category_listing.${category}.empty_state`}
             className="text-center py-16"
           >
-            <p className="text-sm text-gray-400">
-              No listings in this category yet
-            </p>
+            <p className="text-sm text-gray-400">No listings found</p>
             <button
               type="button"
               onClick={onBack}

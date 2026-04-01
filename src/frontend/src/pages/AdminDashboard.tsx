@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 type AdminModule =
   | "pulse"
@@ -289,6 +290,28 @@ function PulseModule() {
         ))}
       </div>
 
+      {/* Weekly Volume highlight */}
+      <div
+        className="p-4 rounded-xl mb-6 flex items-center justify-between"
+        style={{ background: "#EFF6FF", border: "1.5px solid #BFDBFE" }}
+      >
+        <div>
+          <p
+            className="text-xs font-medium mb-0.5"
+            style={{ color: "#1D4ED8" }}
+          >
+            Weekly Volume
+          </p>
+          <p className="text-2xl font-black" style={{ color: "#1D4ED8" }}>
+            ₹4.8 Cr
+          </p>
+          <p className="text-[10px]" style={{ color: "#60A5FA" }}>
+            +22% vs last week
+          </p>
+        </div>
+        <BarChart2 className="w-10 h-10" style={{ color: "#BFDBFE" }} />
+      </div>
+
       {/* Bar chart */}
       <div
         className="p-5 rounded-xl mb-6"
@@ -355,10 +378,17 @@ function PulseModule() {
 
 function DealersModule() {
   const [filter, setFilter] = useState("All");
+  const [dealerStatuses, setDealerStatuses] = useState<Record<string, string>>(
+    {},
+  );
+  const allDealers = MOCK_DEALERS.map((d) => ({
+    ...d,
+    status: dealerStatuses[d.id] ?? d.status,
+  }));
   const filtered =
     filter === "All"
-      ? MOCK_DEALERS
-      : MOCK_DEALERS.filter((d) => d.status === filter);
+      ? allDealers
+      : allDealers.filter((d) => d.status === filter);
   return (
     <div>
       <h2 className="text-xl font-bold mb-5" style={{ color: "#1E293B" }}>
@@ -444,7 +474,19 @@ function DealersModule() {
                       type="button"
                       data-ocid={`admin.dealers.approve.${i + 1}.button`}
                       className="px-2 py-1 rounded text-[11px] font-bold"
-                      style={{ background: "#D1FAE5", color: "#059669" }}
+                      style={{
+                        background: "#D1FAE5",
+                        color: "#059669",
+                        minHeight: "44px",
+                        minWidth: "44px",
+                      }}
+                      onClick={() => {
+                        setDealerStatuses((prev) => ({
+                          ...prev,
+                          [d.id]: "Approved",
+                        }));
+                        toast.success(`${d.name} approved`);
+                      }}
                     >
                       Approve
                     </button>
@@ -452,7 +494,19 @@ function DealersModule() {
                       type="button"
                       data-ocid={`admin.dealers.reject.${i + 1}.button`}
                       className="px-2 py-1 rounded text-[11px] font-bold"
-                      style={{ background: "#FEE2E2", color: "#DC2626" }}
+                      style={{
+                        background: "#FEE2E2",
+                        color: "#DC2626",
+                        minHeight: "44px",
+                        minWidth: "44px",
+                      }}
+                      onClick={() => {
+                        setDealerStatuses((prev) => ({
+                          ...prev,
+                          [d.id]: "Rejected",
+                        }));
+                        toast.error(`${d.name} rejected`);
+                      }}
                     >
                       Reject
                     </button>
@@ -476,6 +530,7 @@ function DealersModule() {
 }
 
 function AuctionsModule() {
+  const [auctions, setAuctions] = useState(MOCK_AUCTIONS);
   return (
     <div>
       <h2 className="text-xl font-bold mb-5" style={{ color: "#1E293B" }}>
@@ -508,7 +563,7 @@ function AuctionsModule() {
             </tr>
           </thead>
           <tbody>
-            {MOCK_AUCTIONS.map((a, i) => (
+            {auctions.map((a, i) => (
               <tr
                 key={a.id}
                 data-ocid={`admin.auctions.row.${i + 1}`}
@@ -563,7 +618,17 @@ function AuctionsModule() {
                       type="button"
                       data-ocid={`admin.auctions.delete.${i + 1}.delete_button`}
                       className="px-2 py-1 rounded text-[11px] font-bold"
-                      style={{ background: "#FEE2E2", color: "#DC2626" }}
+                      style={{
+                        background: "#FEE2E2",
+                        color: "#DC2626",
+                        minHeight: "44px",
+                      }}
+                      onClick={() => {
+                        setAuctions((prev) =>
+                          prev.filter((x) => x.id !== a.id),
+                        );
+                        toast.success("Auction removed");
+                      }}
                     >
                       Remove
                     </button>

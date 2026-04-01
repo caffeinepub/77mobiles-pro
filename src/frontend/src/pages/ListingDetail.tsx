@@ -1,6 +1,9 @@
 import { useNavigate, useParams } from "@tanstack/react-router";
 import {
   ArrowLeft,
+  Battery,
+  CheckCircle,
+  Crown,
   Monitor,
   Shield,
   ShieldCheck,
@@ -631,8 +634,325 @@ export default function ListingDetail() {
               </div>
             </div>
           )}
+
+          {/* 6. Device Verification HUD */}
+          <div
+            className="bg-white rounded-2xl p-4"
+            style={{ border: "1px solid #e5e7eb" }}
+          >
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+              Device Verification
+            </p>
+            <div className="grid grid-cols-2 gap-2.5">
+              {/* Battery Health */}
+              <div
+                className="p-3 rounded-xl"
+                style={{ border: "1px solid #e5e7eb", borderRadius: "12px" }}
+              >
+                <p className="text-[9px] font-semibold text-gray-400 uppercase mb-2">
+                  Battery Health
+                </p>
+                {(() => {
+                  const pct = Number(listing.batteryHealth) || 87;
+                  const r = 20;
+                  const circ = 2 * Math.PI * r;
+                  const fill = circ - (pct / 100) * circ;
+                  const col =
+                    pct > 80 ? "#16A34A" : pct > 60 ? "#D97706" : "#DC2626";
+                  return (
+                    <div className="flex flex-col items-center">
+                      <svg
+                        width="52"
+                        height="52"
+                        viewBox="0 0 52 52"
+                        aria-label="Battery health indicator"
+                        role="img"
+                      >
+                        <circle
+                          cx="26"
+                          cy="26"
+                          r={r}
+                          fill="none"
+                          stroke="#E5E7EB"
+                          strokeWidth="4"
+                        />
+                        <circle
+                          cx="26"
+                          cy="26"
+                          r={r}
+                          fill="none"
+                          stroke={col}
+                          strokeWidth="4"
+                          strokeDasharray={circ}
+                          strokeDashoffset={fill}
+                          strokeLinecap="round"
+                          transform="rotate(-90 26 26)"
+                        />
+                        <text
+                          x="26"
+                          y="30"
+                          textAnchor="middle"
+                          fontSize="11"
+                          fontWeight="800"
+                          fill={col}
+                        >
+                          {pct}%
+                        </text>
+                      </svg>
+                      <span
+                        className="text-[9px] font-semibold mt-1"
+                        style={{ color: col }}
+                      >
+                        {pct > 80 ? "Excellent" : pct > 60 ? "Good" : "Low"}
+                      </span>
+                    </div>
+                  );
+                })()}
+              </div>
+              {/* IMEI Status */}
+              <div
+                className="p-3 rounded-xl flex flex-col gap-1.5"
+                style={{ border: "1px solid #e5e7eb", borderRadius: "12px" }}
+              >
+                <p className="text-[9px] font-semibold text-gray-400 uppercase">
+                  IMEI Status
+                </p>
+                <ShieldCheck className="w-6 h-6" style={{ color: "#16A34A" }} />
+                <span
+                  className="text-xs font-bold"
+                  style={{ color: "#16A34A" }}
+                >
+                  Verified
+                </span>
+                <span className="text-[9px] font-mono text-gray-500">
+                  35****1234
+                </span>
+              </div>
+              {/* Cosmetic Grade */}
+              <div
+                className="p-3 rounded-xl flex flex-col gap-1.5"
+                style={{ border: "1px solid #e5e7eb", borderRadius: "12px" }}
+              >
+                <p className="text-[9px] font-semibold text-gray-400 uppercase">
+                  Cosmetic Grade
+                </p>
+                <span
+                  className="text-xs font-black px-2 py-1 rounded-full w-fit"
+                  style={{ background: "#D1FAE5", color: "#065F46" }}
+                >
+                  {listing.condition === "Like New" ||
+                  listing.condition === "Excellent"
+                    ? "Grade A – Like New"
+                    : listing.condition === "Good"
+                      ? "Grade B – Good"
+                      : "Grade C – Fair"}
+                </span>
+              </div>
+              {/* Functional Check */}
+              <div
+                className="p-3 rounded-xl flex flex-col gap-1.5"
+                style={{ border: "1px solid #e5e7eb", borderRadius: "12px" }}
+              >
+                <p className="text-[9px] font-semibold text-gray-400 uppercase">
+                  Functional Check
+                </p>
+                <CheckCircle className="w-6 h-6" style={{ color: "#16A34A" }} />
+                <span
+                  className="text-xs font-bold"
+                  style={{ color: "#16A34A" }}
+                >
+                  55/55 Pass
+                </span>
+                <span className="text-[9px] text-gray-500">
+                  All Systems Nominal
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* 7. Dealer Leaderboard */}
+          {mode !== "seller" && (
+            <div
+              className="bg-white rounded-2xl p-4"
+              style={{ border: "1px solid #e5e7eb" }}
+            >
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                Live Bidder Board
+              </p>
+              {[
+                { rank: 1, id: "Dealer ***42", offset: 0 },
+                { rank: 2, id: "Dealer ***17", offset: -500 },
+                { rank: 3, id: "Dealer ***85", offset: -1200 },
+                { rank: 4, id: "Dealer ***63", offset: -2000 },
+                { rank: 5, id: "Dealer ***29", offset: -3500 },
+              ].map((d) => {
+                const bid = currentBid + d.offset;
+                return (
+                  <div
+                    key={d.rank}
+                    className="flex items-center gap-3 py-2"
+                    style={{
+                      borderBottom: d.rank < 5 ? "1px solid #F1F5F9" : "none",
+                    }}
+                  >
+                    <span
+                      className="text-xs font-black w-5 text-center"
+                      style={{ color: d.rank === 1 ? "#D97706" : "#9CA3AF" }}
+                    >
+                      {d.rank}
+                    </span>
+                    {d.rank === 1 && (
+                      <Crown
+                        className="w-3.5 h-3.5 flex-shrink-0"
+                        style={{ color: "#D97706" }}
+                      />
+                    )}
+                    <span
+                      className="flex-1 text-xs font-semibold"
+                      style={{ color: "#1E293B" }}
+                    >
+                      {d.id}
+                    </span>
+                    <span
+                      className="text-xs font-black"
+                      style={{ color: "#1D4ED8" }}
+                    >
+                      ₹{(bid / 100).toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* 8. Fee & Tax Summary */}
+          {(() => {
+            const priceRs = currentBid / 100;
+            const fee =
+              priceRs <= 10000
+                ? 800
+                : priceRs <= 30000
+                  ? 1000
+                  : priceRs <= 60000
+                    ? 1300
+                    : priceRs <= 100000
+                      ? 1500
+                      : 2000;
+            const gst = Math.round(fee * 0.18);
+            const tcs = Math.round(priceRs * 0.01);
+            const total = priceRs + fee + gst + tcs;
+            return (
+              <div
+                className="bg-white rounded-2xl p-4"
+                style={{ border: "1px solid #e5e7eb" }}
+              >
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                  Fee & Tax Summary
+                </p>
+                {[
+                  {
+                    label: "Device Price",
+                    value: `₹${priceRs.toLocaleString("en-IN")}`,
+                    bold: false,
+                  },
+                  {
+                    label: "Sourcing Fee",
+                    value: `₹${fee.toLocaleString("en-IN")}`,
+                    bold: false,
+                  },
+                  {
+                    label: "GST on Fee (18%)",
+                    value: `₹${gst.toLocaleString("en-IN")}`,
+                    bold: false,
+                  },
+                  {
+                    label: "1% Claimable TCS",
+                    value: `₹${tcs.toLocaleString("en-IN")}`,
+                    bold: false,
+                  },
+                ].map((row) => (
+                  <div
+                    key={row.label}
+                    className="flex items-center justify-between py-2"
+                    style={{ borderBottom: "1px solid #F1F5F9" }}
+                  >
+                    <span className="text-xs text-gray-500">{row.label}</span>
+                    <span className="text-xs font-semibold text-gray-700">
+                      {row.value}
+                    </span>
+                  </div>
+                ))}
+                <div className="flex items-center justify-between pt-2">
+                  <span className="text-sm font-bold text-gray-900">
+                    Total Payable
+                  </span>
+                  <span
+                    className="text-sm font-black"
+                    style={{ color: "#1D4ED8" }}
+                  >
+                    ₹{total.toLocaleString("en-IN")}
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </div>
+
+      {/* Sticky quick-bid footer */}
+      {listing.status === "Active" && mode !== "seller" && (
+        <div
+          style={{
+            position: "sticky",
+            bottom: 0,
+            background: "white",
+            borderTop: "1px solid #e5e7eb",
+            padding: "12px 16px",
+            display: "flex",
+            gap: "8px",
+            alignItems: "center",
+            zIndex: 10,
+          }}
+        >
+          {[100, 500, 1000].map((inc) => (
+            <button
+              key={inc}
+              type="button"
+              data-ocid={`listing.quick_bid.${inc}.button`}
+              style={{
+                flex: 1,
+                padding: "8px 4px",
+                borderRadius: "10px",
+                border: "1.5px solid #1D4ED8",
+                background: "white",
+                color: "#1D4ED8",
+                fontSize: "12px",
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              +₹{inc.toLocaleString("en-IN")}
+            </button>
+          ))}
+          <button
+            type="button"
+            data-ocid="listing.place_bid.primary_button"
+            style={{
+              flex: 2,
+              padding: "10px",
+              borderRadius: "10px",
+              background: "#1D4ED8",
+              color: "white",
+              fontSize: "13px",
+              fontWeight: 800,
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            Place Bid
+          </button>
+        </div>
+      )}
     </div>
   );
 }

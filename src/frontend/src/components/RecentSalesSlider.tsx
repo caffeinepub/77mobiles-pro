@@ -99,7 +99,7 @@ export default function RecentSalesSlider() {
             letterSpacing: "0.02em",
           }}
         >
-          Recently Sold on 77mobiles
+          Recently Sold on 77mobiles.pro
         </span>
         <button
           type="button"
