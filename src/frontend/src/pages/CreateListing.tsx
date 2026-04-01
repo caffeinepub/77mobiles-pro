@@ -645,18 +645,52 @@ export default function CreateListing() {
                   accept="image/*"
                   capture="environment"
                   className="hidden"
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
-                    // Read the image as OCR placeholder — extract digits from filename or manual
-                    const nameDigits = file.name
-                      .replace(/\D/g, "")
-                      .slice(0, 15);
-                    if (nameDigits.length === 15) handleImeiChange(nameDigits);
-                    else
-                      toast(
-                        "Camera captured. Please type the IMEI number shown on screen.",
+                    try {
+                      if ("BarcodeDetector" in window) {
+                        const detector = new (window as any).BarcodeDetector({
+                          formats: [
+                            "ean_13",
+                            "ean_8",
+                            "code_128",
+                            "code_39",
+                            "qr_code",
+                            "upc_a",
+                          ],
+                        });
+                        const img = await createImageBitmap(file);
+                        const barcodes = await detector.detect(img);
+                        if (barcodes.length > 0) {
+                          const raw = barcodes[0].rawValue
+                            .replace(/\D/g, "")
+                            .slice(0, 15);
+                          handleImeiChange(raw);
+                          toast.success("IMEI scanned successfully!");
+                        } else {
+                          toast.error(
+                            "No barcode found. Please enter IMEI manually.",
+                          );
+                        }
+                      } else {
+                        // Fallback: try to extract digits from the image filename
+                        const nameDigits = file.name
+                          .replace(/\D/g, "")
+                          .slice(0, 15);
+                        if (nameDigits.length === 15) {
+                          handleImeiChange(nameDigits);
+                        } else {
+                          toast(
+                            "Scanner not supported on this device. Please enter IMEI manually.",
+                          );
+                        }
+                      }
+                    } catch {
+                      toast.error(
+                        "Could not read barcode. Please enter IMEI manually.",
                       );
+                    }
                     e.target.value = "";
                   }}
                 />

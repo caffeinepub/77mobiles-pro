@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { Calendar, CheckCircle, Download, Flame, Zap } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import AuctionTimer from "../components/AuctionTimer";
 import PortalCarousel from "../components/PortalCarousel";
@@ -112,6 +112,11 @@ export default function SellerPortal() {
   const { searchQuery } = useApp();
 
   const [soldHistoryVisible, setSoldHistoryVisible] = useState(false);
+  const [gridLoading, setGridLoading] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setGridLoading(false), 1200);
+    return () => clearTimeout(t);
+  }, []);
 
   const filtered = SELLER_LISTINGS.filter((l) => {
     const q = searchQuery.toLowerCase();
@@ -207,10 +212,10 @@ export default function SellerPortal() {
               <div
                 key={item.id}
                 data-ocid={`seller.demand.item.${idx + 1}`}
-                className="bg-white rounded-xl p-2 flex flex-col justify-between flex-shrink-0"
+                className="bg-white rounded-xl p-1.5 flex flex-col justify-between flex-shrink-0"
                 style={{
-                  minWidth: "120px",
-                  maxWidth: "130px",
+                  minWidth: "105px",
+                  maxWidth: "115px",
                   border: "1px solid #e5e7eb",
                   boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
                 }}
@@ -221,41 +226,41 @@ export default function SellerPortal() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
                   </span>
-                  <span className="text-[9px] font-bold text-red-500 uppercase tracking-wide">
+                  <span className="text-[8px] font-bold text-red-500 uppercase tracking-wide">
                     Live
                   </span>
                 </div>
 
                 <div className="mb-2">
                   <div
-                    className="w-6 h-6 rounded-lg flex items-center justify-center mb-2"
+                    className="w-5 h-5 rounded-lg flex items-center justify-center mb-1"
                     style={{ background: "#fff7ed" }}
                   >
                     <Flame className="w-4 h-4 text-orange-500" />
                   </div>
-                  <p className="font-bold text-xs text-gray-900 leading-snug mb-1">
+                  <p className="font-bold text-[10px] text-gray-900 leading-snug mb-1">
                     {item.text}
                   </p>
-                  <p className="text-[9px] text-gray-500">
+                  <p className="text-[8px] text-gray-500">
                     {"\u20B9"}
                     {item.budget} each
                   </p>
-                  <p className="text-[9px] text-gray-400 mt-0.5 truncate">
+                  <p className="text-[8px] text-gray-400 mt-0.5 truncate">
                     {item.dealer}
                   </p>
                   {/* Social proof */}
                   <p
-                    className="text-[8px] font-semibold mt-1"
+                    className="text-[7px] font-semibold mt-0.5"
                     style={{ color: "#1D4ED8" }}
                   >
-                    3 other dealers are viewing this lead
+                    3 dealers viewing
                   </p>
                 </div>
                 <button
                   type="button"
                   data-ocid={`seller.fulfill_lead.button.${idx + 1}`}
                   onClick={() => handleFulfillLead(item)}
-                  className="w-full flex items-center justify-center gap-1 py-1 rounded-lg text-[9px] font-bold text-white transition-all"
+                  className="w-full flex items-center justify-center gap-1 py-0.5 rounded-lg text-[8px] font-bold text-white transition-all"
                   style={{ background: "#1D4ED8" }}
                 >
                   FULFILL LEAD
@@ -432,9 +437,40 @@ export default function SellerPortal() {
             </div>
           </div>
         ) : (
-          /* ── Normal My Listings view ── */
+          /* ── Normal My Listings view (2-column grid) ── */
           <div>
-            {filtered.length === 0 ? (
+            {gridLoading ? (
+              <div className="grid grid-cols-2 gap-2.5 pb-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <div
+                    key={i}
+                    className="bg-white rounded-2xl overflow-hidden"
+                    style={{ border: "1px solid #e5e7eb" }}
+                  >
+                    <div className="animate-pulse">
+                      <div
+                        className="w-full aspect-square"
+                        style={{ background: "#DBEAFE" }}
+                      />
+                      <div className="p-3 space-y-2">
+                        <div
+                          className="h-3 rounded w-3/4"
+                          style={{ background: "#DBEAFE" }}
+                        />
+                        <div
+                          className="h-2.5 rounded w-1/2"
+                          style={{ background: "#DBEAFE" }}
+                        />
+                        <div
+                          className="h-3.5 rounded w-2/3"
+                          style={{ background: "#DBEAFE" }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : filtered.length === 0 ? (
               <div
                 data-ocid="seller.listings.empty_state"
                 className="bg-white rounded-2xl p-8 text-center"
@@ -445,135 +481,102 @@ export default function SellerPortal() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-3 pb-2">
+              <div className="grid grid-cols-2 gap-2.5 pb-2">
                 {filtered.map((listing, idx) => {
-                  const cond = conditionColor(listing.condition);
+                  const isActive = listing.status === "Active";
                   return (
                     <div
                       key={listing.listingId}
                       data-ocid={`seller.listing.item.${idx + 1}`}
-                      className="bg-white rounded-xl overflow-hidden"
+                      className="bg-white rounded-2xl overflow-hidden cursor-pointer active:scale-[0.98] transition-transform"
                       style={{
                         boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
                         border: "1px solid #e5e7eb",
                       }}
+                      onClick={() =>
+                        navigate({ to: `/listing/${listing.listingId}` })
+                      }
+                      onKeyDown={(e) =>
+                        e.key === "Enter" &&
+                        navigate({ to: `/listing/${listing.listingId}` })
+                      }
                     >
-                      {/* Main row */}
-                      <div className="p-4 flex gap-3">
-                        {/* Left: device image */}
-                        <button
-                          type="button"
-                          className="flex-shrink-0"
-                          onClick={() =>
-                            navigate({ to: `/listing/${listing.listingId}` })
-                          }
+                      {/* Square image with overlaid badges */}
+                      <div
+                        className="relative w-full"
+                        style={{
+                          aspectRatio: "1/1",
+                          background: "#F4F7FF",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <img
+                          src={getDeviceImage(listing.model)}
+                          alt={listing.model}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                        {/* Top-left: status badge */}
+                        <span
+                          className="absolute top-2 left-2 text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                          style={{
+                            background: isActive ? "#F0FDF4" : "#F3F4F6",
+                            color: isActive ? "#166534" : "#4b5563",
+                          }}
                         >
-                          <img
-                            src={getDeviceImage(listing.model)}
-                            alt={listing.model}
-                            className="object-cover rounded-xl"
-                            style={{ width: "72px", height: "72px" }}
-                            loading="lazy"
-                          />
-                        </button>
-
-                        {/* Center: model name, condition, price */}
-                        <button
-                          type="button"
-                          className="flex-1 min-w-0 text-left"
-                          onClick={() =>
-                            navigate({ to: `/listing/${listing.listingId}` })
-                          }
+                          {listing.status}
+                        </span>
+                        {/* Top-right: auction type badge */}
+                        <span
+                          className="absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5"
+                          style={{
+                            background:
+                              listing.auctionType === "Live20min"
+                                ? "#FEF2F2"
+                                : "#EFF6FF",
+                            color:
+                              listing.auctionType === "Live20min"
+                                ? "#DC2626"
+                                : "#1D4ED8",
+                          }}
                         >
-                          <p className="font-bold text-[15px] text-[#1E293B] truncate leading-tight mb-1">
-                            {listing.model}
-                          </p>
-                          <div className="flex items-center gap-1.5 flex-wrap mb-1.5">
-                            <span
-                              className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                              style={{ background: cond.bg, color: cond.text }}
-                            >
-                              {listing.condition}
-                            </span>
-                            {listing.usbVerified && (
-                              <span
-                                className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                                style={{
-                                  background: "#F0FDF4",
-                                  color: "#166534",
-                                }}
-                              >
-                                {"\u2713"} VERIFIED
-                              </span>
-                            )}
+                          {listing.auctionType === "Live20min" ? (
+                            <>
+                              <Zap className="w-2 h-2" strokeWidth={1.5} />
+                              Live
+                            </>
+                          ) : (
+                            <>
+                              <Calendar className="w-2 h-2" strokeWidth={1.5} />
+                              7-Day
+                            </>
+                          )}
+                        </span>
+                      </div>
+                      {/* Below image */}
+                      <div className="p-3">
+                        <p className="font-bold text-[12px] text-[#1E293B] truncate leading-tight">
+                          {listing.title}
+                        </p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">
+                          {listing.condition}
+                          {listing.usbVerified ? " · Verified" : ""}
+                        </p>
+                        <p
+                          className="font-black text-[14px] mt-1"
+                          style={{ color: "#1D4ED8" }}
+                        >
+                          {formatINR(listing.basePrice)}
+                        </p>
+                        {isActive && (
+                          <div className="mt-1.5">
+                            <AuctionTimer
+                              endsAt={listing.endsAt}
+                              auctionType={listing.auctionType}
+                              status={listing.status}
+                            />
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] text-gray-400 font-medium">
-                              Base
-                            </span>
-                            <span
-                              className="font-black text-[15px]"
-                              style={{ color: "#1D4ED8" }}
-                            >
-                              {formatINR(listing.basePrice)}
-                            </span>
-                          </div>
-                        </button>
-
-                        {/* Right: status badge + timer */}
-                        <div className="flex flex-col items-end gap-1.5 flex-shrink-0 pt-0.5">
-                          <span
-                            className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                            style={{
-                              background:
-                                listing.status === "Active"
-                                  ? "#F0FDF4"
-                                  : "#F3F4F6",
-                              color:
-                                listing.status === "Active"
-                                  ? "#166534"
-                                  : "#4b5563",
-                            }}
-                          >
-                            {listing.status}
-                          </span>
-                          <span
-                            className="text-[9px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-0.5"
-                            style={{
-                              background:
-                                listing.auctionType === "Live20min"
-                                  ? "#FEF2F2"
-                                  : "#EFF6FF",
-                              color:
-                                listing.auctionType === "Live20min"
-                                  ? "#DC2626"
-                                  : "#1D4ED8",
-                            }}
-                          >
-                            {listing.auctionType === "Live20min" ? (
-                              <>
-                                <Zap
-                                  className="w-2.5 h-2.5"
-                                  strokeWidth={1.5}
-                                />
-                                Live
-                              </>
-                            ) : (
-                              <>
-                                <Calendar
-                                  className="w-2.5 h-2.5"
-                                  strokeWidth={1.5}
-                                />
-                                7-Day
-                              </>
-                            )}
-                          </span>
-                          <AuctionTimer
-                            endsAt={listing.endsAt}
-                            auctionType={listing.auctionType}
-                            status={listing.status}
-                          />
-                        </div>
+                        )}
                       </div>
                     </div>
                   );

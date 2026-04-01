@@ -325,6 +325,30 @@ function BiddingCard({
           onChange={(e) => setBidAmount(e.target.value)}
         />
       </div>
+      {/* Increment buttons */}
+      <div className="flex gap-2 mb-3">
+        {[100, 500, 1000].map((inc) => (
+          <button
+            key={inc}
+            type="button"
+            data-ocid={`listing.bid_increment_${inc}.button`}
+            onClick={() => {
+              const current = Number.parseFloat(bidAmount) || currentBid / 100;
+              setBidAmount(String(current + inc));
+              if (typeof navigator.vibrate === "function")
+                navigator.vibrate([30]);
+            }}
+            className="flex-1 py-1.5 rounded-lg text-[11px] font-bold transition-all"
+            style={{
+              border: "1.5px solid #1D4ED8",
+              color: "#1D4ED8",
+              background: "white",
+            }}
+          >
+            +\u20B9{inc.toLocaleString("en-IN")}
+          </button>
+        ))}
+      </div>
       <button
         type="button"
         data-ocid="listing.bid.submit_button"
@@ -352,6 +376,18 @@ export default function ListingDetail() {
 
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
+  const [bidCount, setBidCount] = useState(0);
+  useEffect(() => {
+    if (!listing || listing.status !== "Active") return;
+    setBidCount(DEMO_BID_COUNTS[listing.listingId] ?? 0);
+    const interval = setInterval(() => {
+      setBidCount((prev) => {
+        if (Math.random() < 0.1) return prev + 1;
+        return prev;
+      });
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [listing]);
 
   useEffect(() => {
     const all = [...SELLER_LISTINGS, ...BUYER_AUCTIONS];
@@ -416,7 +452,6 @@ export default function ListingDetail() {
   }
 
   const currentBid = DEMO_BIDS[listing.listingId] ?? Number(listing.basePrice);
-  const bidCount = DEMO_BID_COUNTS[listing.listingId] ?? 0;
 
   // Build image array for carousel — use device image as demo
   const carouselImages = listing.imageUrl
@@ -725,7 +760,7 @@ export default function ListingDetail() {
                   Verified
                 </span>
                 <span className="text-[9px] font-mono text-gray-500">
-                  35****1234
+                  {mode === "buyer" ? "354812093847561" : "35****3847561"}
                 </span>
               </div>
               {/* Cosmetic Grade */}

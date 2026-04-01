@@ -339,6 +339,7 @@ function CategoryListingView({
   category: string;
   onBack: () => void;
 }) {
+  const navigateInner = useNavigate();
   const categoryData: Record<
     string,
     {
@@ -710,8 +711,13 @@ function CategoryListingView({
               <div
                 key={item.id}
                 data-ocid={`category_listing.${category}.item.${idx + 1}`}
-                className="bg-white rounded-2xl overflow-hidden flex flex-col"
+                className="bg-white rounded-2xl overflow-hidden flex flex-col cursor-pointer active:scale-[0.98] transition-transform"
                 style={{ border: "1px solid #e5e7eb", borderRadius: "16px" }}
+                onClick={() => navigateInner({ to: `/listing/${item.id}` })}
+                onKeyDown={(e) =>
+                  e.key === "Enter" &&
+                  navigateInner({ to: `/listing/${item.id}` })
+                }
               >
                 {/* Image area: square 1:1 with studio inner stroke */}
                 <div
@@ -758,6 +764,10 @@ function CategoryListingView({
                     data-ocid={`category_listing.${category}.bid.${idx + 1}.button`}
                     className="w-full py-1.5 rounded-lg text-[10px] font-bold text-white mt-auto"
                     style={{ background: "#1D4ED8" }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigateInner({ to: `/listing/${item.id}` });
+                    }}
                   >
                     Bid Now
                   </button>

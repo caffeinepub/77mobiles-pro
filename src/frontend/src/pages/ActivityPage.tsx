@@ -1,7 +1,14 @@
-import { CheckCircle, Clock, Download, Package, X } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { CheckCircle, Clock, Download, Package, Star, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useApp } from "../contexts/AppContext";
+import {
+  BUYER_AUCTIONS,
+  SELLER_LISTINGS,
+  getDeviceImage,
+} from "../data/demoListings";
+import { formatINR } from "../utils/format";
 
 const PENDING_SALES = [
   {
@@ -60,13 +67,14 @@ const BUYER_ACTIVITY = [
 ];
 
 export default function ActivityPage() {
-  const { mode } = useApp();
+  const { mode, watchlist, toggleWatchlist } = useApp();
   const [pendingStates, setPendingStates] = useState<
     Record<string, "pending" | "accepted" | "declined">
   >({});
-  const [activeSubTab, setActiveSubTab] = useState<"activity" | "leads">(
-    "activity",
-  );
+  const [activeSubTab, setActiveSubTab] = useState<
+    "activity" | "leads" | "watchlist"
+  >("activity");
+  const navigate = useNavigate();
 
   const handleAccept = (id: string) => {
     setPendingStates((prev) => ({ ...prev, [id]: "accepted" }));
@@ -110,6 +118,20 @@ export default function ActivityPage() {
           }}
         >
           {mode === "seller" ? "Demand Feed" : "Buying Leads"}
+        </button>
+        <button
+          type="button"
+          data-ocid="activity.watchlist.tab"
+          onClick={() => setActiveSubTab("watchlist")}
+          className="flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1"
+          style={{
+            background:
+              activeSubTab === "watchlist" ? "#007AFF" : "transparent",
+            color: activeSubTab === "watchlist" ? "white" : "#6b7280",
+          }}
+        >
+          <Star className="w-3 h-3" />
+          Watchlist
         </button>
       </div>
 
@@ -345,6 +367,77 @@ export default function ActivityPage() {
           </p>
         </div>
       )}
+
+      {activeSubTab === "watchlist" &&
+        (() => {
+          const allListings = [...BUYER_AUCTIONS, ...SELLER_LISTINGS];
+          const watchedItems = allListings.filter((l) =>
+            watchlist.has(l.listingId),
+          );
+          if (watchedItems.length === 0) {
+            return (
+              <div
+                data-ocid="activity.watchlist.empty_state"
+                className="text-center py-12"
+              >
+                <Star className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                <p className="font-bold text-sm text-gray-600">
+                  No watchlist items yet
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Tap the heart icon on any listing to save it here
+                </p>
+              </div>
+            );
+          }
+          return (
+            <div className="space-y-2">
+              {watchedItems.map((item, idx) => (
+                <div
+                  key={item.listingId}
+                  data-ocid={`activity.watchlist.item.${idx + 1}`}
+                  className="bg-white rounded-2xl p-3 flex items-center gap-3 cursor-pointer active:scale-[0.99] transition-transform"
+                  style={{ border: "1px solid #e5e7eb" }}
+                  onClick={() => navigate({ to: `/listing/${item.listingId}` })}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" &&
+                    navigate({ to: `/listing/${item.listingId}` })
+                  }
+                >
+                  <img
+                    src={getDeviceImage(item.model)}
+                    alt={item.model}
+                    className="rounded-xl object-cover flex-shrink-0"
+                    style={{ width: "48px", height: "48px" }}
+                    loading="lazy"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-[13px] text-[#1E293B] truncate">
+                      {item.title}
+                    </p>
+                    <p
+                      className="text-[11px] font-black mt-0.5"
+                      style={{ color: "#1D4ED8" }}
+                    >
+                      {formatINR(item.basePrice)}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    data-ocid={`activity.watchlist.remove.${idx + 1}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleWatchlist(item.listingId);
+                    }}
+                    className="flex-shrink-0 p-1"
+                  >
+                    <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
     </div>
   );
 }
