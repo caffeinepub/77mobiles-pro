@@ -194,7 +194,7 @@ export default function SellerPortal() {
             </span>
             <span
               className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white ml-1"
-              style={{ background: "#1D4ED8" }}
+              style={{ background: "#F5F5F7" }}
             >
               {DEMAND_FEED.length} Leads
             </span>
@@ -209,8 +209,8 @@ export default function SellerPortal() {
                 data-ocid={`seller.demand.item.${idx + 1}`}
                 className="bg-white rounded-xl p-3 flex flex-col justify-between flex-shrink-0"
                 style={{
-                  minWidth: "160px",
-                  maxWidth: "180px",
+                  minWidth: "140px",
+                  maxWidth: "160px",
                   border: "1px solid #e5e7eb",
                   boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
                 }}
@@ -575,37 +575,6 @@ export default function SellerPortal() {
                           />
                         </div>
                       </div>
-
-                      {/* Ghost button for Move to 7-Day Auction */}
-                      {listing.status === "Active" &&
-                        listing.auctionType === "Live20min" && (
-                          <div className="px-4 pb-3 flex justify-center">
-                            <button
-                              type="button"
-                              data-ocid={`seller.move_auction.button.${idx + 1}`}
-                              onClick={() =>
-                                toast.success(
-                                  `${listing.model} moved to 7-Day Auction!`,
-                                )
-                              }
-                              className="flex items-center justify-center gap-1.5 rounded-lg transition-all"
-                              style={{
-                                background: "transparent",
-                                border: "1px solid #D1D5DB",
-                                color: "#6B7280",
-                                fontSize: "12px",
-                                fontWeight: 600,
-                                padding: "6px 16px",
-                              }}
-                            >
-                              <Calendar
-                                className="w-3.5 h-3.5"
-                                strokeWidth={1.5}
-                              />
-                              Move to 7-Day Auction
-                            </button>
-                          </div>
-                        )}
                     </div>
                   );
                 })}

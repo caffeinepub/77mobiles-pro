@@ -1,17 +1,20 @@
 import { ArrowDownLeft, Plus, TrendingUp } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useApp } from "../contexts/AppContext";
 
 const MOCK_TRANSACTIONS = [
   {
     id: 1,
     type: "credit",
-    label: "Bid Refund – iPhone 16 Pro",
+    label: "Bid Refund \u2013 iPhone 16 Pro",
     amount: 78500,
     date: "31 Mar",
   },
   {
     id: 2,
     type: "debit",
-    label: "Bid Placed – S24 Ultra",
+    label: "Bid Placed \u2013 S24 Ultra",
     amount: 85000,
     date: "30 Mar",
   },
@@ -25,7 +28,7 @@ const MOCK_TRANSACTIONS = [
   {
     id: 4,
     type: "debit",
-    label: "Bid Placed – iPad Pro M4",
+    label: "Bid Placed \u2013 iPad Pro M4",
     amount: 95000,
     date: "27 Mar",
   },
@@ -39,6 +42,48 @@ const MOCK_TRANSACTIONS = [
 ];
 
 export default function WalletPage() {
+  const { mode } = useApp();
+  const [addAmount, setAddAmount] = useState(1000);
+  const [showAmountInput, setShowAmountInput] = useState(false);
+
+  const loadRazorpay = () =>
+    new Promise<boolean>((resolve) => {
+      if ((window as any).Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+
+  const handleAddMoney = async () => {
+    const ok = await loadRazorpay();
+    if (!ok) {
+      toast.error("Payment service unavailable. Try again.");
+      return;
+    }
+    const options = {
+      key: "rzp_test_77mobiles",
+      amount: addAmount * 100,
+      currency: "INR",
+      name: "77mobiles.pro",
+      description: "Wallet Top-Up",
+      theme: { color: "#1D4ED8" },
+      handler: (_response: any) => {
+        toast.success(
+          `\u20b9${addAmount.toLocaleString("en-IN")} added to wallet!`,
+        );
+        setShowAmountInput(false);
+      },
+      prefill: { name: "Dealer", email: "dealer@77mobiles.pro" },
+    };
+    const rzp = new (window as any).Razorpay(options);
+    rzp.open();
+  };
+
   return (
     <div style={{ minHeight: "100vh", background: "#F8FAFC" }}>
       {/* Gradient header */}
@@ -69,35 +114,38 @@ export default function WalletPage() {
             marginBottom: "4px",
           }}
         >
-          ₹3,42,500
+          \u20b93,42,500
         </p>
         <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>
           Available for bidding
         </p>
         <div style={{ display: "flex", gap: "12px", marginTop: "24px" }}>
-          <button
-            type="button"
-            data-ocid="wallet.add_money.button"
-            style={{
-              flex: 1,
-              padding: "12px",
-              borderRadius: "14px",
-              background: "rgba(255,255,255,0.18)",
-              backdropFilter: "blur(10px)",
-              WebkitBackdropFilter: "blur(10px)",
-              border: "1px solid rgba(255,255,255,0.3)",
-              color: "#FFFFFF",
-              fontWeight: 700,
-              fontSize: "14px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "6px",
-              cursor: "pointer",
-            }}
-          >
-            <Plus size={16} /> Add Money
-          </button>
+          {mode !== "seller" && (
+            <button
+              type="button"
+              data-ocid="wallet.add_money.button"
+              style={{
+                flex: 1,
+                padding: "12px",
+                borderRadius: "14px",
+                background: "rgba(255,255,255,0.18)",
+                backdropFilter: "blur(10px)",
+                WebkitBackdropFilter: "blur(10px)",
+                border: "1px solid rgba(255,255,255,0.3)",
+                color: "#FFFFFF",
+                fontWeight: 700,
+                fontSize: "14px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                cursor: "pointer",
+              }}
+              onClick={() => setShowAmountInput(true)}
+            >
+              <Plus size={16} /> Add Money
+            </button>
+          )}
           <button
             type="button"
             data-ocid="wallet.withdraw.button"
@@ -124,6 +172,92 @@ export default function WalletPage() {
         </div>
       </div>
 
+      {/* Razorpay amount input */}
+      {showAmountInput && mode !== "seller" && (
+        <div
+          style={{
+            margin: "16px",
+            background: "#fff",
+            borderRadius: "14px",
+            padding: "16px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+          }}
+        >
+          <p
+            style={{
+              fontSize: "14px",
+              fontWeight: 700,
+              color: "#1E293B",
+              marginBottom: "12px",
+            }}
+          >
+            Add Money to Wallet
+          </p>
+          <div
+            style={{
+              display: "flex",
+              gap: "8px",
+              flexWrap: "wrap",
+              marginBottom: "12px",
+            }}
+          >
+            {[500, 1000, 5000, 10000, 25000, 50000].map((amt) => (
+              <button
+                key={amt}
+                type="button"
+                onClick={() => setAddAmount(amt)}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: "20px",
+                  border: `1.5px solid ${addAmount === amt ? "#1D4ED8" : "#E2E8F0"}`,
+                  background: addAmount === amt ? "#EFF6FF" : "#fff",
+                  color: addAmount === amt ? "#1D4ED8" : "#6B7280",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                \u20b9{amt.toLocaleString("en-IN")}
+              </button>
+            ))}
+          </div>
+          <input
+            type="number"
+            value={addAmount}
+            onChange={(e) => setAddAmount(Number(e.target.value))}
+            style={{
+              width: "100%",
+              border: "1.5px solid #E2E8F0",
+              borderRadius: "10px",
+              padding: "10px 14px",
+              fontSize: "15px",
+              fontWeight: 600,
+              marginBottom: "12px",
+              outline: "none",
+              boxSizing: "border-box",
+            }}
+            placeholder="Enter custom amount"
+          />
+          <button
+            type="button"
+            onClick={handleAddMoney}
+            style={{
+              width: "100%",
+              background: "#1D4ED8",
+              color: "#fff",
+              borderRadius: "12px",
+              padding: "13px",
+              fontWeight: 700,
+              fontSize: "15px",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            Pay \u20b9{addAmount.toLocaleString("en-IN")} via Razorpay
+          </button>
+        </div>
+      )}
+
       {/* Escrow info card */}
       <div
         style={{
@@ -146,7 +280,7 @@ export default function WalletPage() {
               margin: 0,
             }}
           >
-            ₹85,000 in Escrow
+            \u20b985,000 in Escrow
           </p>
           <p style={{ fontSize: "11px", color: "#64748B", margin: 0 }}>
             Active bid on Samsung S24 Ultra
@@ -222,7 +356,7 @@ export default function WalletPage() {
                 color: tx.type === "credit" ? "#16A34A" : "#DC2626",
               }}
             >
-              {tx.type === "credit" ? "+" : "-"}₹
+              {tx.type === "credit" ? "+" : "-"}\u20b9
               {tx.amount.toLocaleString("en-IN")}
             </span>
           </div>

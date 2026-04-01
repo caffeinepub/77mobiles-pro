@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { Activity, Home, Plus, Star, User, Wallet } from "lucide-react";
+import { Activity, Bell, Home, Plus, Wallet } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { type AppTab, useApp } from "../contexts/AppContext";
 
@@ -22,36 +22,19 @@ export default function BottomNav() {
     }
   };
 
-  const buyerLeftTabs: { id: AppTab; label: string; Icon: LucideIcon }[] = [
+  const leftTabs: { id: AppTab; label: string; Icon: LucideIcon }[] = [
     { id: "home", label: "Home", Icon: Home },
-    { id: "watchlist", label: "Watchlist", Icon: Star },
+    { id: "wallet", label: "Wallet", Icon: Wallet },
   ];
-  const buyerRightTabs: {
+  const rightTabs: {
     id: AppTab;
     label: string;
     Icon: LucideIcon;
     badge?: number;
   }[] = [
-    { id: "wallet", label: "Wallet", Icon: Wallet },
     { id: "activity", label: "Activity", Icon: Activity, badge: unreadAlerts },
+    { id: "alerts", label: "Alerts", Icon: Bell },
   ];
-
-  const sellerLeftTabs: { id: AppTab; label: string; Icon: LucideIcon }[] = [
-    { id: "home", label: "Home", Icon: Home },
-    { id: "activity", label: "Activity", Icon: Activity },
-  ];
-  const sellerRightTabs: {
-    id: AppTab;
-    label: string;
-    Icon: LucideIcon;
-    badge?: number;
-  }[] = [
-    { id: "wallet", label: "Wallet", Icon: Wallet },
-    { id: "profile", label: "Profile", Icon: User },
-  ];
-
-  const leftTabs = mode === "buyer" ? buyerLeftTabs : sellerLeftTabs;
-  const rightTabs = mode === "buyer" ? buyerRightTabs : sellerRightTabs;
 
   const handleTabClick = (id: AppTab) => {
     setActiveTab(id);

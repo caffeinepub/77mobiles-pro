@@ -20,39 +20,6 @@ type FilterPill = "all" | "live" | "7day";
 
 // Task 5: Added bidding war alert (b4) and price sparkline (b5) slides
 const BUYER_CAROUSEL_SLIDES: CarouselSlide[] = [
-  {
-    id: "b1",
-    bgColor: "#F8F9FA",
-    theme: "light" as const,
-    accentColor: "#00B5B5",
-    badge: { text: "\uD83D\uDD34 LIVE NOW", pulse: true },
-    title: "iPhone 17 Pro \u2014 Live Now",
-    subtitle: "Bidding starts at \u20B91,05,000 \xB7 12 bidders active",
-    ctaText: "Bid Now",
-    image: "\uD83D\uDCF1",
-  },
-  {
-    id: "b2",
-    bgColor: "#F8F9FA",
-    theme: "light" as const,
-    accentColor: "#00B5B5",
-    badge: { text: "\u23F0 ENDING SOON" },
-    title: "Top Bid Items Closing Soon",
-    subtitle: "3 auctions ending \u2014 place your best bid now!",
-    ctaText: "View Auctions",
-    image: "\u26A1",
-  },
-  {
-    id: "b3",
-    bgColor: "#F8F9FA",
-    theme: "light" as const,
-    accentColor: "#00B5B5",
-    badge: { text: "\uD83D\uDCE6 B2B WHOLESALE" },
-    title: "Bulk Device Lots Available",
-    subtitle: "50+ verified devices \xB7 Best dealer prices guaranteed",
-    ctaText: "Explore Lots",
-    image: "\uD83C\uDFEA",
-  },
   // Task 5: Bidding war alert slide
   {
     id: "b4",

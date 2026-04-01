@@ -244,6 +244,7 @@ export default function AuthPage() {
               <Button
                 data-ocid="login.submit_button"
                 className="w-full"
+                style={{ background: "#007AFF", border: "none" }}
                 onClick={handleLogin}
               >
                 Login
@@ -447,7 +448,7 @@ export default function AuthPage() {
               <Button
                 data-ocid="buyer.register.submit_button"
                 className="w-full"
-                style={{ background: "#16a34a" }}
+                style={{ background: "#007AFF", border: "none" }}
                 onClick={handleRegisterBuyer}
                 disabled={loading}
               >

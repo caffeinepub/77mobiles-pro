@@ -722,6 +722,17 @@ function CmsModule() {
           data-ocid="admin.cms.add_banner.button"
           className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold"
           style={{ background: "#1D4ED8", color: "#fff" }}
+          onClick={() =>
+            setBanners((prev) => [
+              ...prev,
+              {
+                id: `b${Date.now()}`,
+                title: "New Banner",
+                type: "promotional",
+                active: false,
+              },
+            ])
+          }
         >
           <Plus className="w-4 h-4" />
           Add Banner
@@ -1032,20 +1043,10 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen" style={{ background: "#F8FAFC" }}>
-      {/* Mobile warning */}
-      <div
-        className="lg:hidden flex items-center gap-2 px-4 py-3 text-sm font-medium"
-        style={{ background: "#FEF3C7", color: "#92400E" }}
-      >
-        <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-        Admin portal is optimized for desktop. Some features may appear limited
-        on mobile.
-      </div>
-
       <div className="flex min-h-screen">
         {/* Sidebar */}
         <aside
-          className="hidden lg:flex flex-col"
+          className="flex flex-col"
           style={{
             width: "240px",
             minHeight: "100vh",

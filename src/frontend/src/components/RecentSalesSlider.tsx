@@ -1,15 +1,72 @@
 import { useNavigate } from "@tanstack/react-router";
+import { CheckCircle } from "lucide-react";
 import { Smartphone } from "lucide-react";
 
 const RECENT_SALES = [
-  { id: "1", model: "iPhone 15 Pro", price: 68000 },
-  { id: "2", model: "S24 Ultra", price: 92000 },
-  { id: "3", model: "iPad Pro M4", price: 95000 },
-  { id: "4", model: "MacBook Pro M3", price: 145000 },
-  { id: "5", model: "OnePlus 13", price: 42000 },
-  { id: "6", model: "Pixel 9 Pro", price: 68000 },
-  { id: "7", model: "iPhone 16", price: 72000 },
-  { id: "8", model: "Redmi Note 13 Pro", price: 18500 },
+  {
+    id: "1",
+    model: "iPhone 15 Pro",
+    storage: "256GB",
+    condition: "Mint Condition",
+    age: "3 months old",
+    price: 68000,
+  },
+  {
+    id: "2",
+    model: "Samsung S24 Ultra",
+    storage: "512GB",
+    condition: "Like New",
+    age: "5 months old",
+    price: 92000,
+  },
+  {
+    id: "3",
+    model: "iPad Pro M4",
+    storage: "128GB",
+    condition: "Excellent",
+    age: "2 months old",
+    price: 95000,
+  },
+  {
+    id: "4",
+    model: "MacBook Pro M3",
+    storage: "512GB",
+    condition: "Good",
+    age: "8 months old",
+    price: 145000,
+  },
+  {
+    id: "5",
+    model: "OnePlus 13",
+    storage: "256GB",
+    condition: "Mint Condition",
+    age: "1 month old",
+    price: 42000,
+  },
+  {
+    id: "6",
+    model: "Pixel 9 Pro",
+    storage: "128GB",
+    condition: "Excellent",
+    age: "4 months old",
+    price: 68000,
+  },
+  {
+    id: "7",
+    model: "iPhone 16",
+    storage: "128GB",
+    condition: "Mint Condition",
+    age: "2 months old",
+    price: 72000,
+  },
+  {
+    id: "8",
+    model: "Redmi Note 13 Pro",
+    storage: "256GB",
+    condition: "Like New",
+    age: "6 months old",
+    price: 18500,
+  },
 ];
 
 export default function RecentSalesSlider() {
@@ -42,7 +99,7 @@ export default function RecentSalesSlider() {
             letterSpacing: "0.02em",
           }}
         >
-          Recent Sales
+          Recently Sold on 77mobiles
         </span>
         <button
           type="button"
@@ -80,58 +137,86 @@ export default function RecentSalesSlider() {
             style={{
               flexShrink: 0,
               display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              background: "#F8FAFC",
+              flexDirection: "column",
+              gap: "6px",
+              background: "#FFFFFF",
               borderRadius: "12px",
-              padding: "8px 10px",
-              border: "1px solid #E2E8F0",
+              padding: "12px",
+              border: "1px solid #E5E7EB",
               cursor: "pointer",
               minWidth: "160px",
+              textAlign: "left",
             }}
           >
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: "8px",
-                background: "#EFF6FF",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
-            >
-              <Smartphone size={16} style={{ color: "#1D4ED8" }} />
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <div
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: "7px",
+                  background: "#EFF6FF",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <Smartphone size={14} style={{ color: "#1D4ED8" }} />
+              </div>
+              <span
+                style={{
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  color: "#1E293B",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {sale.model} | {sale.storage}
+              </span>
             </div>
             <span
               style={{
-                fontSize: "12px",
-                fontWeight: 600,
-                color: "#1E293B",
-                flex: 1,
-                textAlign: "left",
+                fontSize: "10px",
+                color: "#6B7280",
                 whiteSpace: "nowrap",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
               }}
             >
-              {sale.model}
+              {sale.condition} • {sale.age}
             </span>
-            <span
-              style={{
-                fontSize: "11px",
-                fontWeight: 700,
-                color: "#FFFFFF",
-                background: "#1D4ED8",
-                borderRadius: "20px",
-                padding: "3px 8px",
-                whiteSpace: "nowrap",
-                flexShrink: 0,
-              }}
-            >
-              ₹{(sale.price / 1000).toFixed(0)}K
-            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              <span
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: "#16A34A",
+                  background: "#F0FDF4",
+                  border: "1px solid #BBF7D0",
+                  borderRadius: "20px",
+                  padding: "2px 8px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Sold: ₹{sale.price.toLocaleString("en-IN")}
+              </span>
+              <CheckCircle
+                className="w-3 h-3"
+                style={{ color: "#16A34A", flexShrink: 0 }}
+              />
+              <span
+                style={{
+                  fontSize: "9px",
+                  color: "#16A34A",
+                  fontWeight: 600,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Verified
+              </span>
+            </div>
           </button>
         ))}
       </div>

@@ -73,15 +73,26 @@ export default function AppShell() {
   } = useApp();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [categoriesVisible, setCategoriesVisible] = useState(true);
   const [showSearch, setShowSearch] = useState(false);
   const prevTabRef = useRef(activeTab);
+  const lastScrollY = useRef(0);
 
   const isSubPage = activeTab !== "home";
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const handleScroll = () => setShowBackToTop(el.scrollTop > 2000);
+    const handleScroll = () => {
+      setShowBackToTop(el.scrollTop > 2000);
+      const currentY = el.scrollTop;
+      if (currentY > lastScrollY.current && currentY > 80) {
+        setCategoriesVisible(false);
+      } else {
+        setCategoriesVisible(true);
+      }
+      lastScrollY.current = currentY;
+    };
     el.addEventListener("scroll", handleScroll, { passive: true });
     return () => el.removeEventListener("scroll", handleScroll);
   }, []);
@@ -261,65 +272,74 @@ export default function AppShell() {
           {/* Horizontal-scroll category row — buyer only, home only */}
           {!isSeller && !isSubPage && (
             <div
-              className="bg-white px-4 pt-2 pb-0"
-              style={{ borderBottom: "1px solid #f0f0f0" }}
+              style={{
+                overflow: "hidden",
+                maxHeight: categoriesVisible ? "120px" : "0px",
+                transition: "max-height 0.3s ease",
+                opacity: categoriesVisible ? 1 : 0,
+              }}
             >
               <div
-                className="flex gap-4 overflow-x-auto pb-3"
-                style={{ scrollbarWidth: "none" }}
+                className="bg-white px-4 pt-2 pb-0"
+                style={{ borderBottom: "1px solid #f0f0f0" }}
               >
-                {CATEGORIES.map((cat) => {
-                  const isActive = activeCategory === cat.id;
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      data-ocid={`category.${cat.id}.button`}
-                      onClick={() => setActiveCategory(cat.id)}
-                      className="flex flex-col items-center flex-shrink-0"
-                      style={{ minWidth: "52px" }}
-                    >
-                      <div
-                        className="flex items-center justify-center mb-1.5"
-                        style={{
-                          width: "52px",
-                          height: "65px",
-                          borderRadius: "12px",
-                          background: isActive ? "#1D4ED8" : cat.tint,
-                          padding: "12px",
-                          transition: "all 0.15s ease",
-                        }}
+                <div
+                  className="flex gap-4 overflow-x-auto pb-3"
+                  style={{ scrollbarWidth: "none" }}
+                >
+                  {CATEGORIES.map((cat) => {
+                    const isActive = activeCategory === cat.id;
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        data-ocid={`category.${cat.id}.button`}
+                        onClick={() => setActiveCategory(cat.id)}
+                        className="flex flex-col items-center flex-shrink-0"
+                        style={{ minWidth: "52px" }}
                       >
-                        <CategoryIcon id={cat.id} active={!isActive} />
-                      </div>
-                      <span
-                        style={{
-                          fontSize: "10px",
-                          fontWeight: isActive ? 700 : 500,
-                          color: isActive ? "#1D4ED8" : "#6B7280",
-                          textAlign: "center",
-                          lineHeight: "1.2",
-                          maxWidth: "56px",
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
-                        {cat.label}
-                      </span>
-                      <div
-                        style={{
-                          height: "2px",
-                          width: "24px",
-                          borderRadius: "2px",
-                          background: isActive ? "#1D4ED8" : "transparent",
-                          marginTop: "4px",
-                          transition: "background 0.15s ease",
-                        }}
-                      />
-                    </button>
-                  );
-                })}
+                        <div
+                          className="flex items-center justify-center mb-1.5"
+                          style={{
+                            width: "52px",
+                            height: "65px",
+                            borderRadius: "12px",
+                            background: isActive ? "#1D4ED8" : cat.tint,
+                            padding: "12px",
+                            transition: "all 0.15s ease",
+                          }}
+                        >
+                          <CategoryIcon id={cat.id} active={!isActive} />
+                        </div>
+                        <span
+                          style={{
+                            fontSize: "10px",
+                            fontWeight: isActive ? 700 : 500,
+                            color: isActive ? "#1D4ED8" : "#6B7280",
+                            textAlign: "center",
+                            lineHeight: "1.2",
+                            maxWidth: "56px",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {cat.label}
+                        </span>
+                        <div
+                          style={{
+                            height: "2px",
+                            width: "24px",
+                            borderRadius: "2px",
+                            background: isActive ? "#1D4ED8" : "transparent",
+                            marginTop: "4px",
+                            transition: "background 0.15s ease",
+                          }}
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           )}

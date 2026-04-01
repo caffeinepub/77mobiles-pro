@@ -1,28 +1,38 @@
 # 77mobiles.pro
 
 ## Current State
-Full-featured B2B auction marketplace with Buyer/Seller portals, AppShell with frosted glass header, horizontal category scroll, bento grid listings, BottomNav with wallet/activity tabs, carousel slides, RecentSalesSlider, and CreateListing flow. The search bar in AppShell is a simple text input. Category icons use generated PNG images. The Activity tab in BottomNav shows a red dot badge when `unreadAlerts > 0`. No admin portal exists.
+A fully-built B2B mobile auction marketplace with Buyer/Seller portals, Admin dashboard, wallet system, and category navigation. Royal Blue (#1D4ED8) theme, glassmorphic headers, horizontal category row in AppShell (buyer only), and a RecentSalesSlider with basic phone+price cards.
 
 ## Requested Changes (Diff)
 
 ### Add
-- **SearchPage**: Full-screen search overlay with: barcode/IMEI scanner button, type-ahead suggestions split into "Live Matches" vs "Recently Sold" sections, results page with 3 tabs (Live Inventory / Market Trends / Buyer Leads), category filter chips, and sort options ("Ending Soon" / "Highest Demand")
-- **Admin Dashboard** (`/admin` route): Desktop-optimized, protected by a Super-Admin password (hardcoded PIN for demo). Modules: Pulse (global stats), Dealer Verification (KYC list), Auction Moderation (live monitor), Wallet (escrow/withdrawals), CMS (banner management), Audit Log (read-only). RBAC with Super-Admin and Moderator roles. Visible at /admin with a login gate.
-- SVG line-art icons for category cards (Smartphones, Laptops, Tablets, Watches, Parts/Accessories) as inline SVG components — Brand Blue (#1D4ED8) when active, grey (#9CA3AF) when inactive
+- RecentSalesSlider: Enhanced cards with model+storage ("iPhone 15 Pro | 256GB"), condition+age metadata line ("Mint Condition • 3 months old"), green "Sold: ₹X" badge, and a verified checkmark icon
+- AppShell: Scroll-direction detection to hide/show category bar (hide on scroll down, show on scroll up)
+- WalletPage: Razorpay payment integration for Add Money (buyer portal only); load Razorpay checkout script
+- BottomNav: "Alerts" tab item using Bell icon
 
 ### Modify
-- **AppShell search bar**: Replace static placeholder with "Search Model, Brand, or IMEI"; make the camera/barcode button open the new SearchPage overlay; tapping the search input opens SearchPage in focused state
-- **BottomNav Activity icon**: Remove any hardcoded "0" text; ensure badge is only shown when `unreadAlerts > 0`; add pulse animation on badge for high-priority events; ensure icon/label vertical alignment and font size matches other nav items
-- **CategoryCard in AppShell**: Use inline SVG glyphs instead of `<img>` tags; active = Brand Blue, inactive = grey
+- **BottomNav**: Rearrange both buyer and seller nav to: Home | Wallet | SellButton | Activity | Alerts (remove Watchlist and Profile from nav tabs)
+- **BuyerPortal**: Remove carousel slides b1, b2, b3 — keep only b4 and b5
+- **AuthPage**: Change all login/register button colors from current (blue/green) to #007AFF to match logo color
+- **SellerPortal**: Remove the "Move to 7-Day Auction" ghost button from all listing cards; make Market Demand cards more compact (reduce minWidth, font sizes)
+- **WalletPage**: Import useApp, check mode; hide "Add Money" button when mode === "seller"
+- **AdminDashboard**: (a) Remove mobile warning banner (`lg:hidden` amber div), (b) Remove `hidden lg:` from sidebar aside so it shows on mobile, (c) Wire "Add Banner" button with onClick that adds a new banner entry to state, (d) Increase all small button padding to min 44px touch targets
+- **RecentSalesSlider**: Complete redesign of cards — add condition/age/storage fields, green sold badge, verified checkmark
+- **SellerPortal Market Demand cards**: Convert badge tints to neutral gray (#F5F5F7), make cards more compact/high-density to save vertical space
 
 ### Remove
-- Any hardcoded badge counter "0" on Activity nav item
-- Placeholder question mark icons from category tiles
+- BuyerPortal: Slides b1, b2, b3 from BUYER_CAROUSEL_SLIDES array
+- SellerPortal: The entire "Move to 7-Day Auction" ghost button block in listing cards
+- AdminDashboard: The mobile warning banner div
+- WalletPage: "Add Money" button when mode === "seller"
 
 ## Implementation Plan
-1. Create `src/frontend/src/components/SearchOverlay.tsx` — full-screen overlay with barcode icon button, search input (auto-focused), type-ahead suggestions ("Live Matches" / "Recently Sold" sections using mock data), results split into 3 tabs with category filter chips and sort toggle
-2. Create `src/frontend/src/components/CategorySvgIcons.tsx` — inline SVG components for each category; accepts `active: boolean` prop
-3. Update `AppShell.tsx` — change search placeholder, wire search input tap to open SearchOverlay, replace `<img>` category icons with SVG components
-4. Update `BottomNav.tsx` — verify no hardcoded "0"; add `animate-ping` ring on badge for high-priority (badge > 1); fix vertical centering
-5. Create `src/frontend/src/pages/AdminDashboard.tsx` — desktop layout, login gate (PIN: 77admin), tabs for Pulse / Dealers / Auctions / Wallet / CMS / Audit Log; mock data for all modules
-6. Add `/admin` route to `router.tsx`
+1. **BottomNav.tsx**: Restructure both buyer/seller tabs: Left=[Home, Wallet], Right=[Activity, Alerts]. Import Bell for alerts. Both portals use same structure.
+2. **AppShell.tsx**: Add `scrollY` and `prevScrollY` tracking refs; derive `showCategories` boolean (true when scrolling up or near top < 80px); apply CSS transition to hide/show category section.
+3. **BuyerPortal.tsx**: Delete b1, b2, b3 entries from BUYER_CAROUSEL_SLIDES.
+4. **SellerPortal.tsx**: Remove ghost button block (lines 580-608 region). Reduce Market Demand card minWidth from 160px to 140px, font sizes down slightly.
+5. **AuthPage.tsx**: Replace all button background styles/variants with `style={{ background: "#007AFF" }}`.
+6. **WalletPage.tsx**: (a) Import useApp, read mode. (b) Wrap Add Money button in `{mode !== 'seller' && ...}`. (c) Add Razorpay integration: load script, on click open Razorpay checkout with test key and amount input flow.
+7. **RecentSalesSlider.tsx**: Extend RECENT_SALES data with `storage`, `condition`, `age` fields. Redesign cards: title line (model | storage), subtitle (condition • age), green "Sold:" badge with CheckCircle icon.
+8. **AdminDashboard.tsx**: Remove amber warning div, remove `hidden lg:` from aside, wire Add Banner onClick, update small button padding to `p-2.5 min-w-[44px] min-h-[44px]`.
