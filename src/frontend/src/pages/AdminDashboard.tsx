@@ -16,6 +16,7 @@ import {
   Search,
   Settings,
   Shield,
+  SlidersHorizontal,
   TrendingUp,
   Users,
   X,
@@ -31,6 +32,7 @@ type AdminSection =
   | "listings"
   | "payments"
   | "diagnostics"
+  | "portal-controls"
   | "settings"
   | "auditlog";
 
@@ -46,6 +48,7 @@ const NAV_ITEMS: {
   { id: "listings", label: "Listings", Icon: Package },
   { id: "payments", label: "Payments", Icon: CreditCard },
   { id: "diagnostics", label: "Diagnostics", Icon: Activity },
+  { id: "portal-controls", label: "Portal Controls", Icon: SlidersHorizontal },
   { id: "settings", label: "Settings", Icon: Settings },
   { id: "auditlog", label: "Audit Log", Icon: ClipboardList },
 ];
@@ -421,6 +424,15 @@ export default function AdminDashboard() {
   const [benchmarkInputs, setBenchmarkInputs] = useState<
     Record<number, string>
   >({});
+
+  // Portal Controls state
+  const [buyerMinBid, setBuyerMinBid] = useState(500);
+  const [buyerAuctionDuration, setBuyerAuctionDuration] = useState(20);
+  const [buyerMaxListings, setBuyerMaxListings] = useState(20);
+  const [sellerListingFee, setSellerListingFee] = useState(0);
+  const [sellerMaxPhotos, setSellerMaxPhotos] = useState(6);
+  const [sellerAutoExpire, setSellerAutoExpire] = useState(14);
+  const [portalSaveSuccess, setPortalSaveSuccess] = useState(false);
   const [activeBenchmarkIdx, setActiveBenchmarkIdx] = useState<number | null>(
     null,
   );
@@ -457,27 +469,34 @@ export default function AdminDashboard() {
     return (
       <div
         className="min-h-screen flex items-center justify-center p-6"
-        style={{ background: "#0F172A" }}
+        style={{ background: "#F8FAFC" }}
         data-ocid="admin.login.panel"
       >
         <div
           className="w-full max-w-sm rounded-2xl p-8"
-          style={{ background: "#1E293B", border: "1px solid #334155" }}
+          style={{
+            background: "#FFFFFF",
+            border: "1px solid #E2E8F0",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+          }}
         >
           <div className="text-center mb-8">
             <div
               className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4"
               style={{
-                background: "rgba(59,130,246,0.15)",
-                border: "1px solid rgba(59,130,246,0.3)",
+                background: "rgba(29,78,216,0.08)",
+                border: "1px solid rgba(29,78,216,0.2)",
               }}
             >
-              <Shield className="w-8 h-8" style={{ color: "#3B82F6" }} />
+              <Shield className="w-8 h-8" style={{ color: "#1D4ED8" }} />
             </div>
-            <h1 className="text-2xl font-black text-white mb-1">
-              77<span style={{ color: "#3B82F6" }}>mobiles</span>.pro
+            <h1
+              className="text-2xl font-black mb-1"
+              style={{ color: "#1E293B" }}
+            >
+              77<span style={{ color: "#1D4ED8" }}>mobiles</span>.pro
             </h1>
-            <p className="text-sm" style={{ color: "#94A3B8" }}>
+            <p className="text-sm" style={{ color: "#64748B" }}>
               Admin Control Center
             </p>
           </div>
@@ -487,7 +506,7 @@ export default function AdminDashboard() {
               <label
                 htmlFor="admin-pin"
                 className="block text-xs font-semibold mb-2"
-                style={{ color: "#94A3B8" }}
+                style={{ color: "#9CA3AF" }}
               >
                 6-DIGIT ADMIN PIN
               </label>
@@ -502,12 +521,12 @@ export default function AdminDashboard() {
                   setPinError("");
                 }}
                 placeholder="••••••"
-                className="w-full px-4 py-3 rounded-xl text-white text-center text-xl tracking-widest font-mono"
+                className="w-full px-4 py-3 rounded-xl text-[#1E293B] text-center text-xl tracking-widest font-mono bg-white"
                 style={{
-                  background: "#0F172A",
+                  background: "#FFFFFF",
                   border: pinError
                     ? "2px solid #EF4444"
-                    : "1.5px solid #334155",
+                    : "1.5px solid #E2E8F0",
                   outline: "none",
                 }}
                 onKeyDown={(e) => {
@@ -532,7 +551,7 @@ export default function AdminDashboard() {
               type="button"
               data-ocid="admin.login.submit_button"
               className="w-full py-3 rounded-xl font-bold text-white transition-all"
-              style={{ background: pin.length === 6 ? "#3B82F6" : "#334155" }}
+              style={{ background: pin.length === 6 ? "#1D4ED8" : "#CBD5E1" }}
               onClick={() => {
                 if (pin === CORRECT_PIN) {
                   setAuthenticated(true);
@@ -546,7 +565,7 @@ export default function AdminDashboard() {
             </button>
           </div>
 
-          <p className="text-center text-xs mt-6" style={{ color: "#475569" }}>
+          <p className="text-center text-xs mt-6" style={{ color: "#9CA3AF" }}>
             Protected by Multi-Factor Authentication
           </p>
         </div>
@@ -564,7 +583,7 @@ export default function AdminDashboard() {
   return (
     <div
       className="min-h-screen flex"
-      style={{ background: "#0F172A", fontFamily: "Inter, sans-serif" }}
+      style={{ background: "#F8FAFC", fontFamily: "Inter, sans-serif" }}
     >
       {/* Sidebar overlay (mobile) */}
       {sidebarOpen && (
@@ -584,19 +603,20 @@ export default function AdminDashboard() {
         className="fixed top-0 left-0 h-full z-50 flex flex-col"
         style={{
           width: "240px",
-          background: "#1E293B",
-          borderRight: "1px solid #334155",
+          background: "#FFFFFF",
+          borderRight: "1px solid #E2E8F0",
+          boxShadow: "2px 0 8px rgba(0,0,0,0.06)",
           transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)",
           transition: "transform 0.25s ease",
         }}
       >
-        <div className="p-5 border-b" style={{ borderColor: "#334155" }}>
+        <div className="p-5 border-b" style={{ borderColor: "#E2E8F0" }}>
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-lg font-black text-white">
-                77<span style={{ color: "#3B82F6" }}>mobiles</span>
+              <span className="text-lg font-black" style={{ color: "#1E293B" }}>
+                77<span style={{ color: "#1D4ED8" }}>mobiles</span>
               </span>
-              <p className="text-xs" style={{ color: "#94A3B8" }}>
+              <p className="text-xs" style={{ color: "#9CA3AF" }}>
                 Admin Panel
               </p>
             </div>
@@ -604,7 +624,7 @@ export default function AdminDashboard() {
               type="button"
               onClick={() => setSidebarOpen(false)}
               className="p-1 rounded-lg"
-              style={{ color: "#94A3B8" }}
+              style={{ color: "#9CA3AF" }}
             >
               <X className="w-5 h-5" />
             </button>
@@ -642,7 +662,7 @@ export default function AdminDashboard() {
           })}
         </nav>
 
-        <div className="p-4 border-t" style={{ borderColor: "#334155" }}>
+        <div className="p-4 border-t" style={{ borderColor: "#E2E8F0" }}>
           <button
             type="button"
             data-ocid="admin.logout.button"
@@ -664,25 +684,25 @@ export default function AdminDashboard() {
         {/* Top Bar */}
         <header
           className="sticky top-0 z-30 flex items-center gap-3 px-4 py-3"
-          style={{ background: "#1E293B", borderBottom: "1px solid #334155" }}
+          style={{ background: "#FFFFFF", borderBottom: "1px solid #E2E8F0" }}
         >
           <button
             type="button"
             data-ocid="admin.menu.button"
             onClick={() => setSidebarOpen(true)}
             className="p-2 rounded-xl"
-            style={{ background: "rgba(59,130,246,0.1)", color: "#3B82F6" }}
+            style={{ background: "rgba(29,78,216,0.08)", color: "#1D4ED8" }}
           >
             <Menu className="w-5 h-5" />
           </button>
 
           <div
             className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl"
-            style={{ background: "#0F172A", border: "1px solid #334155" }}
+            style={{ background: "#F8FAFC", border: "1px solid #E2E8F0" }}
           >
             <Search
               className="w-4 h-4 flex-shrink-0"
-              style={{ color: "#475569" }}
+              style={{ color: "#9CA3AF" }}
             />
             <input
               data-ocid="admin.search.input"
@@ -691,14 +711,14 @@ export default function AdminDashboard() {
               value={globalSearch}
               onChange={(e) => setGlobalSearch(e.target.value)}
               className="flex-1 bg-transparent text-sm outline-none"
-              style={{ color: "#E2E8F0" }}
+              style={{ color: "#1E293B" }}
             />
           </div>
 
           <button
             type="button"
             className="p-2 rounded-xl relative"
-            style={{ background: "rgba(59,130,246,0.1)", color: "#3B82F6" }}
+            style={{ background: "rgba(29,78,216,0.08)", color: "#1D4ED8" }}
           >
             <Bell className="w-5 h-5" />
             <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full" />
@@ -708,14 +728,14 @@ export default function AdminDashboard() {
         {/* Page Content */}
         <main
           className="flex-1 overflow-y-auto p-4"
-          style={{ background: "#0F172A" }}
+          style={{ background: "#F8FAFC" }}
         >
           {/* Section Title */}
           <div className="mb-5">
-            <h2 className="text-xl font-bold text-white capitalize">
+            <h2 className="text-xl font-bold text-[#1E293B] capitalize">
               {NAV_ITEMS.find((n) => n.id === activeSection)?.label}
             </h2>
-            <p className="text-xs" style={{ color: "#64748B" }}>
+            <p className="text-xs" style={{ color: "#9CA3AF" }}>
               77mobiles.pro Control Center
             </p>
           </div>
@@ -739,7 +759,7 @@ export default function AdminDashboard() {
                 />
                 <StatCard
                   icon={
-                    <Zap className="w-5 h-5" style={{ color: "#3B82F6" }} />
+                    <Zap className="w-5 h-5" style={{ color: "#1D4ED8" }} />
                   }
                   label="Active Auctions"
                   value="128"
@@ -772,10 +792,10 @@ export default function AdminDashboard() {
               {/* Live Bid Feed */}
               <div
                 className="rounded-2xl p-4"
-                style={{ background: "#1E293B", border: "1px solid #334155" }}
+                style={{ background: "#FFFFFF", border: "1px solid #E2E8F0" }}
               >
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-bold text-white text-sm flex items-center gap-2">
+                  <h3 className="font-bold text-[#1E293B] text-sm flex items-center gap-2">
                     <span
                       className="w-2 h-2 rounded-full inline-block"
                       style={{
@@ -785,7 +805,7 @@ export default function AdminDashboard() {
                     />
                     Live Bid Activity
                   </h3>
-                  <span className="text-xs" style={{ color: "#64748B" }}>
+                  <span className="text-xs" style={{ color: "#9CA3AF" }}>
                     Real-time
                   </span>
                 </div>
@@ -798,28 +818,28 @@ export default function AdminDashboard() {
                     <div
                       key={bid.dealer + bid.time}
                       className="bid-item flex items-center justify-between py-2 border-b"
-                      style={{ borderColor: "#334155" }}
+                      style={{ borderColor: "#E2E8F0" }}
                     >
                       <div className="flex items-center gap-2">
                         <span
                           className="text-xs font-bold px-2 py-0.5 rounded-full"
                           style={{
-                            background: "rgba(59,130,246,0.15)",
-                            color: "#3B82F6",
+                            background: "rgba(29,78,216,0.08)",
+                            color: "#1D4ED8",
                           }}
                         >
                           Dealer {bid.dealer}
                         </span>
-                        <span className="text-xs" style={{ color: "#94A3B8" }}>
+                        <span className="text-xs" style={{ color: "#9CA3AF" }}>
                           {bid.action} on{" "}
-                          <span className="text-white font-medium">
+                          <span className="text-[#1E293B] font-medium">
                             {bid.item}
                           </span>
                         </span>
                       </div>
                       <span
                         className="text-xs flex-shrink-0"
-                        style={{ color: "#475569" }}
+                        style={{ color: "#9CA3AF" }}
                       >
                         {bid.time}
                       </span>
@@ -843,7 +863,7 @@ export default function AdminDashboard() {
                   style={{
                     background: !kycTab ? "#3B82F6" : "#1E293B",
                     color: !kycTab ? "white" : "#94A3B8",
-                    border: "1px solid #334155",
+                    border: "1px solid #E2E8F0",
                   }}
                 >
                   Users
@@ -856,7 +876,7 @@ export default function AdminDashboard() {
                   style={{
                     background: kycTab ? "#3B82F6" : "#1E293B",
                     color: kycTab ? "white" : "#94A3B8",
-                    border: "1px solid #334155",
+                    border: "1px solid #E2E8F0",
                   }}
                 >
                   KYC Verification
@@ -868,11 +888,11 @@ export default function AdminDashboard() {
                   <div
                     className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
                     style={{
-                      background: "#1E293B",
-                      border: "1px solid #334155",
+                      background: "#FFFFFF",
+                      border: "1px solid #E2E8F0",
                     }}
                   >
-                    <Search className="w-4 h-4" style={{ color: "#475569" }} />
+                    <Search className="w-4 h-4" style={{ color: "#9CA3AF" }} />
                     <input
                       data-ocid="admin.users.search_input"
                       type="text"
@@ -880,7 +900,7 @@ export default function AdminDashboard() {
                       value={userSearch}
                       onChange={(e) => setUserSearch(e.target.value)}
                       className="flex-1 bg-transparent text-sm outline-none"
-                      style={{ color: "#E2E8F0" }}
+                      style={{ color: "#1E293B" }}
                     />
                   </div>
 
@@ -890,17 +910,17 @@ export default function AdminDashboard() {
                         key={user.id}
                         className="rounded-xl p-3"
                         style={{
-                          background: "#1E293B",
-                          border: "1px solid #334155",
+                          background: "#FFFFFF",
+                          border: "1px solid #E2E8F0",
                         }}
                         data-ocid={`admin.users.item.${MOCK_USERS.indexOf(user) + 1}`}
                       >
                         <div className="flex items-start justify-between mb-2">
                           <div>
-                            <p className="font-semibold text-sm text-white">
+                            <p className="font-semibold text-sm text-[#1E293B]">
                               {user.name}
                             </p>
-                            <p className="text-xs" style={{ color: "#64748B" }}>
+                            <p className="text-xs" style={{ color: "#9CA3AF" }}>
                               {user.id} · Balance: {user.balance}
                             </p>
                           </div>
@@ -980,17 +1000,17 @@ export default function AdminDashboard() {
                       key={kyc.id}
                       className="rounded-xl p-4"
                       style={{
-                        background: "#1E293B",
-                        border: "1px solid #334155",
+                        background: "#FFFFFF",
+                        border: "1px solid #E2E8F0",
                       }}
                       data-ocid={`admin.kyc.item.${i + 1}`}
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div>
-                          <p className="font-semibold text-sm text-white">
+                          <p className="font-semibold text-sm text-[#1E293B]">
                             {kyc.business}
                           </p>
-                          <p className="text-xs" style={{ color: "#64748B" }}>
+                          <p className="text-xs" style={{ color: "#9CA3AF" }}>
                             {kyc.id} · {kyc.docType}
                           </p>
                         </div>
@@ -1012,9 +1032,9 @@ export default function AdminDashboard() {
                         <div
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
                           style={{
-                            background: "#0F172A",
-                            color: "#94A3B8",
-                            border: "1px solid #334155",
+                            background: "#F8FAFC",
+                            color: "#9CA3AF",
+                            border: "1px solid #E2E8F0",
                           }}
                         >
                           <Eye className="w-3.5 h-3.5" /> View Document
@@ -1069,7 +1089,7 @@ export default function AdminDashboard() {
                   style={{
                     background: listingTab === "queue" ? "#3B82F6" : "#1E293B",
                     color: listingTab === "queue" ? "white" : "#94A3B8",
-                    border: "1px solid #334155",
+                    border: "1px solid #E2E8F0",
                   }}
                 >
                   Approval Queue
@@ -1083,7 +1103,7 @@ export default function AdminDashboard() {
                     background:
                       listingTab === "auctions" ? "#3B82F6" : "#1E293B",
                     color: listingTab === "auctions" ? "white" : "#94A3B8",
-                    border: "1px solid #334155",
+                    border: "1px solid #E2E8F0",
                   }}
                 >
                   Active Auctions
@@ -1097,31 +1117,31 @@ export default function AdminDashboard() {
                       key={listing.id}
                       className="rounded-xl p-4"
                       style={{
-                        background: "#1E293B",
-                        border: "1px solid #334155",
+                        background: "#FFFFFF",
+                        border: "1px solid #E2E8F0",
                       }}
                       data-ocid={`admin.listings.item.${i + 1}`}
                     >
                       <div className="flex items-start gap-3 mb-3">
                         <div
                           className="w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center"
-                          style={{ background: "#0F172A" }}
+                          style={{ background: "#F8FAFC" }}
                         >
                           <Package
                             className="w-6 h-6"
-                            style={{ color: "#475569" }}
+                            style={{ color: "#9CA3AF" }}
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-sm text-white">
+                          <p className="font-semibold text-sm text-[#1E293B]">
                             {listing.model}
                           </p>
-                          <p className="text-xs" style={{ color: "#64748B" }}>
+                          <p className="text-xs" style={{ color: "#9CA3AF" }}>
                             {listing.id} · Seller {listing.seller}
                           </p>
                           <p
                             className="text-xs mt-0.5"
-                            style={{ color: "#94A3B8" }}
+                            style={{ color: "#9CA3AF" }}
                           >
                             Condition: {listing.condition} · Base:{" "}
                             {listing.price}
@@ -1135,7 +1155,7 @@ export default function AdminDashboard() {
                           onClick={() =>
                             toast.success(`Listing ${listing.id} approved!`)
                           }
-                          className="flex-1 py-2 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-1"
+                          className="flex-1 py-2 rounded-xl text-sm font-semibold text-[#1E293B] flex items-center justify-center gap-1"
                           style={{ background: "#22C55E" }}
                         >
                           <CheckCircle className="w-3.5 h-3.5" /> Approve
@@ -1173,19 +1193,19 @@ export default function AdminDashboard() {
                       key={auction.id}
                       className="rounded-xl p-4"
                       style={{
-                        background: "#1E293B",
-                        border: "1px solid #334155",
+                        background: "#FFFFFF",
+                        border: "1px solid #E2E8F0",
                       }}
                       data-ocid={`admin.auctions.item.${i + 1}`}
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div>
-                          <p className="font-semibold text-sm text-white">
+                          <p className="font-semibold text-sm text-[#1E293B]">
                             {auction.model}
                           </p>
-                          <p className="text-xs" style={{ color: "#64748B" }}>
+                          <p className="text-xs" style={{ color: "#9CA3AF" }}>
                             {auction.id} · Current Bid:{" "}
-                            <span className="text-white font-semibold">
+                            <span className="text-[#1E293B] font-semibold">
                               {auction.currentBid}
                             </span>
                           </p>
@@ -1233,9 +1253,9 @@ export default function AdminDashboard() {
                           }}
                           className="flex-1 py-2 rounded-xl text-sm font-semibold"
                           style={{
-                            background: "rgba(59,130,246,0.1)",
-                            color: "#3B82F6",
-                            border: "1px solid rgba(59,130,246,0.3)",
+                            background: "rgba(29,78,216,0.08)",
+                            color: "#1D4ED8",
+                            border: "1px solid rgba(29,78,216,0.2)",
                           }}
                         >
                           Extend +1hr
@@ -1258,7 +1278,7 @@ export default function AdminDashboard() {
                     <div
                       key={txn.id}
                       className="flex items-center justify-between py-2.5 border-b"
-                      style={{ borderColor: "#334155" }}
+                      style={{ borderColor: "#E2E8F0" }}
                       data-ocid={`admin.transactions.item.${i + 1}`}
                     >
                       <div className="flex items-center gap-2">
@@ -1276,10 +1296,10 @@ export default function AdminDashboard() {
                           {txn.type}
                         </span>
                         <div>
-                          <p className="text-sm font-semibold text-white">
+                          <p className="text-sm font-semibold text-[#1E293B]">
                             {txn.amount}
                           </p>
-                          <p className="text-xs" style={{ color: "#64748B" }}>
+                          <p className="text-xs" style={{ color: "#9CA3AF" }}>
                             Dealer {txn.dealer} · {txn.date}
                           </p>
                         </div>
@@ -1323,16 +1343,16 @@ export default function AdminDashboard() {
                     >
                       <div className="flex justify-between">
                         <div>
-                          <p className="text-sm font-semibold text-white">
+                          <p className="text-sm font-semibold text-[#1E293B]">
                             {esc.model}
                           </p>
-                          <p className="text-xs" style={{ color: "#64748B" }}>
+                          <p className="text-xs" style={{ color: "#9CA3AF" }}>
                             Buyer {esc.buyer} · Held {esc.since}
                           </p>
                         </div>
                         <span
                           className="font-bold text-sm"
-                          style={{ color: "#3B82F6" }}
+                          style={{ color: "#1D4ED8" }}
                         >
                           {esc.amount}
                         </span>
@@ -1355,15 +1375,15 @@ export default function AdminDashboard() {
                       }}
                       data-ocid={`admin.disputes.item.${i + 1}`}
                     >
-                      <p className="text-sm font-semibold text-white mb-1">
+                      <p className="text-sm font-semibold text-[#1E293B] mb-1">
                         {dis.device}
                       </p>
-                      <p className="text-xs mb-1" style={{ color: "#94A3B8" }}>
+                      <p className="text-xs mb-1" style={{ color: "#9CA3AF" }}>
                         Buyer {dis.buyer} claims: &quot;{dis.claim}&quot;
                       </p>
                       <p
                         className="text-xs mb-3 font-semibold"
-                        style={{ color: "#3B82F6" }}
+                        style={{ color: "#1D4ED8" }}
                       >
                         Amount in Escrow: {dis.amount}
                       </p>
@@ -1386,7 +1406,7 @@ export default function AdminDashboard() {
                             toast.success("Funds released to seller")
                           }
                           className="flex-1 py-2 rounded-xl text-sm font-semibold text-white"
-                          style={{ background: "#3B82F6" }}
+                          style={{ background: "#1D4ED8" }}
                         >
                           Release to Seller
                         </button>
@@ -1410,16 +1430,16 @@ export default function AdminDashboard() {
                       data-ocid={`admin.heatmap.item.${i + 1}`}
                     >
                       <div className="flex justify-between text-xs">
-                        <span className="text-white font-medium">
+                        <span className="text-[#1E293B] font-medium">
                           {item.model}
                         </span>
-                        <span style={{ color: "#64748B" }}>
+                        <span style={{ color: "#9CA3AF" }}>
                           {item.stars} stars
                         </span>
                       </div>
                       <div
                         className="w-full h-2 rounded-full overflow-hidden"
-                        style={{ background: "#334155" }}
+                        style={{ background: "#E2E8F0" }}
                       >
                         <div
                           className="h-full rounded-full"
@@ -1446,19 +1466,19 @@ export default function AdminDashboard() {
                       key={bench.model}
                       className="rounded-xl p-3"
                       style={{
-                        background: "#0F172A",
-                        border: "1px solid #334155",
+                        background: "#F8FAFC",
+                        border: "1px solid #E2E8F0",
                       }}
                       data-ocid={`admin.benchmarks.item.${i + 1}`}
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm text-white font-medium">
+                        <p className="text-sm text-[#1E293B] font-medium">
                           {bench.model}
                         </p>
                         <div className="flex items-center gap-2">
                           <span
                             className="text-sm font-bold"
-                            style={{ color: "#3B82F6" }}
+                            style={{ color: "#1D4ED8" }}
                           >
                             {bench.avgPrice}
                           </span>
@@ -1490,7 +1510,7 @@ export default function AdminDashboard() {
                             }
                             className="flex-1 px-3 py-1.5 rounded-lg text-sm"
                             style={{
-                              background: "#1E293B",
+                              background: "#FFFFFF",
                               border: "1px solid #3B82F6",
                               color: "white",
                               outline: "none",
@@ -1506,7 +1526,7 @@ export default function AdminDashboard() {
                               setActiveBenchmarkIdx(null);
                             }}
                             className="px-3 py-1.5 rounded-lg text-sm font-semibold text-white"
-                            style={{ background: "#3B82F6" }}
+                            style={{ background: "#1D4ED8" }}
                           >
                             Save
                           </button>
@@ -1518,8 +1538,8 @@ export default function AdminDashboard() {
                           onClick={() => setActiveBenchmarkIdx(i)}
                           className="text-xs font-semibold px-3 py-1.5 rounded-lg"
                           style={{
-                            background: "rgba(59,130,246,0.1)",
-                            color: "#3B82F6",
+                            background: "rgba(29,78,216,0.08)",
+                            color: "#1D4ED8",
                             border: "1px solid rgba(59,130,246,0.2)",
                           }}
                         >
@@ -1538,17 +1558,17 @@ export default function AdminDashboard() {
             <div className="space-y-4">
               <div
                 className="rounded-2xl p-4 flex items-center gap-3"
-                style={{ background: "#1E293B", border: "1px solid #334155" }}
+                style={{ background: "#FFFFFF", border: "1px solid #E2E8F0" }}
               >
                 <div
                   className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                  style={{ background: "rgba(59,130,246,0.15)" }}
+                  style={{ background: "rgba(29,78,216,0.08)" }}
                 >
-                  <Shield className="w-6 h-6" style={{ color: "#3B82F6" }} />
+                  <Shield className="w-6 h-6" style={{ color: "#1D4ED8" }} />
                 </div>
                 <div>
-                  <p className="font-bold text-white">Super Admin</p>
-                  <p className="text-xs" style={{ color: "#64748B" }}>
+                  <p className="font-bold text-[#1E293B]">Super Admin</p>
+                  <p className="text-xs" style={{ color: "#9CA3AF" }}>
                     admin@77mobiles.pro
                   </p>
                 </div>
@@ -1605,8 +1625,8 @@ export default function AdminDashboard() {
                     placeholder="192.168.1.0/24"
                     className="flex-1 px-3 py-2 rounded-xl text-sm"
                     style={{
-                      background: "#0F172A",
-                      border: "1px solid #334155",
+                      background: "#F8FAFC",
+                      border: "1px solid #E2E8F0",
                       color: "white",
                       outline: "none",
                     }}
@@ -1616,12 +1636,263 @@ export default function AdminDashboard() {
                     data-ocid="admin.settings.ip.save_button"
                     onClick={() => toast.success("IP whitelist updated")}
                     className="px-4 py-2 rounded-xl text-sm font-semibold text-white"
-                    style={{ background: "#3B82F6" }}
+                    style={{ background: "#1D4ED8" }}
                   >
                     Save
                   </button>
                 </div>
               </SectionBlock>
+            </div>
+          )}
+
+          {/* ===== PORTAL CONTROLS ===== */}
+          {activeSection === "portal-controls" && (
+            <div className="space-y-5">
+              {/* Buyer Portal */}
+              <SectionBlock title="Buyer Portal Settings">
+                <div className="space-y-5">
+                  <div>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <p
+                        className="text-sm font-semibold"
+                        style={{ color: "#1E293B" }}
+                      >
+                        Minimum Bid Increment
+                      </p>
+                      <span
+                        className="text-sm font-black"
+                        style={{ color: "#1D4ED8" }}
+                      >
+                        ₹{buyerMinBid.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+                    <input
+                      id="admin.portal.buyer_min_bid.input"
+                      data-ocid="admin.portal.buyer_min_bid.input"
+                      type="range"
+                      min={100}
+                      max={2000}
+                      step={100}
+                      value={buyerMinBid}
+                      onChange={(e) => setBuyerMinBid(Number(e.target.value))}
+                      className="w-full accent-blue-600"
+                      style={{ accentColor: "#1D4ED8" }}
+                    />
+                    <div
+                      className="flex justify-between text-[10px]"
+                      style={{ color: "#9CA3AF" }}
+                    >
+                      <span>₹100</span>
+                      <span>₹2,000</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <p
+                        className="text-sm font-semibold"
+                        style={{ color: "#1E293B" }}
+                      >
+                        Auction Duration
+                      </p>
+                      <span
+                        className="text-sm font-black"
+                        style={{ color: "#1D4ED8" }}
+                      >
+                        {buyerAuctionDuration} min
+                      </span>
+                    </div>
+                    <input
+                      id="admin.portal.buyer_duration.input"
+                      data-ocid="admin.portal.buyer_duration.input"
+                      type="range"
+                      min={10}
+                      max={60}
+                      step={5}
+                      value={buyerAuctionDuration}
+                      onChange={(e) =>
+                        setBuyerAuctionDuration(Number(e.target.value))
+                      }
+                      className="w-full"
+                      style={{ accentColor: "#1D4ED8" }}
+                    />
+                    <div
+                      className="flex justify-between text-[10px]"
+                      style={{ color: "#9CA3AF" }}
+                    >
+                      <span>10 min</span>
+                      <span>60 min</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <p
+                        className="text-sm font-semibold"
+                        style={{ color: "#1E293B" }}
+                      >
+                        Max Listings Per Page
+                      </p>
+                      <span
+                        className="text-sm font-black"
+                        style={{ color: "#1D4ED8" }}
+                      >
+                        {buyerMaxListings}
+                      </span>
+                    </div>
+                    <input
+                      id="admin.portal.buyer_max_listings.input"
+                      data-ocid="admin.portal.buyer_max_listings.input"
+                      type="range"
+                      min={10}
+                      max={50}
+                      step={5}
+                      value={buyerMaxListings}
+                      onChange={(e) =>
+                        setBuyerMaxListings(Number(e.target.value))
+                      }
+                      className="w-full"
+                      style={{ accentColor: "#1D4ED8" }}
+                    />
+                    <div
+                      className="flex justify-between text-[10px]"
+                      style={{ color: "#9CA3AF" }}
+                    >
+                      <span>10</span>
+                      <span>50</span>
+                    </div>
+                  </div>
+                </div>
+              </SectionBlock>
+
+              {/* Seller Portal */}
+              <SectionBlock title="Seller Portal Settings">
+                <div className="space-y-5">
+                  <div>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <p
+                        className="text-sm font-semibold"
+                        style={{ color: "#1E293B" }}
+                      >
+                        Listing Fee
+                      </p>
+                      <span
+                        className="text-sm font-black"
+                        style={{ color: "#1D4ED8" }}
+                      >
+                        ₹{sellerListingFee}
+                      </span>
+                    </div>
+                    <input
+                      id="admin.portal.seller_fee.input"
+                      data-ocid="admin.portal.seller_fee.input"
+                      type="range"
+                      min={0}
+                      max={500}
+                      step={50}
+                      value={sellerListingFee}
+                      onChange={(e) =>
+                        setSellerListingFee(Number(e.target.value))
+                      }
+                      className="w-full"
+                      style={{ accentColor: "#1D4ED8" }}
+                    />
+                    <div
+                      className="flex justify-between text-[10px]"
+                      style={{ color: "#9CA3AF" }}
+                    >
+                      <span>₹0 (Free)</span>
+                      <span>₹500</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <p
+                        className="text-sm font-semibold"
+                        style={{ color: "#1E293B" }}
+                      >
+                        Max Photos Per Listing
+                      </p>
+                      <span
+                        className="text-sm font-black"
+                        style={{ color: "#1D4ED8" }}
+                      >
+                        {sellerMaxPhotos} photos
+                      </span>
+                    </div>
+                    <input
+                      id="admin.portal.seller_photos.input"
+                      data-ocid="admin.portal.seller_photos.input"
+                      type="range"
+                      min={3}
+                      max={10}
+                      step={1}
+                      value={sellerMaxPhotos}
+                      onChange={(e) =>
+                        setSellerMaxPhotos(Number(e.target.value))
+                      }
+                      className="w-full"
+                      style={{ accentColor: "#1D4ED8" }}
+                    />
+                    <div
+                      className="flex justify-between text-[10px]"
+                      style={{ color: "#9CA3AF" }}
+                    >
+                      <span>3</span>
+                      <span>10</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <p
+                        className="text-sm font-semibold"
+                        style={{ color: "#1E293B" }}
+                      >
+                        Auto-expire Listings
+                      </p>
+                      <span
+                        className="text-sm font-black"
+                        style={{ color: "#1D4ED8" }}
+                      >
+                        {sellerAutoExpire} days
+                      </span>
+                    </div>
+                    <input
+                      id="admin.portal.seller_expire.input"
+                      data-ocid="admin.portal.seller_expire.input"
+                      type="range"
+                      min={7}
+                      max={30}
+                      step={1}
+                      value={sellerAutoExpire}
+                      onChange={(e) =>
+                        setSellerAutoExpire(Number(e.target.value))
+                      }
+                      className="w-full"
+                      style={{ accentColor: "#1D4ED8" }}
+                    />
+                    <div
+                      className="flex justify-between text-[10px]"
+                      style={{ color: "#9CA3AF" }}
+                    >
+                      <span>7 days</span>
+                      <span>30 days</span>
+                    </div>
+                  </div>
+                </div>
+              </SectionBlock>
+
+              <button
+                type="button"
+                data-ocid="admin.portal.save.button"
+                onClick={() => {
+                  setPortalSaveSuccess(true);
+                  toast.success("Portal settings saved successfully!");
+                  setTimeout(() => setPortalSaveSuccess(false), 3000);
+                }}
+                className="w-full py-3 rounded-xl font-bold text-white transition-all"
+                style={{ background: "#1D4ED8" }}
+              >
+                {portalSaveSuccess ? "✓ Changes Saved" : "Save Changes"}
+              </button>
             </div>
           )}
 
@@ -1634,33 +1905,33 @@ export default function AdminDashboard() {
                   data-ocid="admin.auditlog.export.button"
                   onClick={() => toast.success("Audit log exported as CSV")}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white"
-                  style={{ background: "#3B82F6" }}
+                  style={{ background: "#1D4ED8" }}
                 >
                   <Download className="w-4 h-4" /> Export CSV
                 </button>
               </div>
               <div
                 className="rounded-2xl overflow-hidden"
-                style={{ background: "#1E293B", border: "1px solid #334155" }}
+                style={{ background: "#FFFFFF", border: "1px solid #E2E8F0" }}
               >
                 {MOCK_AUDIT.map((entry, i) => (
                   <div
                     key={entry.time}
                     className="flex items-start gap-3 p-3.5 border-b last:border-0"
-                    style={{ borderColor: "#334155" }}
+                    style={{ borderColor: "#E2E8F0" }}
                     data-ocid={`admin.auditlog.item.${i + 1}`}
                   >
                     <CheckCircle
                       className="w-4 h-4 flex-shrink-0 mt-0.5"
-                      style={{ color: "#3B82F6" }}
+                      style={{ color: "#1D4ED8" }}
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white leading-snug">
+                      <p className="text-sm text-[#1E293B] leading-snug">
                         {entry.entry}
                       </p>
                       <p
                         className="text-xs mt-0.5"
-                        style={{ color: "#475569" }}
+                        style={{ color: "#9CA3AF" }}
                       >
                         {entry.time}
                       </p>
@@ -1708,19 +1979,19 @@ function StatCard({
     <div
       className="rounded-2xl p-4"
       style={{
-        background: "#1E293B",
-        border: "1px solid #334155",
+        background: "#FFFFFF",
+        border: "1px solid #E2E8F0",
         borderLeft: `3px solid ${accentColor}`,
       }}
     >
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-semibold" style={{ color: "#64748B" }}>
+        <span className="text-xs font-semibold" style={{ color: "#9CA3AF" }}>
           {label}
         </span>
         {icon}
       </div>
-      <p className="text-2xl font-black text-white">{value}</p>
-      <p className="text-xs mt-0.5" style={{ color: "#64748B" }}>
+      <p className="text-2xl font-black text-[#1E293B]">{value}</p>
+      <p className="text-xs mt-0.5" style={{ color: "#9CA3AF" }}>
         {sub}
       </p>
     </div>
@@ -1737,9 +2008,9 @@ function SectionBlock({
   return (
     <div
       className="rounded-2xl p-4"
-      style={{ background: "#1E293B", border: "1px solid #334155" }}
+      style={{ background: "#FFFFFF", border: "1px solid #E2E8F0" }}
     >
-      <h3 className="font-bold text-white text-sm mb-3">{title}</h3>
+      <h3 className="font-bold text-[#1E293B] text-sm mb-3">{title}</h3>
       {children}
     </div>
   );
@@ -1789,8 +2060,10 @@ function ToggleRow({
   return (
     <div className="flex items-center justify-between">
       <div>
-        <p className="text-sm font-semibold text-white">{label}</p>
-        <p className="text-xs" style={{ color: "#64748B" }}>
+        <p className="text-sm font-semibold" style={{ color: "#1E293B" }}>
+          {label}
+        </p>
+        <p className="text-xs" style={{ color: "#9CA3AF" }}>
           {sub}
         </p>
       </div>
@@ -1799,7 +2072,7 @@ function ToggleRow({
         data-ocid={ocid}
         onClick={() => onChange(!value)}
         className="relative w-11 h-6 rounded-full transition-colors flex-shrink-0"
-        style={{ background: value ? "#3B82F6" : "#334155" }}
+        style={{ background: value ? "#1D4ED8" : "#E2E8F0" }}
       >
         <span
           className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform"

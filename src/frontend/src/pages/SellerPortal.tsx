@@ -416,7 +416,27 @@ export default function SellerPortal() {
                       <p className="font-bold text-[11px] text-[#1E293B] truncate leading-tight">
                         {listing.title || listing.model}
                       </p>
+                      <p className="text-[9px] text-gray-400 truncate">
+                        {listing.brand}
+                      </p>
                       <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                        <span
+                          className="text-[8px] font-semibold px-1 py-0.5 rounded-full"
+                          style={{
+                            background: isActive ? "#F0FDF4" : "#F3F4F6",
+                            color: isActive ? "#166534" : "#4b5563",
+                          }}
+                        >
+                          {listing.status}
+                        </span>
+                        {listing.usbVerified && (
+                          <span
+                            className="text-[8px] font-semibold px-1 py-0.5 rounded-full"
+                            style={{ background: "#D1FAE5", color: "#065F46" }}
+                          >
+                            USB ✓
+                          </span>
+                        )}
                         <span
                           style={{
                             background: conditionColor(listing.condition).bg,
@@ -433,11 +453,20 @@ export default function SellerPortal() {
                         )}
                       </div>
                       <p
-                        className="font-black text-[13px] mt-0.5"
+                        className="font-black text-[12px] mt-0.5"
                         style={{ color: "#1D4ED8" }}
                       >
                         {formatINR(listing.basePrice)}
                       </p>
+                      {isActive && listing.endsAt && (
+                        <div className="mt-0.5">
+                          <AuctionTimer
+                            endsAt={listing.endsAt}
+                            auctionType={listing.auctionType}
+                            status={listing.status}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

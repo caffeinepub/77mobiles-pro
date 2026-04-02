@@ -1,39 +1,44 @@
 # 77mobiles.pro
 
 ## Current State
-- AdminDashboard.tsx: existing admin panel with some modules but outdated design
-- AuthPage.tsx: login/register uses #007AFF blue buttons
-- CreateListing.tsx: listing form uses #002F34 (Deep Teal) as primary color
-- BottomNav.tsx: right tabs are Activity + Watchlist (Star icon)
-- AppShell renders WatchlistPage for 'watchlist' tab
-- AppContext AppTab type includes 'watchlist' and 'alerts'
-- SellerPortal shows both buyer and seller nav
+Full B2B auction marketplace with Buyer/Seller portals, AppShell, BottomNav, ListingDetail, WalletPage, and AdminDashboard. Bottom nav has Home/Wallet/Sell/Activity/Alerts. Header has Bell icon for buyer. Admin panel is dark navy themed.
 
 ## Requested Changes (Diff)
 
 ### Add
-- New full-featured AdminDashboard.tsx with Deep Navy & Electric Blue theme (#0F172A navy, #3B82F6 electric blue)
-- Admin panel sections: Dashboard (4 stats + live bid feed), User Management (searchable table, KYC, action buttons), Inventory/Auction Control (listing approval queue, auction manipulation), Financial/Escrow Tracking (transaction log, escrow monitor, dispute resolution), Market Trends & Analytics (demand heatmap, price benchmarking), Settings
-- Sidebar navigation with icons for: Dashboard, Users, Listings, Payments, Diagnostics, Settings
-- Global search bar at top (by IMEI, Model, Dealer ID)
-- MFA login screen for admin (PIN-based)
-- System Audit Log tab
-- In SellerPortal BottomNav: replace Watchlist tab with Alerts tab (Bell icon)
+- Dynamic `Estimated Total Payable` breakdown below Place Bid button (real-time as user types): Bid Amount, Sourcing Fee ₹1500, GST 18% on fee, 1% TCS on bid, Total Payable
+- Watchlist tab in buyer bottom nav (Star icon, replaces Wallet slot)
+- Wallet icon in buyer header (replaces Bell)
+- Admin panel slider controls for both buyer/seller portal settings
+- Real-time bid update when a bid is placed (currentBid state updates)
 
 ### Modify
-- AdminDashboard.tsx: completely replace with new design
-- AuthPage.tsx: change all #007AFF to #1D4ED8 (logo blue) throughout buttons, icons, borders, text
-- CreateListing.tsx: change primary accent color to #1D4ED8 (logo blue) for progress bars, active borders, buttons, step indicators
-- BottomNav.tsx: for seller mode, replace 'watchlist' tab with 'alerts' tab (Bell icon, label 'Alerts')
-- AppShell.tsx: render AlertsPage for 'alerts' tab in seller mode (already exists), hide watchlist for seller
+- **Task 1**: BuyerPortal listing cards must navigate to `/listing/${listing.listingId}` (fix navigation to use listingId not index)
+- **Task 2**: List and Grid views in both portals must show identical info (brand, condition, warranty, price, status, verified badge, timer)
+- **Task 3**: In AppShell header (buyer only), remove Bell icon, add Wallet icon that navigates to wallet tab
+- **Task 4**: In BottomNav buyer mode, replace Wallet slot with Watchlist (Star icon, label "Watchlist", navigates to watchlist tab)
+- **Task 5**: BiddingCard min increment ₹500; validation error "Minimum bid increment is ₹500"; quick buttons +₹500, +₹1,000, +₹2,000
+- **Task 7**: After placing bid, update `currentBid` state to reflect new bid amount
+- **Task 9**: Scanner icon in search bar should launch BarcodeDetector camera; search overlay scanner button must actually open camera
+- **Task 10a**: AdminDashboard switch from dark navy to light mode (white/light grey surfaces, blue accents)
+- **Task 10b**: Add portal slider controls section in admin panel
+- **Task 12**: WalletPage - fix all \u20b9 to ₹; simplify transaction labels; move dates to grey sub-text; color code +/-; buyer escrow remove sub-text; seller: "Balance"/"Ready for Payout"; seller transaction labels simplified
 
 ### Remove
-- Old AdminDashboard content
-- Watchlist tab from seller portal bottom nav
+- **Task 8**: Remove Fee & Tax Summary section from ListingDetail (the static bottom chart section, buyer view only — keep the dynamic breakdown from Task 6)
+- Bell icon from buyer header
+- Wallet slot from buyer bottom nav
 
 ## Implementation Plan
-1. Replace AdminDashboard.tsx with a comprehensive new admin panel (Deep Navy sidebar + Electric Blue accents, all 6 modules, MFA login, audit log, mock data)
-2. Update AuthPage.tsx: replace all #007AFF with #1D4ED8
-3. Update CreateListing.tsx: replace primary color with #1D4ED8
-4. Update BottomNav.tsx: in seller mode, swap watchlist → alerts (Bell icon)
-5. Update AppShell.tsx: in seller mode render AlertsPage for 'alerts' tab instead of WatchlistPage for 'watchlist'
+1. Fix BuyerPortal listing click navigation (Task 1)
+2. Sync List/Grid metadata in both portals (Task 2)
+3. Header: replace Bell with Wallet icon in buyer (Task 3)
+4. BottomNav: buyer replaces Wallet with Watchlist star (Task 4)
+5. BiddingCard: ₹500 min increment, +500/+1000/+2000 buttons, validation message (Task 5)
+6. BiddingCard: add real-time Estimated Total Payable breakdown below Place Bid (Task 6)
+7. BiddingCard: after placing bid, update currentBid state (Task 7)
+8. ListingDetail: remove static Fee & Tax Summary section (Task 8)
+9. AppShell SearchOverlay scanner: launch BarcodeDetector camera (Task 9)
+10. AdminDashboard: convert to light mode (Task 10a)
+11. AdminDashboard: add portal slider controls (Task 10b)
+12. WalletPage: full cleanup - ₹ symbols, labels, sub-text dates, colors (Task 12)

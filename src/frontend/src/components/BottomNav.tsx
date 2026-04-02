@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { Activity, Bell, Home, Plus, Wallet } from "lucide-react";
+import { Activity, Bell, Home, Plus, Star, Wallet } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { type AppTab, useApp } from "../contexts/AppContext";
 
@@ -22,10 +22,16 @@ export default function BottomNav() {
     }
   };
 
-  const leftTabs: { id: AppTab; label: string; Icon: LucideIcon }[] = [
-    { id: "home", label: "Home", Icon: Home },
-    { id: "wallet", label: "Wallet", Icon: Wallet },
-  ];
+  const isBuyer = mode === "buyer";
+  const leftTabs: { id: AppTab; label: string; Icon: LucideIcon }[] = isBuyer
+    ? [
+        { id: "home", label: "Home", Icon: Home },
+        { id: "watchlist", label: "Watchlist", Icon: Star },
+      ]
+    : [
+        { id: "home", label: "Home", Icon: Home },
+        { id: "wallet", label: "Wallet", Icon: Wallet },
+      ];
   const rightTabs: {
     id: AppTab;
     label: string;

@@ -1,4 +1,4 @@
-import { ArrowUp, Bell, ScanBarcode, Search, User, X } from "lucide-react";
+import { ArrowUp, ScanBarcode, Search, User, Wallet, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "../contexts/AppContext";
 import ActivityPage from "../pages/ActivityPage";
@@ -70,9 +70,10 @@ export default function AppShell() {
     setActiveTab,
     activeCategory,
     setActiveCategory,
-    unreadAlerts,
   } = useApp();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [showScanner, setShowScanner] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [categoriesVisible, setCategoriesVisible] = useState(true);
   const [showSearch, setShowSearch] = useState(false);
@@ -181,8 +182,8 @@ export default function AppShell() {
                 {!isSeller && (
                   <button
                     type="button"
-                    data-ocid="header.alerts.button"
-                    onClick={() => setActiveTab("alerts")}
+                    data-ocid="header.wallet.button"
+                    onClick={() => setActiveTab("wallet")}
                     className="flex items-center justify-center rounded-full relative"
                     style={{
                       width: "38px",
@@ -191,14 +192,11 @@ export default function AppShell() {
                       background: "#F8FAFC",
                     }}
                   >
-                    <Bell
+                    <Wallet
                       className="w-5 h-5"
-                      style={{ color: "#1E293B" }}
+                      style={{ color: "#1D4ED8" }}
                       strokeWidth={1.5}
                     />
-                    {unreadAlerts > 0 && (
-                      <span className="w-2 h-2 bg-red-500 rounded-full absolute -top-0.5 -right-0.5" />
-                    )}
                   </button>
                 )}
                 <button
@@ -276,7 +274,22 @@ export default function AppShell() {
                     data-ocid="header.camera.button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setShowSearch(true);
+                      if ("BarcodeDetector" in window) {
+                        setShowScanner(true);
+                        navigator.mediaDevices
+                          .getUserMedia({
+                            video: { facingMode: "environment" },
+                          })
+                          .then((stream) => {
+                            setTimeout(() => {
+                              if (videoRef.current)
+                                videoRef.current.srcObject = stream;
+                            }, 100);
+                          })
+                          .catch(() => setShowSearch(true));
+                      } else {
+                        setShowSearch(true);
+                      }
                     }}
                     className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
                     style={{ background: "#EFF6FF" }}
@@ -409,6 +422,93 @@ export default function AppShell() {
 
       <PostLeadModal />
 
+      {/* Barcode Scanner Overlay */}
+      {showScanner && (
+        <div
+          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.95)" }}
+        >
+          <div className="w-full max-w-[430px] px-4">
+            <div className="flex items-center justify-between mb-4">
+              <p className="font-bold text-white text-base">
+                Scan Barcode / IMEI
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowScanner(false);
+                  if (videoRef.current?.srcObject) {
+                    for (const t of (
+                      videoRef.current.srcObject as MediaStream
+                    ).getTracks())
+                      t.stop();
+                  }
+                }}
+                className="w-9 h-9 rounded-full flex items-center justify-center"
+                style={{ background: "rgba(255,255,255,0.15)" }}
+              >
+                <X className="w-5 h-5 text-white" />
+              </button>
+            </div>
+            <div
+              className="relative w-full rounded-2xl overflow-hidden"
+              style={{ aspectRatio: "4/3", background: "#1E293B" }}
+            >
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover"
+                onCanPlay={() => {
+                  const detector = new (window as any).BarcodeDetector({
+                    formats: ["qr_code", "code_128", "ean_13", "code_39"],
+                  });
+                  const scan = setInterval(async () => {
+                    if (!videoRef.current) {
+                      clearInterval(scan);
+                      return;
+                    }
+                    try {
+                      const barcodes = await detector.detect(videoRef.current);
+                      if (barcodes.length > 0) {
+                        const val = barcodes[0].rawValue;
+                        setSearchQuery(val);
+                        clearInterval(scan);
+                        setShowScanner(false);
+                        for (const t of (
+                          videoRef.current?.srcObject as MediaStream
+                        )?.getTracks() ?? [])
+                          t.stop();
+                      }
+                    } catch {}
+                  }, 500);
+                  navigator.mediaDevices
+                    .getUserMedia({ video: { facingMode: "environment" } })
+                    .then((stream) => {
+                      if (videoRef.current) videoRef.current.srcObject = stream;
+                    });
+                }}
+              />
+              <div
+                className="absolute inset-0 flex items-center justify-center"
+                style={{ pointerEvents: "none" }}
+              >
+                <div
+                  className="w-48 h-48 border-2 rounded-xl"
+                  style={{
+                    borderColor: "#1D4ED8",
+                    boxShadow: "0 0 0 2000px rgba(0,0,0,0.4)",
+                  }}
+                />
+              </div>
+            </div>
+            <p className="text-center text-xs text-gray-400 mt-3">
+              Point camera at barcode or IMEI number
+            </p>
+          </div>
+        </div>
+      )}
       {/* Search overlay */}
       {showSearch && <SearchOverlay onClose={() => setShowSearch(false)} />}
     </div>

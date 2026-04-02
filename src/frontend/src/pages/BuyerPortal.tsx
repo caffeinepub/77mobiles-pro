@@ -346,7 +346,13 @@ function CategoryListingView({
     {
       title: string;
       emoji: string;
-      items: Array<{ id: string; name: string; price: string; tag: string }>;
+      items: Array<{
+        id: string;
+        listingId?: string;
+        name: string;
+        price: string;
+        tag: string;
+      }>;
     }
   > = {
     "macbook-laptops": {
@@ -355,36 +361,42 @@ function CategoryListingView({
       items: [
         {
           id: "ml1",
+          listingId: "b-1",
           name: "MacBook Air M3 (13-inch)",
           price: "\u20B91,15,000",
           tag: "Like New",
         },
         {
           id: "ml2",
+          listingId: "b-2",
           name: "MacBook Pro M3 Pro (14-inch)",
           price: "\u20B91,85,000",
           tag: "Good",
         },
         {
           id: "ml3",
+          listingId: "b-3",
           name: "Dell XPS 15 (i7, 32GB)",
           price: "\u20B91,25,000",
           tag: "Fair",
         },
         {
           id: "ml4",
+          listingId: "b-4",
           name: "HP Spectre x360 (i7)",
           price: "\u20B91,08,000",
           tag: "Like New",
         },
         {
           id: "ml5",
+          listingId: "b-5",
           name: "ThinkPad X1 Carbon Gen 11",
           price: "\u20B995,000",
           tag: "Good",
         },
         {
           id: "ml6",
+          listingId: "b-6",
           name: "MacBook Air M2 (Space Gray)",
           price: "\u20B989,000",
           tag: "Fair",
@@ -397,36 +409,42 @@ function CategoryListingView({
       items: [
         {
           id: "ip1",
+          listingId: "b-7",
           name: "iPad Pro M4 (13-inch, WiFi)",
           price: "\u20B91,05,000",
           tag: "Like New",
         },
         {
           id: "ip2",
+          listingId: "b-8",
           name: "iPad Air M2 (11-inch)",
           price: "\u20B969,000",
           tag: "Good",
         },
         {
           id: "ip3",
+          listingId: "b-9",
           name: "iPad Mini 7 (64GB)",
           price: "\u20B948,000",
           tag: "Like New",
         },
         {
           id: "ip4",
+          listingId: "b-10",
           name: "iPad Pro M2 (12.9-inch)",
           price: "\u20B992,000",
           tag: "Good",
         },
         {
           id: "ip5",
+          listingId: "b-11",
           name: "iPad 10th Gen (WiFi + Cellular)",
           price: "\u20B945,000",
           tag: "Fair",
         },
         {
           id: "ip6",
+          listingId: "b-12",
           name: "iPad Air M1 (256GB)",
           price: "\u20B958,000",
           tag: "Like New",
@@ -439,36 +457,42 @@ function CategoryListingView({
       items: [
         {
           id: "w1",
+          listingId: "b-1",
           name: "Apple Watch Series 9 (45mm)",
           price: "\u20B942,000",
           tag: "Like New",
         },
         {
           id: "w2",
+          listingId: "b-2",
           name: "Apple Watch Ultra 2 (49mm)",
           price: "\u20B979,000",
           tag: "Good",
         },
         {
           id: "w3",
+          listingId: "b-3",
           name: "Samsung Galaxy Watch 6 Classic",
           price: "\u20B928,000",
           tag: "Like New",
         },
         {
           id: "w4",
+          listingId: "b-4",
           name: "Apple Watch SE 2nd Gen",
           price: "\u20B924,000",
           tag: "Good",
         },
         {
           id: "w5",
+          listingId: "b-5",
           name: "Garmin Fenix 7X Pro",
           price: "\u20B965,000",
           tag: "Fair",
         },
         {
           id: "w6",
+          listingId: "b-6",
           name: "Apple Watch Series 8 (41mm)",
           price: "\u20B932,000",
           tag: "Good",
@@ -481,36 +505,42 @@ function CategoryListingView({
       items: [
         {
           id: "gc1",
+          listingId: "b-7",
           name: "PlayStation 5 Disc Edition",
           price: "\u20B952,000",
           tag: "Like New",
         },
         {
           id: "gc2",
+          listingId: "b-8",
           name: "PS5 Digital Edition",
           price: "\u20B942,000",
           tag: "Good",
         },
         {
           id: "gc3",
+          listingId: "b-9",
           name: "Xbox Series X (1TB)",
           price: "\u20B955,000",
           tag: "Like New",
         },
         {
           id: "gc4",
+          listingId: "b-10",
           name: "Xbox Series S (512GB)",
           price: "\u20B928,500",
           tag: "Good",
         },
         {
           id: "gc5",
+          listingId: "b-11",
           name: "Nintendo Switch OLED (White)",
           price: "\u20B931,000",
           tag: "Like New",
         },
         {
           id: "gc6",
+          listingId: "b-12",
           name: "Nintendo Switch V2",
           price: "\u20B920,000",
           tag: "Fair",
@@ -523,36 +553,42 @@ function CategoryListingView({
       items: [
         {
           id: "ac1",
+          listingId: "b-1",
           name: "Apple AirPods Pro 2nd Gen",
           price: "\u20B918,000",
           tag: "Like New",
         },
         {
           id: "ac2",
+          listingId: "b-2",
           name: "Apple MagSafe Charger 15W",
           price: "\u20B93,200",
           tag: "Good",
         },
         {
           id: "ac3",
+          listingId: "b-3",
           name: "Samsung 65W Fast Charger",
           price: "\u20B92,500",
           tag: "Like New",
         },
         {
           id: "ac4",
+          listingId: "b-4",
           name: "Apple USB-C to Lightning Cable",
           price: "\u20B91,800",
           tag: "Good",
         },
         {
           id: "ac5",
+          listingId: "b-5",
           name: "Anker 26800 Power Bank",
           price: "\u20B95,500",
           tag: "Like New",
         },
         {
           id: "ac6",
+          listingId: "b-6",
           name: "Apple AirPods (3rd Gen)",
           price: "\u20B912,000",
           tag: "Fair",
@@ -565,36 +601,42 @@ function CategoryListingView({
       items: [
         {
           id: "sp1",
+          listingId: "b-7",
           name: "iPhone 15 Pro OLED Screen Module",
           price: "\u20B98,500",
           tag: "New",
         },
         {
           id: "sp2",
+          listingId: "b-8",
           name: "Samsung S24 Ultra Battery Pack",
           price: "\u20B93,200",
           tag: "New",
         },
         {
           id: "sp3",
+          listingId: "b-9",
           name: "iPhone 14 Back Glass Panel",
           price: "\u20B92,800",
           tag: "New",
         },
         {
           id: "sp4",
+          listingId: "b-10",
           name: "OnePlus 12 Charging Port Assembly",
           price: "\u20B91,500",
           tag: "New",
         },
         {
           id: "sp5",
+          listingId: "b-11",
           name: "Samsung Galaxy S23 Camera Module",
           price: "\u20B94,500",
           tag: "New",
         },
         {
           id: "sp6",
+          listingId: "b-12",
           name: "iPhone 13 Pro Vibration Motor",
           price: "\u20B9900",
           tag: "New",
@@ -714,10 +756,12 @@ function CategoryListingView({
                 data-ocid={`category_listing.${category}.item.${idx + 1}`}
                 className="bg-white rounded-2xl overflow-hidden flex flex-col cursor-pointer active:scale-[0.98] transition-transform"
                 style={{ border: "1px solid #e5e7eb", borderRadius: "16px" }}
-                onClick={() => navigateInner({ to: `/listing/${item.id}` })}
+                onClick={() =>
+                  navigateInner({ to: `/listing/${item.listingId || item.id}` })
+                }
                 onKeyDown={(e) =>
                   e.key === "Enter" &&
-                  navigateInner({ to: `/listing/${item.id}` })
+                  navigateInner({ to: `/listing/${item.listingId || item.id}` })
                 }
               >
                 {/* Image area: square 1:1 with studio inner stroke */}
@@ -884,6 +928,26 @@ export default function BuyerPortal() {
   }, []);
 
   const [heartAnim, setHeartAnim] = useState<string | null>(null);
+  // Task 11: Real-time bid count state
+  const [liveBidCounts, setLiveBidCounts] = useState<Record<string, number>>(
+    Object.fromEntries(BENTO_12.map((item) => [item.id, item.bids])),
+  );
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLiveBidCounts((prev) => {
+        const next = { ...prev };
+        // Randomly increment a few active listings
+        for (const id of Object.keys(next)) {
+          if (Math.random() < 0.15) {
+            next[id] = (next[id] || 0) + 1;
+          }
+        }
+        return next;
+      });
+    }, 9000);
+    return () => clearInterval(interval);
+  }, []);
   const [showWatchlistToast, setShowWatchlistToast] = useState(false);
   const [pressedCard, setPressedCard] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1227,28 +1291,38 @@ export default function BuyerPortal() {
                           </p>
                           <div className="flex items-center gap-1 mt-0.5 flex-wrap">
                             <span
+                              className="text-[8px] font-semibold px-1 py-0.5 rounded-full"
+                              style={{
+                                background: "#F0FDF4",
+                                color: "#166534",
+                              }}
+                            >
+                              Active
+                            </span>
+                            <span
                               style={{
                                 background: condColor(item.condition).bg,
                                 color: condColor(item.condition).text,
                               }}
-                              className="inline-block text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+                              className="inline-block text-[8px] font-semibold px-1 py-0.5 rounded-full"
                             >
                               {item.condition}
                             </span>
                             {item.warrantyMonths > 0 && (
-                              <span className="text-[9px] text-gray-400">
+                              <span className="text-[8px] text-gray-400">
                                 ~{item.warrantyMonths}mo
                               </span>
                             )}
                           </div>
                           <p
-                            className="font-black text-[13px] mt-0.5"
+                            className="font-black text-[12px] mt-0.5"
                             style={{ color: "#1D4ED8" }}
                           >
                             ₹{item.price.toLocaleString("en-IN")}
                           </p>
-                          <p className="text-[9px] text-gray-400">
-                            {item.bids} bids · {item.timer}
+                          <p className="text-[8px] text-gray-400">
+                            {liveBidCounts[item.id] ?? item.bids} bids ·{" "}
+                            {item.timer}
                           </p>
                         </div>
                       </div>
@@ -1413,7 +1487,7 @@ export default function BuyerPortal() {
                                 {item.price.toLocaleString("en-IN")}
                               </p>
                               <p className="text-[10px] text-gray-400">
-                                {item.bids} bids
+                                {liveBidCounts[item.id] ?? item.bids} bids
                               </p>
                             </div>
                           </div>

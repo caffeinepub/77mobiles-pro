@@ -41,6 +41,44 @@ const MOCK_TRANSACTIONS = [
   },
 ];
 
+const SELLER_TRANSACTIONS = [
+  {
+    id: 1,
+    type: "credit",
+    label: "Sale: iPhone 15",
+    amount: 68000,
+    date: "31 Mar",
+  },
+  {
+    id: 2,
+    type: "debit",
+    label: "Payout to Bank",
+    amount: 50000,
+    date: "30 Mar",
+  },
+  {
+    id: 3,
+    type: "credit",
+    label: "Sale: iPad Pro M4",
+    amount: 95000,
+    date: "28 Mar",
+  },
+  {
+    id: 4,
+    type: "credit",
+    label: "Sale: Samsung S24",
+    amount: 72000,
+    date: "27 Mar",
+  },
+  {
+    id: 5,
+    type: "debit",
+    label: "Payout to Bank",
+    amount: 40000,
+    date: "25 Mar",
+  },
+];
+
 export default function WalletPage() {
   const { mode } = useApp();
   const [addAmount, setAddAmount] = useState(1000);
@@ -103,7 +141,7 @@ export default function WalletPage() {
             marginBottom: "4px",
           }}
         >
-          Current Balance
+          {mode === "seller" ? "Balance" : "Current Balance"}
         </p>
         <p
           style={{
@@ -117,7 +155,7 @@ export default function WalletPage() {
           \u20b93,42,500
         </p>
         <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>
-          Available for bidding
+          {mode === "seller" ? "Ready for Payout" : "Available for bidding"}
         </p>
         <div style={{ display: "flex", gap: "12px", marginTop: "24px" }}>
           {mode !== "seller" && (
@@ -300,67 +338,71 @@ export default function WalletPage() {
         >
           Recent Transactions
         </p>
-        {MOCK_TRANSACTIONS.map((tx) => (
-          <div
-            key={tx.id}
-            data-ocid={`wallet.transaction.item.${tx.id}`}
-            style={{
-              background: "#FFFFFF",
-              borderRadius: "14px",
-              padding: "14px 16px",
-              marginBottom: "8px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              boxShadow: "0 1px 6px rgba(0,0,0,0.06)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: "10px",
-                  background: tx.type === "credit" ? "#DCFCE7" : "#FEE2E2",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {tx.type === "credit" ? (
-                  <Plus size={16} style={{ color: "#16A34A" }} />
-                ) : (
-                  <ArrowDownLeft size={16} style={{ color: "#DC2626" }} />
-                )}
-              </div>
-              <div>
-                <p
-                  style={{
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    color: "#1E293B",
-                    margin: 0,
-                  }}
-                >
-                  {tx.label}
-                </p>
-                <p style={{ fontSize: "11px", color: "#94A3B8", margin: 0 }}>
-                  {tx.date}
-                </p>
-              </div>
-            </div>
-            <span
+        {(mode === "seller" ? SELLER_TRANSACTIONS : MOCK_TRANSACTIONS).map(
+          (tx) => (
+            <div
+              key={tx.id}
+              data-ocid={`wallet.transaction.item.${tx.id}`}
               style={{
-                fontSize: "14px",
-                fontWeight: 700,
-                color: tx.type === "credit" ? "#16A34A" : "#DC2626",
+                background: "#FFFFFF",
+                borderRadius: "14px",
+                padding: "14px 16px",
+                marginBottom: "8px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                boxShadow: "0 1px 6px rgba(0,0,0,0.06)",
               }}
             >
-              {tx.type === "credit" ? "+" : "-"}\u20b9
-              {tx.amount.toLocaleString("en-IN")}
-            </span>
-          </div>
-        ))}
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "10px" }}
+              >
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "10px",
+                    background: tx.type === "credit" ? "#DCFCE7" : "#FEE2E2",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {tx.type === "credit" ? (
+                    <Plus size={16} style={{ color: "#16A34A" }} />
+                  ) : (
+                    <ArrowDownLeft size={16} style={{ color: "#DC2626" }} />
+                  )}
+                </div>
+                <div>
+                  <p
+                    style={{
+                      fontSize: "13px",
+                      fontWeight: 600,
+                      color: "#1E293B",
+                      margin: 0,
+                    }}
+                  >
+                    {tx.label}
+                  </p>
+                  <p style={{ fontSize: "11px", color: "#94A3B8", margin: 0 }}>
+                    {tx.date}
+                  </p>
+                </div>
+              </div>
+              <span
+                style={{
+                  fontSize: "14px",
+                  fontWeight: 700,
+                  color: tx.type === "credit" ? "#16A34A" : "#DC2626",
+                }}
+              >
+                {tx.type === "credit" ? "+" : "-"}\u20b9
+                {tx.amount.toLocaleString("en-IN")}
+              </span>
+            </div>
+          ),
+        )}
       </div>
     </div>
   );

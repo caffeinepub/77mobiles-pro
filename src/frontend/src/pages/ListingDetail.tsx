@@ -223,6 +223,7 @@ function BiddingCard({
   listing,
   currentBid,
 }: { listing: Listing; currentBid: number }) {
+  const [liveBid, setLiveBid] = useState(currentBid);
   const [bidAmount, setBidAmount] = useState("");
   const [placing, setPlacing] = useState(false);
   const { actor } = useActor();
@@ -252,13 +253,13 @@ function BiddingCard({
   const timerStr = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   const basePrice = Number(listing.basePrice) / 100;
   const minBid =
-    currentBid > Number(listing.basePrice) ? currentBid / 100 + 100 : basePrice;
+    liveBid > Number(listing.basePrice) ? liveBid / 100 + 500 : basePrice;
   const [bidValid, setBidValid] = useState(true);
 
   const handleBid = async () => {
     const amount = Number.parseFloat(bidAmount);
-    if (!amount || amount * 100 <= currentBid) {
-      toast.error("Bid must be higher than current bid");
+    if (!amount || amount * 100 <= liveBid) {
+      toast.error("Minimum bid increment is ₹500");
       return;
     }
     setPlacing(true);
@@ -272,6 +273,7 @@ function BiddingCard({
           createdAt: BigInt(Date.now()) * 1_000_000n,
         });
       }
+      setLiveBid(Math.round(amount * 100));
       toast.success("Bid placed successfully!");
       // Task 6B: Haptic feedback on successful bid
       if (typeof navigator.vibrate === "function")
@@ -295,7 +297,7 @@ function BiddingCard({
     >
       <div className="flex items-center justify-between mb-3">
         <span className="font-black text-sm text-gray-900">
-          Current High Bid: {formatINR(currentBid)}
+          Current High Bid: {formatINR(liveBid)}
         </span>
         {/* Task 1: #007AFF → #1D4ED8 */}
         <span
@@ -338,24 +340,24 @@ function BiddingCard({
               setBidValid(true);
               return;
             }
-            setBidValid(num >= minBid);
+            setBidValid(num >= minBid && num > liveBid / 100);
           }}
         />
       </div>
       {!bidValid && (
         <p className="text-[10px] text-red-500 mb-2">
-          Min bid: ₹{minBid.toLocaleString("en-IN")}
+          Minimum bid increment is ₹500
         </p>
       )}
       {/* Increment buttons */}
       <div className="flex gap-2 mb-3">
-        {[100, 500, 1000].map((inc) => (
+        {[500, 1000, 2000].map((inc) => (
           <button
             key={inc}
             type="button"
             data-ocid={`listing.bid_increment_${inc}.button`}
             onClick={() => {
-              const current = Number.parseFloat(bidAmount) || currentBid / 100;
+              const current = Number.parseFloat(bidAmount) || liveBid / 100;
               setBidAmount(String(current + inc));
               if (typeof navigator.vibrate === "function")
                 navigator.vibrate([30]);
@@ -377,11 +379,67 @@ function BiddingCard({
         onClick={handleBid}
         disabled={placing || !bidValid}
         className="w-full py-3 rounded-xl text-white font-black text-sm"
-        // Task 1: #007AFF → #1D4ED8
         style={{ background: placing ? "#6b7280" : "#1D4ED8" }}
       >
-        {placing ? "Placing..." : "Place Bid \u2192"}
+        {placing ? "Placing..." : "Place Bid →"}
       </button>
+
+      {/* Task 6: Dynamic Estimated Total Payable */}
+      {(() => {
+        const bidAmt = Number.parseFloat(bidAmount) || 0;
+        if (bidAmt <= 0) return null;
+        const sourcingFee = 1500;
+        const gstOnFee = Math.round(sourcingFee * 0.18);
+        const tcs = Math.round(bidAmt * 0.01);
+        const total = bidAmt + sourcingFee + gstOnFee + tcs;
+        return (
+          <div
+            className="mt-3 rounded-xl p-3"
+            style={{ background: "#F8FAFC", border: "1px solid #E2E8F0" }}
+          >
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+              Estimated Total Payable
+            </p>
+            {[
+              { label: "Bid Amount", value: bidAmt },
+              { label: "Sourcing Fee", value: sourcingFee },
+              { label: "GST on Fee (18%)", value: gstOnFee },
+            ].map((row) => (
+              <div
+                key={row.label}
+                className="flex justify-between items-center py-1"
+                style={{ borderBottom: "1px solid #F1F5F9" }}
+              >
+                <span className="text-[11px] text-gray-500">{row.label}</span>
+                <span className="text-[11px] font-semibold text-gray-700">
+                  ₹{row.value.toLocaleString("en-IN")}
+                </span>
+              </div>
+            ))}
+            <div
+              className="flex justify-between items-center py-1"
+              style={{ borderBottom: "1px solid #F1F5F9" }}
+            >
+              <span className="text-[11px] text-gray-500 flex items-center gap-1">
+                1% TCS
+                <span className="text-[9px] text-gray-400">(Claimable)</span>
+              </span>
+              <span className="text-[11px] font-semibold text-gray-700">
+                ₹{tcs.toLocaleString("en-IN")}
+              </span>
+            </div>
+            <div className="flex justify-between items-center pt-2">
+              <span className="text-xs font-bold text-gray-900">
+                Total Payable
+              </span>
+              <span className="text-sm font-black" style={{ color: "#1D4ED8" }}>
+                ₹{total.toLocaleString("en-IN")}
+              </span>
+            </div>
+          </div>
+        );
+      })()}
+
       <p className="text-[10px] text-gray-500 text-center mt-2">
         Bid and seller details are masked until auction end.
       </p>
@@ -919,78 +977,6 @@ export default function ListingDetail() {
               })}
             </div>
           )}
-
-          {/* 8. Fee & Tax Summary */}
-          {(() => {
-            const priceRs = currentBid / 100;
-            const fee =
-              priceRs <= 10000
-                ? 800
-                : priceRs <= 30000
-                  ? 1000
-                  : priceRs <= 60000
-                    ? 1300
-                    : priceRs <= 100000
-                      ? 1500
-                      : 2000;
-            const gst = Math.round(fee * 0.18);
-            const tcs = Math.round(priceRs * 0.01);
-            const total = priceRs + fee + gst + tcs;
-            return (
-              <div
-                className="bg-white rounded-2xl p-4"
-                style={{ border: "1px solid #e5e7eb" }}
-              >
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                  Fee & Tax Summary
-                </p>
-                {[
-                  {
-                    label: "Device Price",
-                    value: `₹${priceRs.toLocaleString("en-IN")}`,
-                    bold: false,
-                  },
-                  {
-                    label: "Sourcing Fee",
-                    value: `₹${fee.toLocaleString("en-IN")}`,
-                    bold: false,
-                  },
-                  {
-                    label: "GST on Fee (18%)",
-                    value: `₹${gst.toLocaleString("en-IN")}`,
-                    bold: false,
-                  },
-                  {
-                    label: "1% Claimable TCS",
-                    value: `₹${tcs.toLocaleString("en-IN")}`,
-                    bold: false,
-                  },
-                ].map((row) => (
-                  <div
-                    key={row.label}
-                    className="flex items-center justify-between py-2"
-                    style={{ borderBottom: "1px solid #F1F5F9" }}
-                  >
-                    <span className="text-xs text-gray-500">{row.label}</span>
-                    <span className="text-xs font-semibold text-gray-700">
-                      {row.value}
-                    </span>
-                  </div>
-                ))}
-                <div className="flex items-center justify-between pt-2">
-                  <span className="text-sm font-bold text-gray-900">
-                    Total Payable
-                  </span>
-                  <span
-                    className="text-sm font-black"
-                    style={{ color: "#1D4ED8" }}
-                  >
-                    ₹{total.toLocaleString("en-IN")}
-                  </span>
-                </div>
-              </div>
-            );
-          })()}
         </div>
       </div>
     </div>
