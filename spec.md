@@ -1,32 +1,41 @@
 # 77mobiles.pro
 
 ## Current State
-- Full B2B electronics auction marketplace with Buyer, Seller, and Admin portals.
-- PWA files (manifest.json, sw.js) are missing — index.html has no manifest link or theme-color meta.
-- ProfilePage has two buttons ("My Account", "Help & Support") that show `toast("Coming soon")`.
-- Buyer portal search/barcode scanner overlay is wired but the IMEI scanner in CreateListing also needs verification.
-- All other major features (wallet, bidding, alerts, watchlist, category nav, admin panel, carousel sliders) are functional.
+A full-stack PWA B2B electronics auction marketplace. Frontend has BuyerPortal, SellerPortal, ListingDetail, CreateListing, ProfilePage, BottomNav, PortalCarousel, RecentSalesSlider, and demoListings data. App icons exist. PWA is set up.
 
 ## Requested Changes (Diff)
 
 ### Add
-- `public/manifest.json` — name: "77mobiles.pro", short_name: "77", display: standalone, theme_color: #1D4ED8, start_url: "/", icons for 192x192 and 512x512 using category smartphone asset.
-- `public/sw.js` — service worker caching homepage, index.html, manifest.json, and critical icon assets for offline use; uses cache-first strategy.
-- `<link rel="manifest">` and `<meta name="theme-color">` in index.html `<head>`.
-- Service worker registration script in index.html.
-- Functional My Account sub-page (modal or inline) showing dealer profile data.
-- Functional Help & Support sub-page with FAQs and contact info.
+- New app icon: royal blue rounded square, '77' in white + 'mobiles.pro' in light gray, small red '6 Live' dot in top-right corner (192x192, 512x512, 180x180 variants)
+- Debug notification button on ProfilePage: triggers local push notification (Title: '77mobiles.pro - Outbid Alert', Body: bidding alert for Samsung S24 Ultra, navigates to Activity on click)
+- 'Enable Notifications' button on ProfilePage (separate from debug button): checks support, calls requestPermission, shows toast for granted, shows message for denied
+- Guided Diagnostic sell flow: new page/modal sequence triggered when user taps Post/Sell. Steps: (1) Smart Start - Quick Scan auto-detects device model/resolution/browser, (2) Touch Test - full-screen grid swipe test, (3) Camera & Mic Check - WebRTC front/back camera 2s check + audio recording, (4) Screen Burn Test - cycle Red/Green/Blue/White full-screen colors, (5) Battery Health manual input with tooltip, (6) Final Report - auto-generate Diagnostic Score + 'Verified by 77mobiles' badge on listing
+- 20 demo listings in demoListings.ts for seller portal (visible in buyer portal)
 
 ### Modify
-- `index.html` — add PWA meta tags, manifest link, SW registration.
-- `ProfilePage.tsx` — wire "My Account" to navigate to AccountPage and "Help & Support" to a help modal/section instead of `toast("Coming soon")`.
+- **app icons**: Update manifest.json to reference new generated icon
+- **BottomNav**: height 80px, padding-bottom env(safe-area-inset-bottom), icons w-6 h-6 (20% larger), labels text-[12px], floating Post button properly scaled/vertically centered
+- **PortalCarousel**: Reduce paddingBottom from 45% to 38.25% (15% height reduction)
+- **RecentSalesSlider**: shrink card size by ~15%, reduce section vertical padding
+- **BuyerPortal**: tighten vertical spacing between categories and Bidding War banner; ensure Live Auctions tab bar + top 50% of first listing visible on 800px screen; fix BENTO_12 duplicate listingIds (bn10 and bn11 had duplicate b-5/b-6 IDs - assign unique IDs); clear all demo listings from buyer portal (remove BENTO_12 hardcoded items, keep only sharedListings from seller)
+- **demoListings.ts**: Remove all BUYER_AUCTIONS demo data; add 20 new seller demo listings (SELLER_DEMO_20) with unique IDs, realistic device names, prices, imageUrl as empty string
+- **ListingDetail.tsx**: Fix mockFallback to use the actual passed id instead of always returning Samsung S24 Ultra; ensure find() uses listingId correctly across combined seller+buyer arrays
+- **CreateListing.tsx**: Fix handlePublish to set imageUrl to uploadedPhotos[0] (cover photo base64) instead of hardcoded ''; clear uploadedPhotos state after publish
+- **SellerPortal.tsx listing cards**: Ensure key={listing.listingId} is unique; imageUrl dynamically from listing.imageUrl || getDeviceImage
 
 ### Remove
-- `toast("Coming soon")` from ProfilePage menu buttons.
+- All BENTO_12 hardcoded demo listings from BuyerPortal (buyer portal shows only seller-posted listings)
+- BUYER_AUCTIONS demo data from demoListings.ts
 
 ## Implementation Plan
-1. Create `public/manifest.json` with full PWA manifest config.
-2. Create `public/sw.js` with install + fetch handlers caching critical files.
-3. Update `index.html` with manifest link, theme-color meta, apple-mobile-web-app tags, and SW registration.
-4. Update `ProfilePage.tsx` — My Account navigates to `/account` route, Help & Support opens an inline help section.
-5. Create/update `AccountPage.tsx` with real dealer profile info display.
+1. Generate new 192x192 and 180x180 app icons from the 512x512 already generated
+2. Update BottomNav: height 80px total, safe-area padding, larger icons (w-6 h-6), 12px labels, Post button recentered
+3. Update PortalCarousel: reduce paddingBottom from 45% to 38.25%
+4. Update RecentSalesSlider: compact cards, less section padding
+5. Update BuyerPortal: tighten spacing, fix BENTO_12 duplicate IDs, clear hardcoded demo listings (only show sharedListings)
+6. Update demoListings.ts: remove BUYER_AUCTIONS demo data, add 20 seller demo listings
+7. Fix ListingDetail.tsx: fix mockFallback and find logic to use correct IDs
+8. Fix CreateListing.tsx: save uploadedPhotos[0] to imageUrl on publish, clear state
+9. Add ProfilePage notification buttons (debug + enable notifications)
+10. Add Guided Diagnostic sell flow as a new page sequence
+11. Update manifest.json to reference new icon

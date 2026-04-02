@@ -389,7 +389,7 @@ export default function AppShell() {
 
       <main
         key={activeTab}
-        className="pb-20 transition-opacity duration-200"
+        className="pb-24 transition-opacity duration-200"
         style={{ background: "#F8FAFC" }}
       >
         {activeTab === "home" && isSeller && <SellerPortal />}

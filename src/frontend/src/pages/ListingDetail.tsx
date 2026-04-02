@@ -28,32 +28,36 @@ import { useActor } from "../hooks/useActor";
 import { formatINR } from "../utils/format";
 
 // ─── Image Carousel ───────────────────────────────────────────────────────────────
-function mockFallback(id: string) {
-  const now = BigInt(Date.now()) * 1_000_000n;
+function mockFallback(id: string): Listing {
+  // First try to find in SELLER_LISTINGS by ID
+  const found = SELLER_LISTINGS.find((l) => l.listingId === id);
+  if (found) return found;
+
+  // Generic fallback for truly unknown IDs
+  const nowTs = BigInt(Date.now()) * 1_000_000n;
   const sec = (s: number) => BigInt(s * 1000) * 1_000_000n;
   return {
     listingId: id,
-    title: "Samsung Galaxy S24 Ultra 256GB",
-    brand: "Samsung",
-    model: "Samsung S24 Ultra",
-    storage: 256n,
-    batteryHealth: 88n,
-    warranty: 8n,
+    title: "Device Listing",
+    brand: "Unknown",
+    model: "Unknown Device",
+    storage: 128n,
+    batteryHealth: 85n,
+    warranty: 0n,
     condition: "Good",
-    color: "Titanium Gray",
-    description:
-      "S-Pen included. USB-verified by 77mobiles Pro diagnostic. Fully functional, minor surface scratches.",
-    basePrice: 8500000n,
+    color: "Black",
+    description: "Device listing details.",
+    basePrice: 5000000n,
     auctionType: "Live20min" as const,
     status: "Active" as const,
     imageUrl: "",
     isDemo: true,
-    screenPassCertified: true,
-    usbVerified: true,
-    serialNumberHash: "sha256:mock",
-    sellerId: "Seller #189",
-    endsAt: now + sec(750),
-    createdAt: now,
+    screenPassCertified: false,
+    usbVerified: false,
+    serialNumberHash: "",
+    sellerId: "Seller #000",
+    endsAt: nowTs + sec(600),
+    createdAt: nowTs,
   };
 }
 
@@ -451,7 +455,7 @@ function BiddingCard({
 export default function ListingDetail() {
   const { id } = useParams({ strict: false }) as { id?: string };
   const navigate = useNavigate();
-  const { mode } = useApp();
+  const { mode, sharedListings } = useApp();
   const { actor } = useActor();
 
   const [listing, setListing] = useState<Listing | null>(null);
@@ -470,8 +474,14 @@ export default function ListingDetail() {
   }, [listing]);
 
   useEffect(() => {
-    const all = [...SELLER_LISTINGS, ...BUYER_AUCTIONS];
+    const all = [...SELLER_LISTINGS, ...BUYER_AUCTIONS, ...sharedListings];
     const found = all.find((l) => l.listingId === id);
+    console.log(
+      "[ListingDetail] Loading ID:",
+      id,
+      "Found:",
+      found?.model ?? "not found in local data",
+    );
     if (found) {
       setListing(found);
       setLoading(false);
@@ -482,19 +492,30 @@ export default function ListingDetail() {
         .getListing(id)
         .then((res) => {
           if (res) {
+            console.log("[ListingDetail] Loaded from backend:", res.model);
             setListing(res);
           } else {
+            console.log(
+              "[ListingDetail] Not in backend, using mockFallback for:",
+              id,
+            );
             setListing(mockFallback(id));
           }
         })
-        .catch(() => setListing(mockFallback(id)))
+        .catch(() => {
+          console.log(
+            "[ListingDetail] Backend error, using mockFallback for:",
+            id,
+          );
+          setListing(mockFallback(id));
+        })
         .finally(() => setLoading(false));
       return;
     }
     // No actor yet — use fallback so UI always renders
     setListing(mockFallback(id ?? "mock"));
     setLoading(false);
-  }, [actor, id]);
+  }, [actor, id, sharedListings]);
 
   if (loading) {
     return (

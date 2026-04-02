@@ -57,6 +57,7 @@ export default function ProfilePage() {
   const navigate = useNavigate();
   const [view, setView] = useState<"profile" | "account" | "help">("profile");
   const [notifEnabled, setNotifEnabled] = useState(true);
+  const [notifDenied, setNotifDenied] = useState(false);
 
   const handleSwitchMode = () => {
     const newMode: AppMode = mode === "seller" ? "buyer" : "seller";
@@ -86,6 +87,49 @@ export default function ProfilePage() {
         notifEnabled ? "Notifications turned off" : "Notifications turned on",
       );
     }
+  };
+
+  const handleEnableNotifications = async () => {
+    if (!("Notification" in window)) {
+      toast.error("Notifications not supported in this browser");
+      return;
+    }
+    const perm = await Notification.requestPermission();
+    if (perm === "granted") {
+      setNotifEnabled(true);
+      setNotifDenied(false);
+      toast.success("Alerts Enabled!");
+    } else if (perm === "denied") {
+      setNotifDenied(true);
+    } else {
+      toast("Notification permission dismissed");
+    }
+  };
+
+  const handleTestNotification = () => {
+    if (!("Notification" in window) || Notification.permission !== "granted") {
+      toast.error("Please enable notifications first");
+      return;
+    }
+    const n = new Notification("77mobiles.pro - Outbid Alert", {
+      body: "Someone just placed a higher bid on the Samsung S24 Ultra.",
+      icon: "/assets/generated/icon-77mobiles-192.dim_192x192.png",
+    });
+    n.onclick = () => {
+      window.focus();
+    };
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.ready
+        .then((reg) => {
+          reg.showNotification("77mobiles.pro - Outbid Alert", {
+            body: "Someone just placed a higher bid on the Samsung S24 Ultra.",
+            icon: "/assets/generated/icon-77mobiles-192.dim_192x192.png",
+            data: { url: "/app" },
+          });
+        })
+        .catch(() => {});
+    }
+    toast.success("Test notification sent!");
   };
 
   // ── Account sub-page ─────────────────────────────────────────────────────────
@@ -224,6 +268,72 @@ export default function ProfilePage() {
               )}
             </button>
           ))}
+        </div>
+
+        {/* Notification Actions */}
+        <div
+          className="bg-white rounded-2xl overflow-hidden mb-3"
+          style={{
+            border: "1px solid #e5e7eb",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+          }}
+        >
+          <p className="px-4 pt-3 pb-1 text-xs font-bold text-gray-400 uppercase tracking-wide">
+            Bid Alerts
+          </p>
+          {/* Enable Bid Alerts */}
+          <div
+            className="px-4 py-3"
+            style={{ borderBottom: "1px solid #f3f4f6" }}
+          >
+            <p className="text-sm font-semibold text-gray-800 mb-1">
+              Enable Bid Alerts
+            </p>
+            <p className="text-xs text-gray-500 mb-2.5">
+              Get notified when you're outbid or when a bidding war starts.
+            </p>
+            {notifDenied && (
+              <div
+                className="mb-2 text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2"
+                style={{ border: "1px solid #fecaca" }}
+              >
+                Notifications blocked. To receive bidding updates, go to your
+                browser Settings &rarr; Site Settings &rarr; Notifications and
+                allow this site.
+              </div>
+            )}
+            <button
+              type="button"
+              data-ocid="profile.enable_notifications.button"
+              onClick={handleEnableNotifications}
+              className="w-full py-2.5 rounded-xl text-sm font-bold text-white"
+              style={{ background: "#1D4ED8" }}
+            >
+              Enable Bid Alerts
+            </button>
+          </div>
+          {/* Debug Notification */}
+          <div className="px-4 py-3">
+            <p className="text-sm font-semibold text-gray-800 mb-1">
+              Test Notification
+            </p>
+            <p className="text-xs text-gray-500 mb-2.5">
+              Trigger a sample outbid alert to verify your notification setup.
+            </p>
+            <button
+              type="button"
+              data-ocid="profile.test_notification.button"
+              onClick={handleTestNotification}
+              className="w-full py-2.5 rounded-xl text-sm font-bold"
+              style={{
+                background: "white",
+                color: "#6B7280",
+                border: "1px solid #e5e7eb",
+              }}
+            >
+              Test Notification (Debug)
+            </button>
+          </div>
         </div>
 
         {/* Ratings */}

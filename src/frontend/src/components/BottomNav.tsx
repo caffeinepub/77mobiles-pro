@@ -60,9 +60,11 @@ export default function BottomNav() {
         background: "rgba(255,255,255,0.88)",
         borderTop: "1px solid rgba(229,231,235,0.7)",
         boxShadow: "0 -2px 12px rgba(0,0,0,0.06)",
+        height: "80px",
+        paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
-      <div className="flex items-center justify-around px-2 pt-2 pb-1">
+      <div className="flex items-center justify-around px-2 h-full">
         {leftTabs.map(({ id, label, Icon }) => {
           const isActive = activeTab === id;
           return (
@@ -74,13 +76,16 @@ export default function BottomNav() {
               className="flex flex-col items-center justify-center gap-0.5 min-w-[56px] py-1"
             >
               <Icon
-                className="w-5 h-5"
+                className="w-6 h-6"
                 strokeWidth={1.5}
                 style={{ color: isActive ? "#1D4ED8" : "#9CA3AF" }}
               />
               <span
-                className="text-[10px] font-semibold"
-                style={{ color: isActive ? "#1D4ED8" : "#9CA3AF" }}
+                className="font-semibold"
+                style={{
+                  fontSize: "12px",
+                  color: isActive ? "#1D4ED8" : "#9CA3AF",
+                }}
               >
                 {label}
               </span>
@@ -96,11 +101,11 @@ export default function BottomNav() {
           className="w-14 h-14 rounded-full flex flex-col items-center justify-center flex-shrink-0"
           style={{
             background: "#1D4ED8",
-            marginTop: "-20px",
+            marginTop: "-24px",
             boxShadow: "0 4px 16px rgba(29,78,216,0.4)",
           }}
         >
-          <Plus size={24} strokeWidth={2.5} style={{ color: "#FFFFFF" }} />
+          <Plus size={28} strokeWidth={2.5} style={{ color: "#FFFFFF" }} />
           <span
             className="font-bold"
             style={{ fontSize: "9px", color: "#FFFFFF", marginTop: "1px" }}
@@ -123,7 +128,7 @@ export default function BottomNav() {
             >
               <div className="relative">
                 <Icon
-                  className="w-5 h-5"
+                  className="w-6 h-6"
                   strokeWidth={1.5}
                   style={{ color: isActive ? "#1D4ED8" : "#9CA3AF" }}
                 />
@@ -143,8 +148,11 @@ export default function BottomNav() {
                 )}
               </div>
               <span
-                className="text-[10px] font-semibold"
-                style={{ color: isActive ? "#1D4ED8" : "#9CA3AF" }}
+                className="font-semibold"
+                style={{
+                  fontSize: "12px",
+                  color: isActive ? "#1D4ED8" : "#9CA3AF",
+                }}
               >
                 {label}
               </span>

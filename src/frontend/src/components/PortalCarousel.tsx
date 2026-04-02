@@ -177,7 +177,7 @@ export default function PortalCarousel({
       data-ocid="portal.carousel.panel"
     >
       {/* 16:9 aspect ratio wrapper */}
-      <div style={{ paddingBottom: "45%", position: "relative" }}>
+      <div style={{ paddingBottom: "38.25%", position: "relative" }}>
         {/* Slides track */}
         <div
           style={{

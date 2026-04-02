@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useApp } from "../contexts/AppContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useActor } from "../hooks/useActor";
+import GuidedDiagnostic from "./GuidedDiagnostic";
 
 const BRANDS = [
   "Apple",
@@ -230,6 +231,8 @@ function luhnCheck(imei: string): boolean {
 
 export default function CreateListing() {
   const navigate = useNavigate();
+  const [showDiagnostic, setShowDiagnostic] = useState(false);
+  const [diagnosticResult, setDiagnosticResult] = useState<any>(null);
   const { actor } = useActor();
   const { addSharedListing } = useApp();
   const { user } = useAuth();
@@ -451,7 +454,7 @@ export default function CreateListing() {
       storage: BigInt(Number.parseInt(finalStorage ?? "0") || 0),
       color: finalColor,
       description: "",
-      imageUrl: "",
+      imageUrl: uploadedPhotos[0] ?? "",
       batteryHealth: BigInt(100),
       warranty: BigInt(0),
       serialNumberHash: imei ? `imei:${imei}` : "",
@@ -470,6 +473,8 @@ export default function CreateListing() {
       addSharedListing(newListing);
       toast.success("Listing published!");
       setPublishing(false);
+      // Clear upload cache so next listing doesn't inherit old photos
+      setUploadedPhotos(Array(5).fill(null));
       navigate({ to: "/app" });
     }
   };
@@ -527,6 +532,64 @@ export default function CreateListing() {
             <h2 className="font-black text-xl" style={{ color: "#002F34" }}>
               Add IMEI & Photos
             </h2>
+
+            {/* Guided Diagnostic CTA */}
+            <button
+              type="button"
+              data-ocid="create.run_diagnostic.button"
+              onClick={() => setShowDiagnostic(true)}
+              className="w-full flex items-center justify-between px-4 py-3 rounded-2xl"
+              style={{ background: "#EFF6FF", border: "1.5px solid #BFDBFE" }}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-8 h-8 rounded-xl flex items-center justify-center"
+                  style={{ background: "#1D4ED8" }}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="w-4 h-4"
+                    aria-hidden="true"
+                  >
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-bold" style={{ color: "#1D4ED8" }}>
+                    Run Device Diagnostic
+                    {diagnosticResult && (
+                      <span
+                        className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                        style={{ background: "#D1FAE5", color: "#065F46" }}
+                      >
+                        Score: {diagnosticResult.score}
+                        {diagnosticResult.verified ? " ✓ Verified" : ""}
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-[10px] text-blue-500">
+                    Touch test, camera check, screen test & battery health
+                  </p>
+                </div>
+              </div>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#1D4ED8"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-4 h-4 flex-shrink-0"
+                aria-hidden="true"
+              >
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </button>
 
             {/* IMEI input — FIRST / TOP */}
             <div
@@ -1422,6 +1485,16 @@ export default function CreateListing() {
           </div>
         )}
       </div>
+      {/* Guided Diagnostic overlay */}
+      {showDiagnostic && (
+        <GuidedDiagnostic
+          onClose={() => setShowDiagnostic(false)}
+          onAttach={(r) => {
+            setDiagnosticResult(r);
+            setShowDiagnostic(false);
+          }}
+        />
+      )}
     </div>
   );
 }

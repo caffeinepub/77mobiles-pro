@@ -23,8 +23,8 @@ import type { CarouselSlide } from "../components/PortalCarousel";
 import RecentSalesSlider from "../components/RecentSalesSlider";
 import { useApp } from "../contexts/AppContext";
 import {
-  BUYER_AUCTIONS,
   DEMO_BIDS,
+  SELLER_LISTINGS,
   getDeviceImage,
 } from "../data/demoListings";
 import { formatINR } from "../utils/format";
@@ -56,177 +56,6 @@ const BUYER_CAROUSEL_SLIDES: CarouselSlide[] = [
     title: "Used iPhone 15 Market",
     subtitle: "Price trending up +18% this month",
     ctaText: "View Trends",
-  },
-];
-
-const BENTO_12 = [
-  {
-    id: "bn1",
-    listingId: "b-1",
-    model: "Samsung S24 Ultra",
-    brand: "Samsung",
-    emoji: "\uD83D\uDCF1",
-    condition: "Like New",
-    price: 112500,
-    originalPrice: 134999,
-    bids: 14,
-    timer: "03:46",
-    isLive: true,
-    warrantyMonths: 8,
-  },
-  {
-    id: "bn2",
-    listingId: "b-2",
-    model: "iPhone 16 Pro",
-    brand: "Apple",
-    emoji: "\uD83D\uDCF1",
-    condition: "Excellent",
-    price: 118500,
-    originalPrice: 125000,
-    bids: 9,
-    timer: "12:24",
-    isLive: true,
-    warrantyMonths: 4,
-  },
-  {
-    id: "bn3",
-    listingId: "b-3",
-    model: "MacBook Pro M3 Max",
-    brand: "Apple",
-    emoji: "\uD83D\uDCBB",
-    condition: "Like New",
-    price: 249000,
-    originalPrice: 289000,
-    bids: 5,
-    timer: "18:39",
-    isLive: false,
-    warrantyMonths: 0,
-  },
-  {
-    id: "bn4",
-    listingId: "b-4",
-    model: "Google Pixel 9",
-    brand: "Google",
-    emoji: "\uD83D\uDCF1",
-    condition: "Good",
-    price: 65000,
-    originalPrice: 75000,
-    bids: 7,
-    timer: "22:15",
-    isLive: true,
-    warrantyMonths: 11,
-  },
-  {
-    id: "bn5",
-    listingId: "b-5",
-    model: "OnePlus 12 Pro",
-    brand: "OnePlus",
-    emoji: "\uD83D\uDCF1",
-    condition: "Fair",
-    price: 72000,
-    originalPrice: 85000,
-    bids: 11,
-    timer: "07:33",
-    isLive: true,
-    warrantyMonths: 3,
-  },
-  {
-    id: "bn6",
-    listingId: "b-6",
-    model: "Apple Watch Ultra 2",
-    brand: "Apple",
-    emoji: "\u231A",
-    condition: "Like New",
-    price: 82000,
-    originalPrice: 94900,
-    bids: 3,
-    timer: "14:50",
-    isLive: false,
-    warrantyMonths: 10,
-  },
-  {
-    id: "bn7",
-    listingId: "b-7",
-    model: "Sony WH-1000XM5",
-    brand: "Sony",
-    emoji: "\uD83C\uDFA7",
-    condition: "Excellent",
-    price: 24500,
-    originalPrice: 34990,
-    bids: 6,
-    timer: "09:12",
-    isLive: false,
-    warrantyMonths: 0,
-  },
-  {
-    id: "bn8",
-    listingId: "b-8",
-    model: "iPad Pro M4 13in",
-    brand: "Apple",
-    emoji: "\uD83D\uDCF1",
-    condition: "Like New",
-    price: 95000,
-    originalPrice: 109900,
-    bids: 4,
-    timer: "21:08",
-    isLive: false,
-    warrantyMonths: 6,
-  },
-  {
-    id: "bn9",
-    listingId: "b-9",
-    model: "AirPods Pro 3",
-    brand: "Apple",
-    emoji: "\uD83C\uDFA7",
-    condition: "New",
-    price: 18500,
-    originalPrice: 24900,
-    bids: 8,
-    timer: "05:45",
-    isLive: true,
-    warrantyMonths: 9,
-  },
-  {
-    id: "bn10",
-    listingId: "b-5",
-    model: "Galaxy Tab S9 Ultra",
-    brand: "Samsung",
-    emoji: "\uD83D\uDCF1",
-    condition: "Good",
-    price: 55000,
-    originalPrice: 69999,
-    bids: 2,
-    timer: "16:22",
-    isLive: false,
-    warrantyMonths: 2,
-  },
-  {
-    id: "bn11",
-    listingId: "b-6",
-    model: "Xbox Series X",
-    brand: "Microsoft",
-    emoji: "\uD83C\uDFAE",
-    condition: "Like New",
-    price: 45000,
-    originalPrice: 52990,
-    bids: 5,
-    timer: "11:17",
-    isLive: false,
-    warrantyMonths: 0,
-  },
-  {
-    id: "bn12",
-    listingId: "b-12",
-    model: "Pixel Watch 3 Pro",
-    brand: "Google",
-    emoji: "\u231A",
-    condition: "Excellent",
-    price: 32000,
-    originalPrice: 39999,
-    bids: 3,
-    timer: "08:54",
-    isLive: true,
-    warrantyMonths: 5,
   },
 ];
 
@@ -916,7 +745,7 @@ export default function BuyerPortal() {
       const el = document.getElementById("listing-grid");
       el?.scrollIntoView({ behavior: "smooth" });
     } else if (ctaText === "Bid Now") {
-      const firstListing = BENTO_12[0];
+      const firstListing = SELLER_LISTINGS[0];
       if (firstListing) navigate({ to: `/listing/${firstListing.listingId}` });
     }
   };
@@ -930,7 +759,7 @@ export default function BuyerPortal() {
   const [heartAnim, setHeartAnim] = useState<string | null>(null);
   // Task 11: Real-time bid count state
   const [liveBidCounts, setLiveBidCounts] = useState<Record<string, number>>(
-    Object.fromEntries(BENTO_12.map((item) => [item.id, item.bids])),
+    Object.fromEntries(SELLER_LISTINGS.map((l) => [l.listingId, 0])),
   );
 
   useEffect(() => {
@@ -1001,10 +830,26 @@ export default function BuyerPortal() {
     navigate({ to: `/listing/${listingId}` });
   };
 
-  /* Merge shared (newly posted) listings into bento display */
-  const sharedBentoItems = sharedListings.map((l: any, i: number) => ({
-    id: `shared-${i}`,
-    listingId: l.listingId ?? `shared-${i}`,
+  /* Map SELLER_LISTINGS + sharedListings into display format */
+  const sellerBentoItems = SELLER_LISTINGS.map((l) => ({
+    id: l.listingId,
+    listingId: l.listingId,
+    model: l.model,
+    brand: l.brand,
+    emoji: "📱",
+    condition: l.condition,
+    price: Number(l.basePrice) / 100,
+    originalPrice: Number(l.basePrice) / 100,
+    bids: liveBidCounts[l.listingId] ?? 0,
+    timer: l.auctionType === "Live20min" ? "20:00" : "7d",
+    isLive: l.auctionType === "Live20min",
+    warrantyMonths: Number(l.warranty ?? 0n),
+    imageUrl: l.imageUrl ?? "",
+  }));
+
+  const sharedBentoItems = sharedListings.map((l: any) => ({
+    id: l.listingId ?? `shared-${l.model}`,
+    listingId: l.listingId ?? `shared-${l.model}`,
     model: l.model ?? "New Device",
     brand: l.brand ?? "",
     emoji: "📱",
@@ -1015,10 +860,11 @@ export default function BuyerPortal() {
     timer: "20:00",
     isLive: l.auctionType === "Live20min",
     warrantyMonths: 0,
+    imageUrl: l.imageUrl ?? "",
   }));
 
   /* Filtered bento items — filter by filterPill and search, dismiss swipes */
-  const allBentoItems = [...sharedBentoItems, ...BENTO_12];
+  const allBentoItems = [...sharedBentoItems, ...sellerBentoItems];
   const filteredBento = allBentoItems.filter((item) => {
     if (dismissedCards.has(item.id)) return false;
     const q = searchQuery.toLowerCase();
@@ -1247,7 +1093,7 @@ export default function BuyerPortal() {
                           }}
                         >
                           <img
-                            src={getDeviceImage(item.model)}
+                            src={item.imageUrl || getDeviceImage(item.model)}
                             alt={item.model}
                             className="w-full h-full object-cover"
                             loading="lazy"
@@ -1396,7 +1242,7 @@ export default function BuyerPortal() {
                             }
                           >
                             <img
-                              src={getDeviceImage(item.model)}
+                              src={item.imageUrl || getDeviceImage(item.model)}
                               alt={item.model}
                               className="rounded-xl object-cover"
                               style={{ width: "72px", height: "72px" }}
@@ -1574,7 +1420,8 @@ export default function BuyerPortal() {
         {/* ENDING SOON — 2-column bento grid */}
         {category === "ending" && (
           <div className="grid grid-cols-2 gap-2.5">
-            {BUYER_AUCTIONS.slice()
+            {[...sharedListings, ...SELLER_LISTINGS]
+              .slice()
               .sort((a, b) => Number(a.endsAt - b.endsAt))
               .map((listing, idx) => {
                 const currentBid =
@@ -1605,7 +1452,7 @@ export default function BuyerPortal() {
                   >
                     <div className="w-full h-28 overflow-hidden">
                       <img
-                        src={getDeviceImage(listing.model)}
+                        src={listing.imageUrl || getDeviceImage(listing.model)}
                         alt={listing.model}
                         className="w-full h-full object-cover"
                         style={{ borderRadius: "12px 12px 0 0" }}

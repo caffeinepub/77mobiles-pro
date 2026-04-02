@@ -107,8 +107,8 @@ export default function RecentSalesSlider() {
       style={{
         background: "#FFFFFF",
         borderBottom: "1px solid #F1F5F9",
-        paddingTop: "10px",
-        paddingBottom: "10px",
+        paddingTop: "6px",
+        paddingBottom: "6px",
       }}
     >
       <div
@@ -171,7 +171,7 @@ export default function RecentSalesSlider() {
               gap: "6px",
               background: "#FFFFFF",
               borderRadius: "12px",
-              padding: "12px",
+              padding: "8px",
               border: "1px solid #E5E7EB",
               cursor: "pointer",
               minWidth: "160px",
