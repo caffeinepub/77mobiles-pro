@@ -1,21 +1,62 @@
 import { useNavigate } from "@tanstack/react-router";
 import {
+  ArrowLeft,
+  Bell,
+  Building2,
+  CheckCircle,
   ChevronRight,
+  CreditCard,
+  FileText,
   HelpCircle,
+  Lock,
   LogOut,
+  Mail,
+  MessageCircle,
+  Phone,
   RefreshCw,
   Settings,
   Shield,
+  Star,
   User,
 } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { type AppMode, useApp } from "../contexts/AppContext";
 import { useAuth } from "../contexts/AuthContext";
+
+const FAQ_ITEMS = [
+  {
+    q: "How do I verify my device with IMEI?",
+    a: "Go to Sell → Smartphones, enter your 15-digit IMEI number in the field at the top. The system will auto-fill model, storage, and color details from our device database.",
+  },
+  {
+    q: "When do I receive payment after a sale?",
+    a: "Funds are released to your wallet within 48 hours after the buyer confirms receipt. You can then withdraw to your linked bank account.",
+  },
+  {
+    q: "How does the escrow system work?",
+    a: "When a buyer wins an auction, the bid amount is automatically moved to escrow. It’s held securely until the buyer confirms the device matches the listing, then released to the seller.",
+  },
+  {
+    q: "What are the platform fees?",
+    a: "Sourcing fee is ₹800–₹2,000 depending on transaction value, plus 18% GST on the fee and 1% claimable TCS on the total transaction.",
+  },
+  {
+    q: "Can I bulk list multiple devices?",
+    a: "Yes. Use the Create Listing flow for each device, or contact our B2B support team to set up a bulk Excel upload for 50+ devices.",
+  },
+  {
+    q: "How do I switch between Buyer and Seller mode?",
+    a: "Go to Profile tab, then tap the \u2018Switch\u2019 button in the Mode section. Your data and listings are preserved when switching.",
+  },
+];
 
 export default function ProfilePage() {
   const { mode, setMode } = useApp();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [view, setView] = useState<"profile" | "account" | "help">("profile");
+  const [notifEnabled, setNotifEnabled] = useState(true);
 
   const handleSwitchMode = () => {
     const newMode: AppMode = mode === "seller" ? "buyer" : "seller";
@@ -30,6 +71,280 @@ export default function ProfilePage() {
     navigate({ to: "/" });
   };
 
+  const handleNotifToggle = async () => {
+    if (!notifEnabled && "Notification" in window) {
+      const perm = await Notification.requestPermission();
+      if (perm === "granted") {
+        setNotifEnabled(true);
+        toast.success("Push notifications enabled");
+      } else {
+        toast("Notification permission denied. Enable it in browser settings.");
+      }
+    } else {
+      setNotifEnabled((p) => !p);
+      toast(
+        notifEnabled ? "Notifications turned off" : "Notifications turned on",
+      );
+    }
+  };
+
+  // ── Account sub-page ─────────────────────────────────────────────────────────
+  if (view === "account") {
+    return (
+      <div className="px-4 pt-4 pb-24 bg-[#F8F9FA] min-h-screen">
+        <button
+          type="button"
+          onClick={() => setView("profile")}
+          className="flex items-center gap-2 mb-4 text-sm font-semibold"
+          style={{ color: "#1D4ED8" }}
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Profile
+        </button>
+        <h2 className="font-black text-lg text-gray-900 mb-4">My Account</h2>
+
+        {/* Identity card */}
+        <div
+          className="bg-white rounded-2xl p-4 mb-3"
+          style={{
+            border: "1px solid #e5e7eb",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+          }}
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <div
+              className="w-12 h-12 rounded-full flex items-center justify-center"
+              style={{ background: "#EEF2FF" }}
+            >
+              <User className="w-6 h-6" style={{ color: "#1D4ED8" }} />
+            </div>
+            <div>
+              <p className="font-black text-base text-gray-900">
+                Verified Dealer #402
+              </p>
+              <div className="flex items-center gap-1">
+                <Shield className="w-3 h-3" style={{ color: "#1D4ED8" }} />
+                <span
+                  className="text-xs font-semibold"
+                  style={{ color: "#1D4ED8" }}
+                >
+                  KYC Verified
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-2.5">
+            {[
+              {
+                icon: Building2,
+                label: "Business Name",
+                value: "TechMart India Pvt. Ltd.",
+              },
+              {
+                icon: Phone,
+                label: "Mobile",
+                value: `+91 •••••${user?.mobileNumber?.slice(-5) || "‥90000"}`,
+              },
+              { icon: Mail, label: "Email", value: "dealer402@77mobiles.pro" },
+              { icon: FileText, label: "GST Number", value: "22AAAAA0000A1Z5" },
+              { icon: CreditCard, label: "PAN", value: "AAAAA0000A" },
+            ].map(({ icon: Icon, label, value }) => (
+              <div key={label} className="flex items-center gap-3">
+                <div
+                  className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "#F4F7FF" }}
+                >
+                  <Icon className="w-4 h-4" style={{ color: "#1D4ED8" }} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[10px] text-gray-400 font-medium">
+                    {label}
+                  </p>
+                  <p className="text-sm font-semibold text-gray-900">{value}</p>
+                </div>
+                <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Security */}
+        <div
+          className="bg-white rounded-2xl overflow-hidden mb-3"
+          style={{
+            border: "1px solid #e5e7eb",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+          }}
+        >
+          <p className="px-4 pt-3 pb-1 text-xs font-bold text-gray-400 uppercase tracking-wide">
+            Security
+          </p>
+          {[
+            {
+              icon: Lock,
+              label: "Change Password",
+              action: () =>
+                toast("Password reset link sent to your registered email."),
+            },
+            {
+              icon: Shield,
+              label: "Two-Factor Authentication",
+              action: () => toast("2FA is enabled for wallet withdrawals."),
+            },
+            {
+              icon: Bell,
+              label: "Push Notifications",
+              action: handleNotifToggle,
+              trailing: notifEnabled ? "On" : "Off",
+            },
+          ].map((item, idx, arr) => (
+            <button
+              key={item.label}
+              type="button"
+              onClick={item.action}
+              className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
+              style={{
+                borderBottom:
+                  idx < arr.length - 1 ? "1px solid #f3f4f6" : "none",
+              }}
+            >
+              <item.icon className="w-4 h-4 text-gray-500" />
+              <span className="text-sm font-medium text-gray-800 flex-1">
+                {item.label}
+              </span>
+              {item.trailing ? (
+                <span
+                  className="text-xs font-bold px-2 py-0.5 rounded-full text-white"
+                  style={{ background: notifEnabled ? "#22c55e" : "#9ca3af" }}
+                >
+                  {item.trailing}
+                </span>
+              ) : (
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Ratings */}
+        <div
+          className="bg-white rounded-2xl p-4"
+          style={{
+            border: "1px solid #e5e7eb",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+          }}
+        >
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">
+            Dealer Reputation
+          </p>
+          <div className="flex items-center gap-3">
+            <div
+              className="w-14 h-14 rounded-xl flex items-center justify-center"
+              style={{ background: "#FFF7ED" }}
+            >
+              <Star className="w-7 h-7 text-orange-500" fill="currentColor" />
+            </div>
+            <div>
+              <p className="font-black text-2xl text-gray-900">4.8</p>
+              <p className="text-xs text-gray-500">Based on 136 transactions</p>
+              <div className="flex gap-0.5 mt-1">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star
+                    key={s}
+                    className="w-3 h-3"
+                    style={{ color: s <= 4 ? "#f97316" : "#d1d5db" }}
+                    fill={s <= 4 ? "currentColor" : "none"}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Help sub-page ─────────────────────────────────────────────────────────────
+  if (view === "help") {
+    return (
+      <div className="px-4 pt-4 pb-24 bg-[#F8F9FA] min-h-screen">
+        <button
+          type="button"
+          onClick={() => setView("profile")}
+          className="flex items-center gap-2 mb-4 text-sm font-semibold"
+          style={{ color: "#1D4ED8" }}
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Profile
+        </button>
+        <h2 className="font-black text-lg text-gray-900 mb-1">
+          Help & Support
+        </h2>
+        <p className="text-xs text-gray-500 mb-4">
+          Frequently asked questions for B2B dealers
+        </p>
+
+        {/* Contact options */}
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          {[
+            {
+              icon: MessageCircle,
+              label: "WhatsApp Support",
+              sub: "Mon–Sat 9AM–8PM",
+              color: "#22c55e",
+              action: () => window.open("https://wa.me/917700000077", "_blank"),
+            },
+            {
+              icon: Mail,
+              label: "Email Support",
+              sub: "Reply within 24h",
+              color: "#1D4ED8",
+              action: () =>
+                window.open("mailto:support@77mobiles.pro", "_blank"),
+            },
+          ].map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              onClick={item.action}
+              className="bg-white rounded-2xl p-3.5 flex flex-col items-center gap-2 text-center"
+              style={{
+                border: "1px solid #e5e7eb",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+              }}
+            >
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ background: `${item.color}15` }}
+              >
+                <item.icon className="w-5 h-5" style={{ color: item.color }} />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-gray-900">{item.label}</p>
+                <p className="text-[10px] text-gray-400">{item.sub}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* FAQs */}
+        <div
+          className="bg-white rounded-2xl overflow-hidden"
+          style={{
+            border: "1px solid #e5e7eb",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+          }}
+        >
+          <p className="px-4 pt-3 pb-1 text-xs font-bold text-gray-400 uppercase tracking-wide">
+            Frequently Asked Questions
+          </p>
+          <FAQList />
+        </div>
+      </div>
+    );
+  }
+
+  // ── Main Profile view ─────────────────────────────────────────────────────────
   return (
     <div className="px-4 pt-6 pb-6 bg-[#F8F9FA] min-h-screen">
       {/* Profile header */}
@@ -79,52 +394,56 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Switch Mode */}
+      {/* Switch mode */}
       <div
-        className="bg-white rounded-2xl p-4 mb-4"
+        className="bg-white rounded-2xl p-4 flex items-center justify-between mb-4"
         style={{
-          border: "2px solid #007AFF",
-          boxShadow: "0 1px 3px rgba(0,82,212,0.1)",
+          border: "1px solid #e5e7eb",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
         }}
       >
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="font-bold text-sm text-gray-900">
-              Switch to {mode === "seller" ? "Buyer" : "Seller"} Mode
-            </p>
-            <p className="text-xs text-gray-500 mt-0.5">
-              {mode === "seller"
-                ? "Browse and bid on listings"
-                : "List your devices for auction"}
-            </p>
-          </div>
-          <button
-            type="button"
-            data-ocid="profile.switch_mode.toggle"
-            onClick={handleSwitchMode}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white"
-            style={{ background: "#007AFF" }}
-          >
-            <RefreshCw className="w-4 h-4" />
-            Switch
-          </button>
+        <div>
+          <p className="font-bold text-sm text-gray-900">
+            Switch to {mode === "seller" ? "Buyer" : "Seller"} Mode
+          </p>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {mode === "seller"
+              ? "Browse and bid on listings"
+              : "List your devices for auction"}
+          </p>
         </div>
+        <button
+          type="button"
+          data-ocid="profile.switch_mode.toggle"
+          onClick={handleSwitchMode}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white"
+          style={{ background: "#007AFF" }}
+        >
+          <RefreshCw className="w-4 h-4" />
+          Switch
+        </button>
       </div>
 
       {/* Settings list */}
       <div
-        className="bg-white rounded-2xl overflow-hidden"
+        className="bg-white rounded-2xl overflow-hidden mb-4"
         style={{
           border: "1px solid #e5e7eb",
           boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
         }}
       >
         {[
-          { icon: Settings, label: "My Account", ocid: "profile.account.link" },
+          {
+            icon: Settings,
+            label: "My Account",
+            ocid: "profile.account.link",
+            action: () => setView("account"),
+          },
           {
             icon: HelpCircle,
             label: "Help & Support",
             ocid: "profile.help.link",
+            action: () => setView("help"),
           },
         ].map((item, idx) => (
           <button
@@ -135,9 +454,9 @@ export default function ProfilePage() {
             style={{
               borderBottom: idx < 1 ? "1px solid #f3f4f6" : "none",
             }}
-            onClick={() => toast("Coming soon")}
+            onClick={item.action}
           >
-            <item.icon className="w-4.5 h-4.5 text-gray-500" />
+            <item.icon className="w-4 h-4 text-gray-500" />
             <span className="text-sm font-medium text-gray-800 flex-1">
               {item.label}
             </span>
@@ -151,7 +470,7 @@ export default function ProfilePage() {
         type="button"
         data-ocid="profile.logout.button"
         onClick={handleLogout}
-        className="w-full mt-4 py-3 rounded-2xl text-sm font-bold flex items-center justify-center gap-2"
+        className="w-full mt-2 py-3 rounded-2xl text-sm font-bold flex items-center justify-center gap-2"
         style={{
           background: "#fef2f2",
           color: "#dc2626",
@@ -159,21 +478,48 @@ export default function ProfilePage() {
         }}
       >
         <LogOut className="w-4 h-4" />
-        Logout
+        Sign Out
       </button>
+    </div>
+  );
+}
 
-      {/* Footer */}
-      <p className="text-center text-[10px] text-gray-400 mt-6">
-        © {new Date().getFullYear()}. Built with ♥ using{" "}
-        <a
-          href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline"
+function FAQList() {
+  const [openIdx, setOpenIdx] = useState<number | null>(null);
+
+  return (
+    <div>
+      {FAQ_ITEMS.map((item, idx) => (
+        <div
+          key={item.q}
+          style={{
+            borderBottom:
+              idx < FAQ_ITEMS.length - 1 ? "1px solid #f3f4f6" : "none",
+          }}
         >
-          caffeine.ai
-        </a>
-      </p>
+          <button
+            type="button"
+            className="w-full flex items-start gap-2 px-4 py-3 text-left"
+            onClick={() => setOpenIdx(openIdx === idx ? null : idx)}
+          >
+            <HelpCircle className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+            <span className="text-sm font-semibold text-gray-800 flex-1">
+              {item.q}
+            </span>
+            <ChevronRight
+              className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5 transition-transform"
+              style={{ transform: openIdx === idx ? "rotate(90deg)" : "none" }}
+            />
+          </button>
+          {openIdx === idx && (
+            <div className="px-4 pb-3">
+              <p className="text-xs text-gray-600 leading-relaxed pl-6">
+                {item.a}
+              </p>
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }

@@ -1,0 +1,27 @@
+{
+  "name": "77mobiles.pro",
+  "short_name": "77",
+  "description": "Premium B2B Electronics Auction Marketplace",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#1D4ED8",
+  "background_color": "#F8FAFC",
+  "categories": ["shopping", "business"],
+  "icons": [
+    {
+      "src": "/assets/generated/category-smartphone-transparent.dim_200x240.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/generated/category-smartphone-transparent.dim_200x240.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "related_applications": []
+}
