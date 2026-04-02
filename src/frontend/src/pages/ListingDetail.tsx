@@ -25,6 +25,7 @@ import {
   getDeviceImage,
 } from "../data/demoListings";
 import { useActor } from "../hooks/useActor";
+import { BidStore } from "../stores/BidStore";
 import { formatINR } from "../utils/format";
 
 // ─── Image Carousel ───────────────────────────────────────────────────────────────
@@ -234,6 +235,18 @@ function BiddingCard({
   const [secs, setSecs] = useState(0);
   const ref = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Task 1: Subscribe to BidStore for real-time bid updates
+  useEffect(() => {
+    const unsub = BidStore.subscribeBids(listing.listingId, (bids) => {
+      if (bids.length > 0) {
+        const highestBid = Math.max(...bids.map((b) => b.amount));
+        // Use functional update to avoid stale closure on liveBid
+        setLiveBid((prev) => (highestBid > prev ? highestBid : prev));
+      }
+    });
+    return unsub;
+  }, [listing.listingId]);
+
   useEffect(() => {
     const endMs = Number(listing.endsAt) / 1_000_000;
     const update = () =>
@@ -277,13 +290,29 @@ function BiddingCard({
           createdAt: BigInt(Date.now()) * 1_000_000n,
         });
       }
-      setLiveBid(Math.round(amount * 100));
+      const amountPaise = Math.round(amount * 100);
+      BidStore.addBid({
+        bidId: crypto.randomUUID(),
+        listingId: listing.listingId,
+        dealerId: "demo-buyer",
+        amount: amountPaise,
+        placedAt: Date.now(),
+      });
+      setLiveBid(amountPaise);
       toast.success("Bid placed successfully!");
       // Task 6B: Haptic feedback on successful bid
       if (typeof navigator.vibrate === "function")
         navigator.vibrate([100, 50, 100]);
       setBidAmount("");
     } catch {
+      const amountPaise = Math.round(amount * 100);
+      BidStore.addBid({
+        bidId: crypto.randomUUID(),
+        listingId: listing.listingId,
+        dealerId: "demo-buyer",
+        amount: amountPaise,
+        placedAt: Date.now(),
+      });
       toast.success("Bid placed! (Demo mode)");
       // Task 6B: Haptic feedback on successful bid
       if (typeof navigator.vibrate === "function")
@@ -463,14 +492,30 @@ export default function ListingDetail() {
   const [bidCount, setBidCount] = useState(0);
   useEffect(() => {
     if (!listing || listing.status !== "Active") return;
-    setBidCount(DEMO_BID_COUNTS[listing.listingId] ?? 0);
+    const initialCount = DEMO_BID_COUNTS[listing.listingId] ?? 0;
+    setBidCount(initialCount);
+    // Real-time subscription: when buyer places a bid, seller sees count increase instantly
+    const unsub = BidStore.subscribeBids(listing.listingId, (bids) => {
+      setBidCount(bids.length + initialCount);
+    });
+    // Also simulate occasional organic bids from other dealers
     const interval = setInterval(() => {
-      setBidCount((prev) => {
-        if (Math.random() < 0.1) return prev + 1;
-        return prev;
-      });
-    }, 8000);
-    return () => clearInterval(interval);
+      if (Math.random() < 0.05) {
+        BidStore.addBid({
+          bidId: crypto.randomUUID(),
+          listingId: listing.listingId,
+          dealerId: `dealer-${Math.floor(Math.random() * 900 + 100)}`,
+          amount:
+            (DEMO_BIDS[listing.listingId] ?? Number(listing.basePrice)) +
+            Math.floor(Math.random() * 5 + 1) * 50000,
+          placedAt: Date.now(),
+        });
+      }
+    }, 12000);
+    return () => {
+      unsub();
+      clearInterval(interval);
+    };
   }, [listing]);
 
   useEffect(() => {
@@ -554,14 +599,15 @@ export default function ListingDetail() {
 
   const currentBid = DEMO_BIDS[listing.listingId] ?? Number(listing.basePrice);
 
-  // Build image array for carousel — use device image as demo
-  const carouselImages = listing.imageUrl
-    ? [listing.imageUrl]
-    : [
-        getDeviceImage(listing.model),
-        getDeviceImage(listing.model),
-        getDeviceImage(listing.model),
-      ];
+  // Build image array for carousel — supports multi-image uploads (Task 7)
+  const carouselImages = (() => {
+    const imgs = (listing as any).images as string[] | undefined;
+    if (imgs && imgs.length > 0) return imgs;
+    if (listing.imageUrl) return [listing.imageUrl];
+    // Demo fallback — 3 copies to show multi-image slider works
+    const img = getDeviceImage(listing.model);
+    return [img, img, img];
+  })();
 
   const specs = [
     { label: "Model", value: listing.model },

@@ -105,11 +105,21 @@ const CONDITIONS = [
   "Cracked/Damaged",
 ];
 const AGES = [
+  "Sealed Box (New)",
   "Less than 1 month",
-  "1-3 months",
-  "3-6 months",
-  "6-12 months",
-  "1 year+",
+  "1 month",
+  "2 months",
+  "3 months",
+  "4 months",
+  "5 months",
+  "6 months",
+  "7 months",
+  "8 months",
+  "9 months",
+  "10 months",
+  "11 months",
+  "1 Year",
+  "1 Year+",
 ];
 
 const MODEL_SPECS: Record<string, { storages: string[]; colors: string[] }> = {
@@ -253,7 +263,8 @@ export default function CreateListing() {
   );
   const [age, setAge] = useState("3-6 months");
   const [auctionType, setAuctionType] = useState("Live20min");
-  const [basePrice, setBasePrice] = useState("");
+  const [basePrice, setBasePrice] = useState(""); // clean numeric string
+  const [basePriceDisplay, setBasePriceDisplay] = useState(""); // formatted display string
   const [imei, setImei] = useState("");
   const [showImeiTooltip, setShowImeiTooltip] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -325,7 +336,17 @@ export default function CreateListing() {
     const controller = new AbortController();
     verifyTimer.current = setTimeout(() => controller.abort(), 8000);
 
-    fetch(`https://imeicheck.net/api/checkImei?imei=${digits}`, {
+    // DHRU BULK API v6.1 — IMEI to Brand/Model/Name (Service ID 11)
+    const formData = new URLSearchParams();
+    formData.append("username", "MOHAMMEDIBRAHIM486");
+    formData.append("apikey", "iNinq-Oj2x1-KR8aV-3HalS-IDt2Y-jsWQl");
+    formData.append("service", "11");
+    formData.append("imei", digits);
+
+    fetch("https://dhru.checkimei.com/api/", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: formData.toString(),
       signal: controller.signal,
     })
       .then(async (res) => {
@@ -334,19 +355,24 @@ export default function CreateListing() {
       })
       .then((data) => {
         if (verifyTimer.current) clearTimeout(verifyTimer.current);
+        // DHRU response fields: model_name, brand_name, name, result
         const modelName =
-          data?.model ||
           data?.model_name ||
-          data?.deviceName ||
           data?.name ||
-          data?.brand_name ||
+          data?.result ||
+          data?.model ||
+          data?.deviceName ||
           null;
+        const brandName = data?.brand_name || data?.brand || null;
         const storageVal =
           data?.storage || data?.storage_gb || data?.capacity || null;
         const colorVal = data?.color || data?.color_name || null;
 
         const device: VerifiedDevice = {
-          model_name: modelName || "",
+          model_name:
+            [brandName, modelName].filter(Boolean).join(" ").trim() ||
+            modelName ||
+            "",
           storage_gb: storageVal || "",
           color_name: colorVal || "",
         };
@@ -403,14 +429,21 @@ export default function CreateListing() {
     });
   };
 
+  // Task 9: Fill slots starting from first empty one (supports multi-select)
   const handleMultiPhotoSelect = async (files: FileList) => {
     const slots = Array.from(files).slice(0, 5);
     const compressed = await Promise.all(slots.map((f) => compressImage(f)));
     setUploadedPhotos((prev) => {
       const next = [...prev];
-      compressed.forEach((dataUrl, i) => {
-        if (i < next.length) next[i] = dataUrl;
-      });
+      let insertIdx = 0;
+      for (const dataUrl of compressed) {
+        // Find next empty slot
+        while (insertIdx < next.length && next[insertIdx] !== null) insertIdx++;
+        if (insertIdx < next.length) {
+          next[insertIdx] = dataUrl;
+          insertIdx++;
+        }
+      }
       return next;
     });
   };
@@ -419,7 +452,7 @@ export default function CreateListing() {
   const displayStep = step + 1;
 
   const handlePublish = async () => {
-    if (!basePrice) {
+    if (!basePrice || !Number(basePrice)) {
       toast.error("Enter a base price");
       return;
     }
@@ -437,7 +470,7 @@ export default function CreateListing() {
       auctionType === "Live20min"
         ? BigInt(20 * 60 * 1_000_000_000)
         : BigInt(7 * 24 * 60 * 60 * 1_000_000_000);
-    const basePriceVal = Math.round(Number.parseFloat(basePrice) * 100);
+    const basePriceVal = Math.round(Number(basePrice) * 100);
     const nowTs = BigInt(Date.now()) * BigInt(1_000_000);
     const newListing = {
       listingId: crypto.randomUUID(),
@@ -455,12 +488,14 @@ export default function CreateListing() {
       color: finalColor,
       description: "",
       imageUrl: uploadedPhotos[0] ?? "",
+      images: uploadedPhotos.filter(Boolean) as string[],
       batteryHealth: BigInt(100),
       warranty: BigInt(0),
       serialNumberHash: imei ? `imei:${imei}` : "",
       usbVerified: false,
       screenPassCertified: false,
       isDemo: false,
+      sealedBox: age === "Sealed Box (New)",
     };
     try {
       if (actor && user) {
@@ -879,25 +914,24 @@ export default function CreateListing() {
                 <p className="text-sm font-bold" style={{ color: "#002F34" }}>
                   Device Photos (up to 5)
                 </p>
-                <label
-                  className="text-xs font-bold px-3 py-1.5 rounded-lg cursor-pointer"
-                  style={{ background: "#1D4ED8", color: "white" }}
-                >
-                  + Add Photos
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="hidden"
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files.length > 0) {
-                        handleMultiPhotoSelect(e.target.files);
-                      }
-                      e.target.value = "";
-                    }}
-                  />
-                </label>
+                <span className="text-[10px] text-gray-400">
+                  Tap empty box to add
+                </span>
               </div>
+              {/* Hidden multi-file input for empty slots */}
+              <input
+                id="photo-multi"
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files.length > 0) {
+                    handleMultiPhotoSelect(e.target.files);
+                  }
+                  e.target.value = "";
+                }}
+              />
               <div
                 className="overflow-x-auto pb-1"
                 style={{ scrollbarWidth: "none" }}
@@ -920,7 +954,15 @@ export default function CreateListing() {
                             : "#f9fafb",
                           flexShrink: 0,
                         }}
-                        onClick={() => setPhotoMenu(i)}
+                        onClick={() => {
+                          if (!uploadedPhotos[i]) {
+                            // Empty slot — directly open multi-file picker
+                            document.getElementById("photo-multi")?.click();
+                          } else {
+                            // Filled slot — open replace/delete menu
+                            setPhotoMenu(i);
+                          }
+                        }}
                       >
                         {uploadedPhotos[i] ? (
                           <>
@@ -936,8 +978,11 @@ export default function CreateListing() {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setUploadedPhotos((prev) => {
-                                  const next = [...prev];
-                                  next[i] = null;
+                                  // Shift remaining photos left, fill null at end
+                                  const next = prev.filter(
+                                    (_, idx) => idx !== i,
+                                  );
+                                  while (next.length < 5) next.push(null);
                                   return next;
                                 });
                               }}
@@ -1340,7 +1385,13 @@ export default function CreateListing() {
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold outline-none bg-white"
                 style={{ color: "#002F34" }}
                 value={age}
-                onChange={(e) => setAge(e.target.value)}
+                onChange={(e) => {
+                  const newAge = e.target.value;
+                  setAge(newAge);
+                  if (newAge === "Sealed Box (New)") {
+                    setCondition("New");
+                  }
+                }}
               >
                 {AGES.map((a) => (
                   <option key={a} value={a}>
@@ -1414,12 +1465,25 @@ export default function CreateListing() {
                 <input
                   id="base-price"
                   data-ocid="create.base_price.input"
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   className="flex-1 py-3 text-lg font-black bg-transparent outline-none"
                   style={{ color: "#002F34" }}
-                  placeholder="e.g. 72000"
-                  value={basePrice}
-                  onChange={(e) => setBasePrice(e.target.value)}
+                  placeholder="e.g. 1,35,000"
+                  value={basePriceDisplay}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, "");
+                    setBasePrice(digits);
+                    if (digits) {
+                      setBasePriceDisplay(
+                        new Intl.NumberFormat("en-IN", {
+                          maximumFractionDigits: 0,
+                        }).format(Number(digits)),
+                      );
+                    } else {
+                      setBasePriceDisplay("");
+                    }
+                  }}
                 />
               </div>
             </div>

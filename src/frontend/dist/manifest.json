@@ -1,1 +1,28 @@
-{"background_color":"#F8FAFC","categories":["shopping","business"],"description":"Premium B2B Electronics Auction Marketplace","display":"standalone","icons":[{"purpose":"any","sizes":"192x192","src":"/assets/generated/icon-77mobiles-192.dim_192x192.png","type":"image/png"},{"purpose":"maskable","sizes":"192x192","src":"/assets/generated/icon-77mobiles-192.dim_192x192.png","type":"image/png"},{"purpose":"any","sizes":"512x512","src":"/assets/generated/icon-77mobiles-512.dim_512x512.png","type":"image/png"},{"purpose":"maskable","sizes":"512x512","src":"/assets/generated/icon-77mobiles-512.dim_512x512.png","type":"image/png"}],"name":"77mobiles.pro","orientation":"portrait","related_applications":[],"screenshots":[],"short_name":"77","start_url":"/","theme_color":"#1D4ED8"}
+{
+  "name": "77mobiles.pro",
+  "short_name": "77",
+  "description": "Premium B2B Electronics Auction Marketplace",
+  "display": "standalone",
+  "start_url": "/",
+  "scope": "/",
+  "orientation": "portrait",
+  "theme_color": "#1D4ED8",
+  "background_color": "#0047AB",
+  "categories": ["shopping", "business"],
+  "related_applications": [],
+  "screenshots": [],
+  "icons": [
+    {
+      "src": "/assets/generated/icon-77m-maskable-192.dim_192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/generated/icon-77m-maskable.dim_512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

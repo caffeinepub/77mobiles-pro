@@ -5,6 +5,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { type AlertNotification, BidStore } from "../stores/BidStore";
 
 export type AppMode = "seller" | "buyer";
 export type AppTab =
@@ -30,6 +31,8 @@ interface AppContextType {
   setSearchQuery: (q: string) => void;
   unreadAlerts: number;
   setUnreadAlerts: (n: number) => void;
+  alerts: AlertNotification[];
+  addAlert: (a: AlertNotification) => void;
   showPostLead: boolean;
   setShowPostLead: (v: boolean) => void;
   watchlist: Set<string>;
@@ -50,6 +53,8 @@ const AppContext = createContext<AppContextType>({
   setSearchQuery: () => {},
   unreadAlerts: 4,
   setUnreadAlerts: () => {},
+  alerts: [],
+  addAlert: () => {},
   showPostLead: false,
   setShowPostLead: () => {},
   watchlist: new Set(),
@@ -69,6 +74,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [activeTab, setActiveTab] = useState<AppTab>("home");
   const [searchQuery, setSearchQuery] = useState("");
   const [unreadAlerts, setUnreadAlerts] = useState(4);
+  const [alerts, setAlerts] = useState<AlertNotification[]>([]);
   const [showPostLead, setShowPostLead] = useState(false);
   const [activeCategory, setActiveCategory] = useState("smartphones");
   const [sharedListings, setSharedListings] = useState<any[]>([]);
@@ -80,6 +86,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return new Set();
     }
   });
+
+  // Subscribe to BidStore alerts for real-time unread count
+  useEffect(() => {
+    const unsub = BidStore.subscribeAlerts((newAlerts) => {
+      setAlerts(newAlerts);
+      setUnreadAlerts(newAlerts.filter((a) => !a.read).length);
+    });
+    return unsub;
+  }, []);
+
+  // Check for persistent phone session on mount
+  useEffect(() => {
+    try {
+      const session = localStorage.getItem("77m_phone_session");
+      if (session) {
+        const parsed = JSON.parse(session);
+        const age = Date.now() - parsed.token;
+        const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+        if (age < thirtyDays && parsed.role) {
+          localStorage.setItem("77m_mode", parsed.role);
+          setModeState(parsed.role);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const setMode = (m: AppMode) => {
     setModeState(m);
@@ -108,6 +141,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSharedListings((prev) => [listing, ...prev]);
   };
 
+  const addAlert = (a: AlertNotification) => {
+    BidStore.addBid({
+      bidId: a.id,
+      listingId: a.listingId,
+      dealerId: "system",
+      amount: 0,
+      placedAt: a.timestamp,
+    });
+  };
+
   useEffect(() => {
     const stored = localStorage.getItem("77m_mode");
     if (stored === "seller" || stored === "buyer") {
@@ -126,6 +169,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setSearchQuery,
         unreadAlerts,
         setUnreadAlerts,
+        alerts,
+        addAlert,
         showPostLead,
         setShowPostLead,
         watchlist: watchlistIds,

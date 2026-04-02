@@ -52,12 +52,46 @@ export default function GuidedDiagnostic({
     browser: string;
   } | null>(null);
 
-  // Touch test
+  // Touch test — dynamic grid based on window dimensions
   const [touchedSquares, setTouchedSquares] = useState<Set<number>>(new Set());
-  const GRID_ROWS = 8;
-  const GRID_COLS = 5;
+  const [gridDims, setGridDims] = useState<{ rows: number; cols: number }>(
+    () => ({
+      cols: Math.max(4, Math.floor(window.innerWidth / 60)),
+      rows: Math.max(6, Math.floor(window.innerHeight / 60)),
+    }),
+  );
+
+  const GRID_COLS = gridDims.cols;
+  const GRID_ROWS = gridDims.rows;
   const TOTAL_SQUARES = GRID_ROWS * GRID_COLS;
   const GRID_SQUARES = Array.from({ length: TOTAL_SQUARES }, (_, idx) => idx);
+
+  // Recalculate grid on resize
+  useEffect(() => {
+    const onResize = () => {
+      setGridDims({
+        cols: Math.max(4, Math.floor(window.innerWidth / 60)),
+        rows: Math.max(6, Math.floor(window.innerHeight / 60)),
+      });
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  // Remove body overflow when touch test is active
+  useEffect(() => {
+    if (step === 1) {
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    };
+  }, [step]);
 
   // Camera/mic test
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -244,8 +278,8 @@ export default function GuidedDiagnostic({
       className="fixed inset-0 z-[200] flex flex-col"
       style={{ background: "#F8FAFC" }}
     >
-      {/* Header */}
-      {step !== 3 && (
+      {/* Header — hidden during full-screen steps */}
+      {step !== 3 && step !== 1 && (
         <div
           className="flex items-center justify-between px-4 py-3 bg-white"
           style={{ borderBottom: "1px solid #e5e7eb" }}
@@ -270,8 +304,8 @@ export default function GuidedDiagnostic({
         </div>
       )}
 
-      {/* Step indicator */}
-      {step !== 3 && (
+      {/* Step indicator — hidden during full-screen steps */}
+      {step !== 3 && step !== 1 && (
         <div className="px-4 py-2 bg-white flex gap-1.5">
           {STEP_LABELS.map((label, i) => (
             <div
@@ -381,97 +415,188 @@ export default function GuidedDiagnostic({
         </div>
       )}
 
-      {/* ── STEP 1: Touch Test ── */}
+      {/* ── STEP 1: Touch Test — full-screen overlay with safe areas ── */}
       {step === 1 && (
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="px-4 py-3">
-            <h2 className="font-black text-base text-gray-900">Touch Test</h2>
-            <p className="text-xs text-gray-500 mb-2">
-              Swipe over every square to turn it green. Tests your touchscreen
-              digitizer.
-            </p>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-bold" style={{ color: "#1D4ED8" }}>
-                {touchProgress}% complete
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            background: "#F8FAFC",
+            display: "flex",
+            flexDirection: "column",
+            width: "100vw",
+            height: "100vh",
+            paddingTop: "env(safe-area-inset-top, 0px)",
+            paddingRight: "env(safe-area-inset-right, 0px)",
+            paddingBottom: "env(safe-area-inset-bottom, 0px)",
+            paddingLeft: "env(safe-area-inset-left, 0px)",
+          }}
+        >
+          {/* Compact top bar */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "8px 12px",
+              background: "rgba(255,255,255,0.9)",
+              backdropFilter: "blur(10px)",
+              borderBottom: "1px solid #e5e7eb",
+              flexShrink: 0,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 800,
+                  color: "#1D4ED8",
+                }}
+              >
+                Touch Test — Swipe to green
               </span>
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: touchProgress >= 90 ? "#16A34A" : "#6B7280",
+                }}
+              >
+                {touchProgress}%
+              </span>
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
               <button
                 type="button"
                 data-ocid="diagnostic.skip_touch.button"
                 onClick={() => setStep(2)}
-                className="flex items-center gap-1 text-xs font-semibold text-gray-400"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: "#6B7280",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "4px 8px",
+                }}
               >
-                <SkipForward className="w-3 h-3" /> Skip Test
+                <SkipForward style={{ width: 12, height: 12 }} /> Skip
+              </button>
+              <button
+                type="button"
+                data-ocid="diagnostic.close.button"
+                onClick={onClose}
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "#F4F7FF",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                <X style={{ width: 14, height: 14, color: "#1D4ED8" }} />
               </button>
             </div>
-            <div
-              className="w-full rounded-full h-1.5 mb-2"
-              style={{ background: "#E2E8F0" }}
-            >
-              <div
-                className="h-full rounded-full transition-all"
-                style={{ width: `${touchProgress}%`, background: "#1D4ED8" }}
-              />
-            </div>
           </div>
 
-          {touchProgress >= 90 && (
-            <div
-              className="mx-4 mb-2 py-2 px-3 rounded-xl flex items-center gap-2"
-              style={{ background: "#D1FAE5", border: "1px solid #6EE7B7" }}
-            >
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              <span className="text-xs font-bold text-green-800">
-                Touch Test Passed!
-              </span>
-            </div>
-          )}
-
-          {/* Touch grid */}
+          {/* Progress bar */}
           <div
-            className="flex-1 px-3 pb-2 select-none"
-            style={{ touchAction: "none" }}
+            style={{
+              height: 3,
+              background: "#E2E8F0",
+              flexShrink: 0,
+            }}
           >
             <div
-              className="grid h-full"
               style={{
-                gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`,
-                gridTemplateRows: `repeat(${GRID_ROWS}, 1fr)`,
-                gap: "3px",
+                height: "100%",
+                width: `${touchProgress}%`,
+                background: touchProgress >= 90 ? "#16A34A" : "#1D4ED8",
+                transition: "width 0.2s ease, background 0.3s",
               }}
-            >
-              {GRID_SQUARES.map((squareIdx) => (
-                <div
-                  key={`touch-square-${squareIdx}`}
-                  data-ocid={`diagnostic.touch_square.${squareIdx + 1}`}
-                  className="rounded transition-colors"
-                  style={{
-                    background: touchedSquares.has(squareIdx)
-                      ? "#22c55e"
-                      : "white",
-                    border: "1px solid #e5e7eb",
-                    cursor: "crosshair",
-                  }}
-                  onPointerEnter={() => {
-                    setTouchedSquares((prev) => new Set([...prev, squareIdx]));
-                    if (touchedSquares.size + 1 >= TOTAL_SQUARES * 0.9) {
-                      setTimeout(() => setStep(2), 1000);
-                    }
-                  }}
-                />
-              ))}
-            </div>
+            />
           </div>
 
+          {/* Full-screen touch grid */}
+          <div
+            style={{
+              flex: 1,
+              display: "grid",
+              gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`,
+              gridTemplateRows: `repeat(${GRID_ROWS}, 1fr)`,
+              gap: "2px",
+              padding: "2px",
+              touchAction: "none",
+              userSelect: "none",
+              WebkitUserSelect: "none",
+            }}
+          >
+            {GRID_SQUARES.map((squareIdx) => (
+              <div
+                key={`touch-square-${squareIdx}`}
+                data-ocid={`diagnostic.touch_square.${squareIdx + 1}`}
+                style={{
+                  background: touchedSquares.has(squareIdx)
+                    ? "#22c55e"
+                    : "white",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 4,
+                  cursor: "crosshair",
+                  transition: "background 0.15s",
+                }}
+                onPointerEnter={() => {
+                  setTouchedSquares((prev) => {
+                    const next = new Set([...prev, squareIdx]);
+                    if (next.size >= TOTAL_SQUARES * 0.9) {
+                      setTimeout(() => setStep(2), 600);
+                    }
+                    return next;
+                  });
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Success overlay */}
           {touchProgress >= 90 && (
-            <div className="px-4 pb-4">
+            <div
+              style={{
+                position: "absolute",
+                bottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)",
+                left: "50%",
+                transform: "translateX(-50%)",
+                zIndex: 10,
+              }}
+            >
               <button
                 type="button"
                 data-ocid="diagnostic.touch_next.button"
                 onClick={() => setStep(2)}
-                className="w-full py-3 rounded-xl text-white font-bold"
-                style={{ background: "#1D4ED8" }}
+                style={{
+                  padding: "12px 32px",
+                  borderRadius: 12,
+                  background: "#1D4ED8",
+                  color: "white",
+                  fontWeight: 800,
+                  fontSize: 14,
+                  border: "none",
+                  cursor: "pointer",
+                  boxShadow: "0 4px 16px rgba(29,78,216,0.4)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
               >
-                Next: Camera & Mic
+                <CheckCircle style={{ width: 16, height: 16 }} />
+                Touch Test Passed! Continue
               </button>
             </div>
           )}

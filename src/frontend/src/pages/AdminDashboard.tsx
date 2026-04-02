@@ -396,6 +396,14 @@ const MOCK_AUDIT = [
   },
 ];
 
+interface BannerSlide {
+  id: string;
+  imageUrl: string;
+  title: string;
+  target: "buyer" | "seller" | "both";
+  active: boolean;
+}
+
 function formatTime(seconds: number) {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -438,6 +446,90 @@ export default function AdminDashboard() {
   );
   const feedRef = useRef<HTMLDivElement>(null);
   const feedIdxRef = useRef(0);
+
+  // Task 11: Real-time pending verifications
+  const [pendingUsers, setPendingUsers] = useState([
+    {
+      id: "PND-001",
+      name: "PhoneHub Surat",
+      mobile: "+91 98765 43210",
+      business: "PhoneHub Electronics",
+      status: "pending" as const,
+    },
+    {
+      id: "PND-002",
+      name: "QuickResell Jaipur",
+      mobile: "+91 87654 32109",
+      business: "QuickResell Pvt Ltd",
+      status: "pending" as const,
+    },
+    {
+      id: "PND-003",
+      name: "MobilePlex Kochi",
+      mobile: "+91 76543 21098",
+      business: "MobilePlex Traders",
+      status: "pending" as const,
+    },
+  ]);
+  const [pendingCount, setPendingCount] = useState(3);
+
+  // Task 12: Slider Management state
+  const [banners, setBanners] = useState<BannerSlide[]>([
+    {
+      id: "b1",
+      imageUrl: "",
+      title: "iPhone 16 Pro — Bidding War!",
+      target: "both",
+      active: true,
+    },
+    {
+      id: "b2",
+      imageUrl: "",
+      title: "Samsung S25 Ultra Auction",
+      target: "buyer",
+      active: true,
+    },
+    {
+      id: "b3",
+      imageUrl: "",
+      title: "Bulk MacBook Pro Deals",
+      target: "seller",
+      active: false,
+    },
+  ]);
+  const [newBannerTitle, setNewBannerTitle] = useState("");
+  const [newBannerTarget, setNewBannerTarget] = useState<
+    "buyer" | "seller" | "both"
+  >("both");
+  const [newBannerPreview, setNewBannerPreview] = useState("");
+
+  // Task 11: Real-time new user listener simulation (like Firebase onSnapshot)
+  useEffect(() => {
+    if (!authenticated) return;
+    const names = ["TechStore Nagpur", "BidPhone Vizag", "SmartResell Indore"];
+    const interval = setInterval(() => {
+      if (Math.random() < 0.3) {
+        const name = names[Math.floor(Math.random() * names.length)];
+        const newUser = {
+          id: `PND-${Date.now()}`,
+          name,
+          mobile: `+91 9${Math.floor(Math.random() * 9)}${Math.floor(
+            Math.random() * 100000000,
+          )
+            .toString()
+            .padStart(8, "0")}`,
+          business: `${name} Ltd`,
+          status: "pending" as const,
+        };
+        setPendingUsers((prev) => [newUser, ...prev]);
+        setPendingCount((prev) => prev + 1);
+        toast.success(`New registration: ${newUser.name}`, {
+          description: "Pending verification",
+        });
+      }
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [authenticated]);
 
   // Live feed auto-scroll
   useEffect(() => {
@@ -656,7 +748,17 @@ export default function AdminDashboard() {
               >
                 <Icon className="w-4 h-4 flex-shrink-0" />
                 {label}
-                {isActive && <ChevronRight className="w-3.5 h-3.5 ml-auto" />}
+                {id === "users" && pendingCount > 0 && (
+                  <span
+                    className="ml-auto text-[9px] font-black px-1.5 py-0.5 rounded-full"
+                    style={{ background: "#F97316", color: "white" }}
+                  >
+                    {pendingCount}
+                  </span>
+                )}
+                {isActive && id !== "users" && (
+                  <ChevronRight className="w-3.5 h-3.5 ml-auto" />
+                )}
               </button>
             );
           })}
@@ -885,6 +987,99 @@ export default function AdminDashboard() {
 
               {!kycTab ? (
                 <>
+                  {/* Task 11: Pending Verifications real-time card */}
+                  <div
+                    className="rounded-2xl p-4"
+                    style={{
+                      background: "#FFF7ED",
+                      border: "1px solid #FED7AA",
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="font-bold text-sm"
+                          style={{ color: "#92400E" }}
+                        >
+                          Pending Verifications
+                        </span>
+                        <span
+                          className="text-xs font-black px-2 py-0.5 rounded-full animate-pulse"
+                          style={{ background: "#F97316", color: "white" }}
+                        >
+                          {pendingCount}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-orange-500">
+                        Live • Auto-updates
+                      </span>
+                    </div>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {pendingUsers.map((u) => (
+                        <div
+                          key={u.id}
+                          className="flex items-center justify-between py-2 px-3 rounded-xl"
+                          style={{
+                            background: "white",
+                            border: "1px solid #FED7AA",
+                          }}
+                        >
+                          <div>
+                            <p className="text-sm font-semibold text-[#1E293B]">
+                              {u.name}
+                            </p>
+                            <p className="text-xs text-gray-400">
+                              {u.business} • {u.mobile}
+                            </p>
+                          </div>
+                          <div className="flex gap-1.5">
+                            <button
+                              type="button"
+                              data-ocid="admin.pending.approve.button"
+                              onClick={() => {
+                                setPendingUsers((prev) =>
+                                  prev.filter((x) => x.id !== u.id),
+                                );
+                                setPendingCount((prev) =>
+                                  Math.max(0, prev - 1),
+                                );
+                                toast.success(
+                                  "User approved — they can now access the portal",
+                                );
+                              }}
+                              className="text-xs font-bold px-2.5 py-1 rounded-lg"
+                              style={{ background: "#16A34A", color: "white" }}
+                            >
+                              Approve
+                            </button>
+                            <button
+                              type="button"
+                              data-ocid="admin.pending.reject.button"
+                              onClick={() => {
+                                setPendingUsers((prev) =>
+                                  prev.filter((x) => x.id !== u.id),
+                                );
+                                setPendingCount((prev) =>
+                                  Math.max(0, prev - 1),
+                                );
+                                toast.error("User rejected");
+                              }}
+                              className="text-xs font-bold px-2.5 py-1 rounded-lg"
+                              style={{ background: "#DC2626", color: "white" }}
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      {pendingUsers.length === 0 && (
+                        <p className="text-xs text-center text-gray-400 py-2">
+                          No pending verifications
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
                   <div
                     className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
                     style={{
@@ -1875,6 +2070,269 @@ export default function AdminDashboard() {
                     >
                       <span>7 days</span>
                       <span>30 days</span>
+                    </div>
+                  </div>
+                </div>
+              </SectionBlock>
+
+              {/* Task 12: Slider Management */}
+              <SectionBlock title="Slider Management">
+                <div className="space-y-4">
+                  {/* Upload New Banner */}
+                  <div className="space-y-3">
+                    <p className="text-xs font-bold text-gray-500 uppercase">
+                      Upload New Banner
+                    </p>
+                    <div>
+                      <label
+                        htmlFor="admin-banner-upload"
+                        className="block text-xs text-gray-600 mb-1 font-medium"
+                      >
+                        Banner Image
+                      </label>
+                      <label
+                        htmlFor="admin-banner-upload"
+                        className="flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer text-sm font-semibold"
+                        style={{
+                          background: "#F1F5F9",
+                          border: "1.5px dashed #CBD5E1",
+                          color: "#64748B",
+                        }}
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="w-4 h-4"
+                          aria-hidden="true"
+                        >
+                          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                        </svg>
+                        {newBannerPreview
+                          ? "Image selected ✓"
+                          : "Choose image..."}
+                        <input
+                          id="admin-banner-upload"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (ev) =>
+                                setNewBannerPreview(
+                                  ev.target?.result as string,
+                                );
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                      </label>
+                      {newBannerPreview && (
+                        <img
+                          src={newBannerPreview}
+                          alt="Banner preview"
+                          className="mt-2 rounded-xl h-16 w-full object-cover"
+                        />
+                      )}
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="admin-banner-title"
+                        className="block text-xs text-gray-600 mb-1 font-medium"
+                      >
+                        Title
+                      </label>
+                      <input
+                        id="admin-banner-title"
+                        data-ocid="admin.slider.title.input"
+                        type="text"
+                        value={newBannerTitle}
+                        onChange={(e) => setNewBannerTitle(e.target.value)}
+                        placeholder="e.g. iPhone 16 Pro — Bidding War!"
+                        className="w-full px-3 py-2 rounded-xl text-sm outline-none"
+                        style={{
+                          background: "#F8FAFC",
+                          border: "1px solid #E2E8F0",
+                          color: "#1E293B",
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="admin-banner-target"
+                        className="block text-xs text-gray-600 mb-1 font-medium"
+                      >
+                        Target Audience
+                      </label>
+                      <select
+                        id="admin-banner-target"
+                        data-ocid="admin.slider.target.select"
+                        value={newBannerTarget}
+                        onChange={(e) =>
+                          setNewBannerTarget(
+                            e.target.value as "buyer" | "seller" | "both",
+                          )
+                        }
+                        className="w-full px-3 py-2 rounded-xl text-sm outline-none"
+                        style={{
+                          background: "#F8FAFC",
+                          border: "1px solid #E2E8F0",
+                          color: "#1E293B",
+                        }}
+                      >
+                        <option value="both">Both Portals</option>
+                        <option value="buyer">Buyer Portal Only</option>
+                        <option value="seller">Seller Portal Only</option>
+                      </select>
+                    </div>
+                    <button
+                      type="button"
+                      data-ocid="admin.slider.publish.button"
+                      onClick={() => {
+                        if (!newBannerTitle) {
+                          toast.error("Enter a banner title");
+                          return;
+                        }
+                        const newBanner = {
+                          id: `banner-${Date.now()}`,
+                          imageUrl: newBannerPreview,
+                          title: newBannerTitle,
+                          target: newBannerTarget,
+                          active: true,
+                        };
+                        setBanners((prev) => [newBanner, ...prev]);
+                        setNewBannerTitle("");
+                        setNewBannerPreview("");
+                        toast.success(
+                          "Banner published — portals updated in real-time!",
+                        );
+                      }}
+                      className="w-full py-2.5 rounded-xl font-bold text-white text-sm"
+                      style={{ background: "#1D4ED8" }}
+                    >
+                      Publish Banner
+                    </button>
+                  </div>
+
+                  {/* Banner list */}
+                  <div>
+                    <p className="text-xs font-bold text-gray-500 uppercase mb-2">
+                      Active Banners ({banners.length})
+                    </p>
+                    <div className="space-y-2">
+                      {banners.map((banner) => (
+                        <div
+                          key={banner.id}
+                          className="flex items-center gap-3 p-3 rounded-xl"
+                          style={{
+                            background: "#F8FAFC",
+                            border: "1px solid #E2E8F0",
+                          }}
+                          data-ocid={`admin.slider.banner.item.${banners.indexOf(banner) + 1}`}
+                        >
+                          {banner.imageUrl && (
+                            <img
+                              src={banner.imageUrl}
+                              alt={banner.title}
+                              className="w-12 h-8 rounded-lg object-cover flex-shrink-0"
+                            />
+                          )}
+                          {!banner.imageUrl && (
+                            <div
+                              className="w-12 h-8 rounded-lg flex-shrink-0 flex items-center justify-center"
+                              style={{ background: "#E2E8F0" }}
+                            >
+                              <span className="text-[8px] text-gray-400">
+                                IMG
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-[#1E293B] truncate">
+                              {banner.title}
+                            </p>
+                            <span
+                              className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+                              style={{
+                                background:
+                                  banner.target === "both"
+                                    ? "#EFF6FF"
+                                    : banner.target === "buyer"
+                                      ? "#F0FDF4"
+                                      : "#FFF7ED",
+                                color:
+                                  banner.target === "both"
+                                    ? "#1D4ED8"
+                                    : banner.target === "buyer"
+                                      ? "#16A34A"
+                                      : "#F97316",
+                              }}
+                            >
+                              {banner.target === "both"
+                                ? "Both"
+                                : banner.target === "buyer"
+                                  ? "Buyer"
+                                  : "Seller"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <button
+                              type="button"
+                              data-ocid="admin.slider.banner.toggle"
+                              onClick={() => {
+                                setBanners((prev) =>
+                                  prev.map((b) =>
+                                    b.id === banner.id
+                                      ? { ...b, active: !b.active }
+                                      : b,
+                                  ),
+                                );
+                                toast.success(
+                                  `Banner ${banner.active ? "deactivated" : "activated"} successfully`,
+                                );
+                              }}
+                              className="text-[10px] font-bold px-2 py-1 rounded-lg transition-all"
+                              style={{
+                                background: banner.active
+                                  ? "#D1FAE5"
+                                  : "#F1F5F9",
+                                color: banner.active ? "#065F46" : "#94A3B8",
+                              }}
+                            >
+                              {banner.active ? "ON" : "OFF"}
+                            </button>
+                            <button
+                              type="button"
+                              data-ocid="admin.slider.banner.delete_button"
+                              onClick={() => {
+                                setBanners((prev) =>
+                                  prev.filter((b) => b.id !== banner.id),
+                                );
+                                toast.success("Banner removed");
+                              }}
+                              className="w-6 h-6 flex items-center justify-center rounded-lg"
+                              style={{
+                                background: "#FEE2E2",
+                                color: "#DC2626",
+                              }}
+                            >
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                className="w-3 h-3"
+                                aria-hidden="true"
+                              >
+                                <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>

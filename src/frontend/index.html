@@ -10,20 +10,20 @@
     <link rel="manifest" href="/manifest.json" />
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" sizes="192x192" href="/assets/generated/icon-192x192.dim_192x192.png" />
-    <link rel="icon" type="image/png" sizes="512x512" href="/assets/generated/icon-512x512.dim_512x512.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/generated/icon-77m-maskable-192.dim_192x192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/assets/generated/icon-77m-maskable.dim_512x512.png" />
 
     <!-- Apple PWA -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="77mobiles" />
-    <link rel="apple-touch-icon" href="/assets/generated/icon-77mobiles-180.dim_180x180.png" />
+    <link rel="apple-touch-icon" href="/assets/generated/icon-77m-apple-180.dim_180x180.png" />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="77mobiles.pro" />
     <meta property="og:description" content="Premium B2B Electronics Auction Marketplace" />
-    <meta property="og:image" content="/assets/generated/icon-512x512.dim_512x512.png" />
+    <meta property="og:image" content="/assets/generated/icon-77m-maskable.dim_512x512.png" />
   </head>
   <body>
     <div id="root"></div>
@@ -32,7 +32,7 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function () {
-          navigator.serviceWorker.register('/sw.js').catch(function () {});
+          navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function () {});
         });
       }
     </script>

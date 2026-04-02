@@ -1462,12 +1462,22 @@ export default function BuyerPortal() {
                       <p className="font-bold text-xs text-[#002F34] leading-snug mb-1 truncate">
                         {listing.model}
                       </p>
-                      <span
-                        className="inline-block text-[9px] font-semibold px-1.5 py-0.5 rounded-full mb-1.5"
-                        style={{ background: cond.bg, color: cond.text }}
-                      >
-                        {listing.condition}
-                      </span>
+                      <div className="flex gap-1 mb-1.5 flex-wrap">
+                        <span
+                          className="inline-block text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+                          style={{ background: cond.bg, color: cond.text }}
+                        >
+                          {listing.condition}
+                        </span>
+                        {(listing as any).sealedBox && (
+                          <span
+                            className="inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                            style={{ background: "#D1FAE5", color: "#065F46" }}
+                          >
+                            SEALED
+                          </span>
+                        )}
+                      </div>
                       <p className="font-black text-sm text-[#002F34] mb-1">
                         {formatINR(currentBid)}
                       </p>

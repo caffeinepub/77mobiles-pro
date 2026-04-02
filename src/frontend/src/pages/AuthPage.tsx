@@ -3,18 +3,32 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "@tanstack/react-router";
-import { LogIn, ShoppingBag, Smartphone, Store } from "lucide-react";
-import { useState } from "react";
+import {
+  CheckCircle,
+  LogIn,
+  Phone,
+  ShoppingBag,
+  Smartphone,
+  Store,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { UserRole } from "../backend.d";
 import { useAuth } from "../contexts/AuthContext";
 import { useActor } from "../hooks/useActor";
 
+// Mock verified phone numbers for demo
+const VERIFIED_PHONES: Record<string, "verified" | "pending" | "new"> = {
+  "9876543210": "verified",
+  "9999999999": "verified",
+  "1111111111": "pending",
+};
+
 export default function AuthPage() {
   const navigate = useNavigate();
   const { actor } = useActor();
   const { login } = useAuth();
-  const [mode, setMode] = useState<"register" | "login">("register");
+  const [mode, setMode] = useState<"register" | "login" | "phone">("register");
   const [loading, setLoading] = useState(false);
 
   const [sellerPan, setSellerPan] = useState("");
@@ -29,6 +43,31 @@ export default function AuthPage() {
 
   const [loginMobile, setLoginMobile] = useState("");
   const [loginRole, setLoginRole] = useState<UserRole>(UserRole.sellerDealer);
+
+  // Phone OTP flow state
+  const [otpMode, setOtpMode] = useState<"idle" | "phone" | "otp" | "pending">(
+    "idle",
+  );
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpError, setOtpError] = useState("");
+  const [otpResendTimer, setOtpResendTimer] = useState(0);
+  const [phoneStatus, setPhoneStatus] = useState<
+    "verified" | "pending" | "new" | null
+  >(null);
+  const [pendingCheckCount, setPendingCheckCount] = useState(0);
+  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const resendTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pendingCheckRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (resendTimerRef.current) clearInterval(resendTimerRef.current);
+      if (pendingCheckRef.current) clearInterval(pendingCheckRef.current);
+    };
+  }, []);
 
   const goToApp = (role: UserRole) => {
     localStorage.setItem(
@@ -144,6 +183,446 @@ export default function AuthPage() {
     goToApp(loginRole);
   };
 
+  // ── Phone OTP flow handlers ──
+  const startResendTimer = () => {
+    setOtpResendTimer(30);
+    if (resendTimerRef.current) clearInterval(resendTimerRef.current);
+    resendTimerRef.current = setInterval(() => {
+      setOtpResendTimer((prev) => {
+        if (prev <= 1) {
+          if (resendTimerRef.current) clearInterval(resendTimerRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleSendOtp = async () => {
+    if (phoneNumber.length !== 10) {
+      setOtpError("Enter a valid 10-digit phone number");
+      return;
+    }
+    setOtpError("");
+    setLoading(true);
+
+    // Simulate API call delay
+    await new Promise((r) => setTimeout(r, 1500));
+
+    const status = VERIFIED_PHONES[phoneNumber] || "new";
+    setPhoneStatus(status);
+
+    if (status === "new") {
+      setOtpError(
+        "Account not registered. Please complete full registration first.",
+      );
+      setLoading(false);
+      return;
+    }
+
+    setOtpSent(true);
+    setOtpMode("otp");
+    startResendTimer();
+    setLoading(false);
+    toast.success(`OTP sent to +91 ${phoneNumber}`);
+    setTimeout(() => otpRefs.current[0]?.focus(), 100);
+  };
+
+  const handleVerifyOtp = async () => {
+    const enteredOtp = otp.join("");
+    if (enteredOtp.length !== 6) {
+      setOtpError("Enter complete 6-digit OTP");
+      return;
+    }
+    setOtpError("");
+    setLoading(true);
+
+    // Mock OTP: 123456 always succeeds
+    await new Promise((r) => setTimeout(r, 1200));
+
+    if (enteredOtp !== "123456") {
+      setOtpError("Invalid OTP. Please try again. (Demo: use 123456)");
+      setLoading(false);
+      return;
+    }
+
+    if (phoneStatus === "pending") {
+      setOtpMode("pending");
+      setLoading(false);
+      startPendingCheck();
+      return;
+    }
+
+    // Verified user — store session and navigate
+    localStorage.setItem(
+      "77m_phone_session",
+      JSON.stringify({
+        phone: phoneNumber,
+        role: "buyer",
+        token: Date.now(),
+      }),
+    );
+
+    const profile = {
+      userId: crypto.randomUUID(),
+      userRole: UserRole.businessBuyer,
+      businessName: "Mobile Dealer",
+      verificationId: "PHONE_AUTH",
+      mobileNumber: phoneNumber,
+      aadhaarNumber: "",
+      createdAt: BigInt(Date.now()) * 1_000_000n,
+    };
+    login(profile);
+    toast.success("Welcome to 77mobiles.pro — Your account is now active!");
+    goToApp(UserRole.businessBuyer);
+    setLoading(false);
+  };
+
+  const startPendingCheck = () => {
+    setPendingCheckCount(0);
+    if (pendingCheckRef.current) clearInterval(pendingCheckRef.current);
+    pendingCheckRef.current = setInterval(() => {
+      setPendingCheckCount((prev) => {
+        const next = prev + 1;
+        // After 2 checks (10s), simulate admin approval
+        if (next >= 2) {
+          if (pendingCheckRef.current) clearInterval(pendingCheckRef.current);
+          setTimeout(() => {
+            localStorage.setItem(
+              "77m_phone_session",
+              JSON.stringify({
+                phone: phoneNumber,
+                role: "buyer",
+                token: Date.now(),
+              }),
+            );
+            const profile = {
+              userId: crypto.randomUUID(),
+              userRole: UserRole.businessBuyer,
+              businessName: "Mobile Dealer",
+              verificationId: "PHONE_AUTH",
+              mobileNumber: phoneNumber,
+              aadhaarNumber: "",
+              createdAt: BigInt(Date.now()) * 1_000_000n,
+            };
+            login(profile);
+            toast.success(
+              "Welcome to 77mobiles.pro — Your account is now active!",
+            );
+            navigate({ to: "/app" });
+          }, 500);
+        }
+        return next;
+      });
+    }, 5000);
+  };
+
+  const handleOtpInput = (idx: number, val: string) => {
+    if (!/^\d?$/.test(val)) return;
+    const next = [...otp];
+    next[idx] = val;
+    setOtp(next);
+    if (val && idx < 5) {
+      otpRefs.current[idx + 1]?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (idx: number, e: React.KeyboardEvent) => {
+    if (e.key === "Backspace" && !otp[idx] && idx > 0) {
+      otpRefs.current[idx - 1]?.focus();
+    }
+  };
+
+  // ── Phone OTP Screens ──
+  if (mode === "phone") {
+    // Pending approval screen
+    if (otpMode === "pending") {
+      return (
+        <div
+          className="mobile-container flex flex-col min-h-screen items-center justify-center px-6"
+          style={{ background: "#F8F9FA" }}
+        >
+          <div className="text-center mb-8">
+            <div
+              className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4"
+              style={{ background: "#FEF9C3", border: "2px solid #FDE047" }}
+            >
+              <span style={{ fontSize: 32 }}>⏳</span>
+            </div>
+            <h2 className="text-xl font-black text-gray-900 mb-2">
+              Account Under Verification
+            </h2>
+            <p className="text-sm text-gray-500">
+              Your documents are being reviewed by our team. This usually takes
+              2-4 hours.
+            </p>
+          </div>
+
+          <div
+            className="w-full bg-white rounded-2xl p-5 mb-5"
+            style={{ border: "1px solid #e5e7eb" }}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div
+                className="w-8 h-8 rounded-full animate-pulse"
+                style={{ background: "#FEF9C3" }}
+              />
+              <div>
+                <p className="text-sm font-bold text-gray-900">
+                  Verification in progress...
+                </p>
+                <p className="text-xs text-gray-500">
+                  Check count: {pendingCheckCount}/2
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500">
+              We&apos;re automatically checking your approval status every 5
+              seconds. You&apos;ll be redirected as soon as the admin approves
+              your account.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            data-ocid="otp.check_status.button"
+            onClick={() => {
+              if (pendingCheckCount >= 2) {
+                startPendingCheck();
+              } else {
+                toast.info("Still checking... please wait.");
+              }
+            }}
+            className="w-full py-3.5 rounded-xl font-bold text-sm mb-3"
+            style={{ background: "#1D4ED8", color: "white" }}
+          >
+            Check Status Now
+          </button>
+
+          <button
+            type="button"
+            data-ocid="otp.back.button"
+            onClick={() => {
+              setMode("register");
+              setOtpMode("idle");
+              setOtp(["", "", "", "", "", ""]);
+              setPhoneNumber("");
+            }}
+            className="w-full py-3 text-sm font-semibold text-gray-400"
+          >
+            Back to Registration
+          </button>
+        </div>
+      );
+    }
+
+    // OTP entry screen
+    if (otpSent && otpMode === "otp") {
+      return (
+        <div
+          className="mobile-container flex flex-col min-h-screen px-6 py-10"
+          style={{ background: "#F8F9FA" }}
+        >
+          <div className="text-center mb-8">
+            <div
+              className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-3"
+              style={{ background: "#EEF2FF" }}
+            >
+              <CheckCircle className="w-7 h-7" style={{ color: "#1D4ED8" }} />
+            </div>
+            <h1 className="text-2xl font-black tracking-tight">
+              <span className="text-gray-900">77</span>
+              <span style={{ color: "#1D4ED8" }}>mobiles</span>
+              <span className="text-gray-900">.pro</span>
+            </h1>
+            <p className="text-gray-600 text-sm mt-2">
+              OTP sent to{" "}
+              <strong>
+                +91 {phoneNumber.replace(/(\d{3})(\d{4})(\d{3})/, "$1****$3")}
+              </strong>
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
+              Demo OTP: <strong>123456</strong>
+            </p>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-card p-6">
+            <p className="text-sm font-semibold text-gray-700 mb-4 text-center">
+              Enter 6-digit OTP
+            </p>
+
+            {/* 6 OTP boxes */}
+            <div className="flex gap-2.5 justify-center mb-4">
+              {(["p0", "p1", "p2", "p3", "p4", "p5"] as const).map((pos, i) => (
+                <input
+                  key={pos}
+                  ref={(el) => {
+                    otpRefs.current[i] = el;
+                  }}
+                  data-ocid={`otp.digit_${i + 1}.input`}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={otp[i]}
+                  onChange={(e) => handleOtpInput(i, e.target.value)}
+                  onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                  className="text-center text-xl font-black rounded-xl outline-none"
+                  style={{
+                    width: 44,
+                    height: 52,
+                    border: otp[i]
+                      ? "2px solid #1D4ED8"
+                      : "1.5px solid #d1d5db",
+                    background: otp[i] ? "#EFF6FF" : "white",
+                    color: "#1E293B",
+                    transition: "all 0.15s",
+                  }}
+                />
+              ))}
+            </div>
+
+            {otpError && (
+              <p className="text-xs text-red-500 text-center mb-3">
+                {otpError}
+              </p>
+            )}
+
+            <Button
+              data-ocid="otp.verify.submit_button"
+              className="w-full mb-3"
+              style={{ background: "#1D4ED8", border: "none" }}
+              onClick={handleVerifyOtp}
+              disabled={loading || otp.join("").length !== 6}
+            >
+              {loading ? "Verifying..." : "Verify OTP"}
+            </Button>
+
+            <div className="text-center">
+              {otpResendTimer > 0 ? (
+                <p className="text-xs text-gray-400">
+                  Resend in {otpResendTimer}s
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  data-ocid="otp.resend.button"
+                  onClick={handleSendOtp}
+                  className="text-xs font-semibold"
+                  style={{ color: "#1D4ED8" }}
+                >
+                  Resend OTP
+                </button>
+              )}
+            </div>
+          </div>
+
+          <p className="text-center text-[10px] text-gray-400 mt-4">
+            Auto OTP retrieval enabled for Android. App Check active for iOS.
+          </p>
+
+          <button
+            type="button"
+            data-ocid="otp.back.button"
+            onClick={() => {
+              setOtpMode("phone");
+              setOtpSent(false);
+              setOtp(["", "", "", "", "", ""]);
+              setOtpError("");
+            }}
+            className="mt-4 text-sm text-gray-400 text-center w-full"
+          >
+            ← Change number
+          </button>
+        </div>
+      );
+    }
+
+    // Phone number entry screen
+    return (
+      <div
+        className="mobile-container flex flex-col min-h-screen px-6 py-10"
+        style={{ background: "#F8F9FA" }}
+      >
+        <div className="text-center mb-8">
+          <div
+            className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-3"
+            style={{ background: "#EEF2FF" }}
+          >
+            <Phone className="w-7 h-7" style={{ color: "#1D4ED8" }} />
+          </div>
+          <h1 className="text-2xl font-black tracking-tight">
+            <span className="text-gray-900">77</span>
+            <span style={{ color: "#1D4ED8" }}>mobiles</span>
+            <span className="text-gray-900">.pro</span>
+          </h1>
+          <p className="text-gray-500 text-sm mt-1">Login with Phone OTP</p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-card p-6">
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs font-semibold text-gray-500 mb-1 block">
+                Mobile Number
+              </Label>
+              <div className="flex">
+                <span className="px-3 flex items-center bg-gray-100 border border-gray-200 rounded-l-xl text-sm font-medium text-gray-600">
+                  +91
+                </span>
+                <Input
+                  data-ocid="otp.phone.input"
+                  className="rounded-l-none"
+                  placeholder="Enter 10-digit number"
+                  value={phoneNumber}
+                  onChange={(e) => {
+                    setPhoneNumber(
+                      e.target.value.replace(/\D/g, "").slice(0, 10),
+                    );
+                    setOtpError("");
+                  }}
+                  inputMode="numeric"
+                  maxLength={10}
+                  autoFocus
+                />
+              </div>
+              {otpError && (
+                <p className="text-xs text-red-500 mt-1">{otpError}</p>
+              )}
+            </div>
+
+            <Button
+              data-ocid="otp.send_otp.button"
+              className="w-full"
+              style={{ background: "#1D4ED8", border: "none" }}
+              onClick={handleSendOtp}
+              disabled={loading || phoneNumber.length !== 10}
+            >
+              {loading ? "Sending OTP..." : "Send OTP"}
+            </Button>
+          </div>
+
+          <p className="text-center text-[10px] text-gray-400 mt-4">
+            Auto OTP retrieval enabled for Android. App Check active for iOS.
+          </p>
+        </div>
+
+        <p className="text-center text-sm text-gray-500 mt-6">
+          <button
+            type="button"
+            data-ocid="auth.register.link"
+            onClick={() => {
+              setMode("register");
+              setOtpMode("idle");
+            }}
+            className="font-semibold"
+            style={{ color: "#1D4ED8" }}
+          >
+            ← Back to Register
+          </button>
+        </p>
+      </div>
+    );
+  }
+
   if (mode === "login") {
     return (
       <div
@@ -249,6 +728,24 @@ export default function AuthPage() {
               >
                 Login
               </Button>
+
+              {/* Phone OTP login option */}
+              <button
+                type="button"
+                data-ocid="login.phone_otp.button"
+                onClick={() => {
+                  setMode("phone");
+                  setOtpMode("phone");
+                }}
+                className="w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2"
+                style={{
+                  border: "1.5px solid #1D4ED8",
+                  color: "#1D4ED8",
+                  background: "white",
+                }}
+              >
+                <Phone className="w-4 h-4" /> Login with Phone OTP
+              </button>
             </div>
           </div>
           <p className="text-center text-sm text-gray-500 mt-6">
@@ -376,6 +873,7 @@ export default function AuthPage() {
               <Button
                 data-ocid="seller.register.submit_button"
                 className="w-full"
+                style={{ background: "#1D4ED8", border: "none" }}
                 onClick={handleRegisterSeller}
                 disabled={loading}
               >
@@ -458,7 +956,31 @@ export default function AuthPage() {
           </TabsContent>
         </Tabs>
 
-        <p className="text-center text-sm text-gray-500 mt-6">
+        <div className="flex items-center gap-3 mt-5">
+          <div className="flex-1 h-px bg-gray-200" />
+          <span className="text-xs text-gray-400">or</span>
+          <div className="flex-1 h-px bg-gray-200" />
+        </div>
+
+        {/* Phone OTP quick login */}
+        <button
+          type="button"
+          data-ocid="auth.phone_otp.button"
+          onClick={() => {
+            setMode("phone");
+            setOtpMode("phone");
+          }}
+          className="mt-4 w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2"
+          style={{
+            border: "1.5px solid #1D4ED8",
+            color: "#1D4ED8",
+            background: "white",
+          }}
+        >
+          <Phone className="w-4 h-4" /> Login with Phone OTP
+        </button>
+
+        <p className="text-center text-sm text-gray-500 mt-4">
           Already have an account?{" "}
           <button
             type="button"

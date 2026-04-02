@@ -390,6 +390,14 @@ export default function SellerPortal() {
                       >
                         {listing.status}
                       </span>
+                      {(listing as any).sealedBox && (
+                        <span
+                          className="absolute bottom-1.5 left-1.5 text-[8px] font-bold px-1.5 py-0.5 rounded-full"
+                          style={{ background: "#D1FAE5", color: "#065F46" }}
+                        >
+                          SEALED
+                        </span>
+                      )}
                       {listing.auctionType && (
                         <span
                           className="absolute top-1.5 right-1.5 text-[8px] font-bold px-1 py-0.5 rounded-full flex items-center gap-0.5"

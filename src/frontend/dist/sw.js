@@ -1,4 +1,5 @@
-const CACHE_NAME = '77mobiles-v1';
+/* scope: / */
+const CACHE_NAME = '77mobiles-v2';
 const PRECACHE_URLS = [
   '/',
   '/index.html',
@@ -21,7 +22,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate: clean up old caches
+// Activate: clean up old caches + claim clients
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
