@@ -196,25 +196,91 @@ export default function AuthPage() {
       toast.error("Enter a valid mobile number");
       return;
     }
+
+    // Normalize phone: strip leading +91 / 0 to get bare 10-digit number
+    const raw = loginMobile.replace(/^\+91/, "").replace(/^0+/, "");
+    const withPrefix = `+91${raw}`;
+
+    // Cross-collection check: look for any matching seller/buyer registration
+    let foundRole: UserRole | null = null;
+    let foundVerifStatus: string | null = null;
+
+    // Check known VERIFIED_PHONES list first
+    const knownStatus = VERIFIED_PHONES[raw] || VERIFIED_PHONES[withPrefix];
+    if (knownStatus === "verified") {
+      foundRole = loginRole;
+      foundVerifStatus = "verified";
+    } else if (knownStatus === "pending") {
+      foundRole = loginRole;
+      foundVerifStatus = "pending";
+    } else {
+      // Search localStorage for seller/buyer registrations with this phone
+      const kycSubs = JSON.parse(
+        localStorage.getItem("77m_kyc_submissions") || "[]",
+      );
+      const match = kycSubs.find(
+        (k: any) =>
+          k.phone === raw || k.phone === withPrefix || k.phone === loginMobile,
+      );
+      if (match) {
+        foundVerifStatus =
+          match.status === "approved" ? "verified" : match.status;
+        foundRole = loginRole;
+      }
+
+      // Also check verification status if user previously set it
+      if (!foundRole) {
+        const verifStatus = localStorage.getItem("77m_verification_status");
+        const sessionStr = localStorage.getItem("77m_phone_session");
+        const phoneSession = sessionStr ? JSON.parse(sessionStr) : null;
+        if (
+          phoneSession &&
+          (phoneSession.phone === raw || phoneSession.phone === withPrefix)
+        ) {
+          foundRole =
+            phoneSession.role === "seller"
+              ? UserRole.sellerDealer
+              : UserRole.businessBuyer;
+          foundVerifStatus = verifStatus || "pending";
+        }
+      }
+    }
+
+    if (!foundRole) {
+      toast.error(
+        "Account not registered. Please complete registration first. (Tip: check if your number has the +91 prefix mismatch)",
+      );
+      return;
+    }
+
     const profile = {
       userId: crypto.randomUUID(),
-      userRole: loginRole,
+      userRole: foundRole,
       businessName: "Demo Business",
       verificationId:
-        loginRole === UserRole.sellerDealer
+        foundRole === UserRole.sellerDealer
           ? "DEMOSEL001"
           : "DEMOGST000000A1Z5",
-      mobileNumber: loginMobile,
+      mobileNumber: raw,
       aadhaarNumber: "",
       createdAt: BigInt(Date.now()) * 1_000_000n,
     };
     login(profile);
+
+    // Session persistence: store role so app can auto-route on next load
+    const roleStr = foundRole === UserRole.sellerDealer ? "seller" : "buyer";
+    localStorage.setItem("77m_role", roleStr);
+    localStorage.setItem("77m_mode", roleStr);
+    localStorage.setItem(
+      "77m_phone_session",
+      JSON.stringify({ phone: raw, role: roleStr, token: Date.now() }),
+    );
+
     toast.success("Logged in successfully!");
-    const loginVerifStatus = localStorage.getItem("77m_verification_status");
-    if (loginVerifStatus === "pending") {
+    if (foundVerifStatus === "pending") {
       navigate({ to: "/pending-verification" });
     } else {
-      goToApp(loginRole);
+      goToApp(foundRole);
     }
   };
 

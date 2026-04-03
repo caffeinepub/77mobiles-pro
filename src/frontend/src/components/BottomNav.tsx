@@ -53,18 +53,23 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-50"
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px]"
       style={{
+        zIndex: 9999,
         backdropFilter: "blur(10px) saturate(180%)",
         WebkitBackdropFilter: "blur(10px) saturate(180%)",
         background: "rgba(255,255,255,0.88)",
         borderTop: "1px solid rgba(229,231,235,0.7)",
         boxShadow: "0 -2px 12px rgba(0,0,0,0.06)",
-        height: "80px",
-        paddingBottom: "env(safe-area-inset-bottom)",
+        height: "calc(80px + env(safe-area-inset-bottom))",
+        paddingBottom: "calc(env(safe-area-inset-bottom) + 8px)",
+        // No margin-bottom — fixed position handles placement
       }}
     >
-      <div className="flex items-center justify-around px-2 h-full">
+      <div
+        className="flex items-center justify-around px-2"
+        style={{ height: "80px" }}
+      >
         {leftTabs.map(({ id, label, Icon }) => {
           const isActive = activeTab === id;
           return (

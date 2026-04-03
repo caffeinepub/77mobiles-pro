@@ -90,7 +90,7 @@ body {
     max-width: 430px;
     margin-left: auto;
     margin-right: auto;
-    min-height: 100dvh;
+    min-height: 100svh;
     position: relative;
     background: #f8fafc;
   }
@@ -98,15 +98,20 @@ body {
     max-width: 430px;
     margin-left: auto;
     margin-right: auto;
-    height: 100dvh;
+    height: 100svh;
     overflow-y: auto;
     overflow-x: hidden;
     position: relative;
     background: #f8fafc;
     scroll-behavior: smooth;
   }
+  /* Legacy nav padding — use pb-safe-nav for new components */
   .pb-nav {
     padding-bottom: 80px;
+  }
+  /* Safe-area-aware bottom padding that accounts for nav bar + iOS home indicator */
+  .pb-safe-nav {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
   }
   .animate-pulse-dot {
     animation: pulseDot 1.5s ease-in-out infinite;

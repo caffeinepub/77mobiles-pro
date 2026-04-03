@@ -16,22 +16,27 @@ export interface AlertNotification {
   read: boolean;
 }
 
+export type BidEntry = Bid;
 type BidListener = (bids: Bid[]) => void;
 type AlertListener = (alerts: AlertNotification[]) => void;
+type AllBidsListener = (listingId: string, bids: Bid[]) => void;
 
 class BidStoreClass {
   private bids: Map<string, Bid[]> = new Map();
   private alerts: AlertNotification[] = [];
   private bidListeners: Map<string, BidListener[]> = new Map();
   private alertListeners: AlertListener[] = [];
+  private allBidsListeners: Map<string, AllBidsListener> = new Map();
 
   addBid(bid: Bid) {
     const existing = this.bids.get(bid.listingId) || [];
     const updated = [bid, ...existing];
     this.bids.set(bid.listingId, updated);
-    // Fire bid listeners
+    // Fire per-listing bid listeners
     const listeners = this.bidListeners.get(bid.listingId) || [];
     for (const cb of listeners) cb(updated);
+    // Fire all-bids listeners
+    for (const cb of this.allBidsListeners.values()) cb(bid.listingId, updated);
     // Auto-generate alert notification
     const alert: AlertNotification = {
       id: crypto.randomUUID(),
@@ -56,6 +61,18 @@ class BidStoreClass {
         listingId,
         l.filter((x) => x !== cb),
       );
+    };
+  }
+
+  subscribeAllBids(cb: AllBidsListener): () => void {
+    const id = Math.random().toString(36).slice(2);
+    this.allBidsListeners.set(id, cb);
+    // Fire immediately for any existing bids
+    this.bids.forEach((bids, listingId) => {
+      if (bids.length > 0) cb(listingId, bids);
+    });
+    return () => {
+      this.allBidsListeners.delete(id);
     };
   }
 

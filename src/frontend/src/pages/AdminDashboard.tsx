@@ -169,27 +169,63 @@ const MOCK_USERS = [
 const MOCK_KYC = [
   {
     id: "KYC-001",
+    name: "Arham Shaikh",
     business: "TechMart Delhi",
+    businessName: "TechMart Delhi",
+    phone: "+91 98765 43210",
+    phone_number: "9876543210",
+    location: "Delhi",
+    city: "Delhi",
     docType: "GST Certificate",
     status: "Pending",
+    aadhaar_url: "",
+    pan_url: "",
+    createdAt: Date.now() - 3600000,
   },
   {
     id: "KYC-002",
+    name: "Rajesh Kumar",
     business: "MobileWorld Surat",
+    businessName: "MobileWorld Surat",
+    phone: "+91 87654 32109",
+    phone_number: "8765432109",
+    location: "Surat",
+    city: "Surat",
     docType: "PAN Card",
     status: "Pending",
+    aadhaar_url: "",
+    pan_url: "",
+    createdAt: Date.now() - 7200000,
   },
   {
     id: "KYC-003",
+    name: "Priya Gupta",
     business: "GadgetPro Jaipur",
+    businessName: "GadgetPro Jaipur",
+    phone: "+91 76543 21098",
+    phone_number: "7654321098",
+    location: "Jaipur",
+    city: "Jaipur",
     docType: "Business License",
     status: "Approved",
+    aadhaar_url: "",
+    pan_url: "",
+    createdAt: Date.now() - 86400000,
   },
   {
     id: "KYC-004",
+    name: "Mohammed Ibrahim",
     business: "ScreenFix Lucknow",
+    businessName: "ScreenFix Lucknow",
+    phone: "+91 65432 10987",
+    phone_number: "6543210987",
+    location: "Lucknow",
+    city: "Lucknow",
     docType: "GST Certificate",
     status: "Pending",
+    aadhaar_url: "",
+    pan_url: "",
+    createdAt: Date.now() - 1800000,
   },
 ];
 
@@ -423,7 +459,7 @@ export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState("");
   const [userSearch, setUserSearch] = useState("");
-  const [kycTab, setKycTab] = useState(false);
+
   const [kycFilter, setKycFilter] = useState<
     "All" | "Pending" | "Verified" | "Rejected"
   >("All");
@@ -458,7 +494,7 @@ export default function AdminDashboard() {
   const feedIdxRef = useRef(0);
 
   // Task 11: Real-time pending verifications
-  const [pendingUsers, setPendingUsers] = useState([
+  const [_pendingUsers, setPendingUsers] = useState([
     {
       id: "PND-001",
       name: "PhoneHub Surat",
@@ -523,8 +559,17 @@ export default function AdminDashboard() {
           const parsed = JSON.parse(stored);
           const mapped = parsed.map((k: any) => ({
             id: k.id,
-            business: k.business,
-            docType: k.docType,
+            name: k.name || k.business || "Unknown",
+            business: k.business || k.businessName || "Unknown",
+            businessName: k.businessName || k.business || "—",
+            phone: k.phone || k.phone_number || "—",
+            phone_number: k.phone_number || k.phone || "—",
+            location: k.city || k.location || "—",
+            city: k.city || k.location || "—",
+            docType: k.docType || "KYC Document",
+            aadhaar_url: k.aadhaar_url || "",
+            pan_url: k.pan_url || "",
+            createdAt: k.createdAt || Date.now(),
             status:
               k.status === "pending"
                 ? "Pending"
@@ -712,7 +757,7 @@ export default function AdminDashboard() {
   }
 
   // --- MAIN ADMIN PANEL ---
-  const filteredUsers = MOCK_USERS.filter(
+  const _filteredUsers = MOCK_USERS.filter(
     (u) =>
       u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
       u.id.toLowerCase().includes(userSearch.toLowerCase()),
@@ -998,140 +1043,132 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* ===== USERS ===== */}
-          {activeSection === "users" && (
-            <div className="space-y-4">
-              {/* Sub-tabs */}
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  data-ocid="admin.users.tab"
-                  onClick={() => setKycTab(false)}
-                  className="px-4 py-2 rounded-xl text-sm font-semibold"
-                  style={{
-                    background: !kycTab ? "#3B82F6" : "#1E293B",
-                    color: !kycTab ? "white" : "#94A3B8",
-                    border: "1px solid #E2E8F0",
-                  }}
-                >
-                  Users
-                </button>
-                <button
-                  type="button"
-                  data-ocid="admin.kyc.tab"
-                  onClick={() => setKycTab(true)}
-                  className="px-4 py-2 rounded-xl text-sm font-semibold"
-                  style={{
-                    background: kycTab ? "#3B82F6" : "#1E293B",
-                    color: kycTab ? "white" : "#94A3B8",
-                    border: "1px solid #E2E8F0",
-                  }}
-                >
-                  KYC Verification
-                </button>
-              </div>
+          {/* ===== USERS ===== (Unified User Management - Tasks 3 & 4) */}
+          {activeSection === "users" &&
+            (() => {
+              // Build unified user list: MOCK_USERS base + KYC entries from localStorage
+              // Merge kycItems into an enriched user table with name, phone, status
+              const localKyc: Array<{
+                id: string;
+                name: string;
+                phone: string;
+                businessName: string;
+                location: string;
+                role: string;
+                balance: string;
+                kycStatus: "Pending" | "Verified" | "Rejected";
+                docType: string;
+                aadhaar_url?: string;
+                pan_url?: string;
+                joinedAt: string;
+              }> = kycItems.map((k: any) => ({
+                id: k.id,
+                name: k.name || k.business || "Unknown",
+                phone: k.phone || k.phone_number || "—",
+                businessName:
+                  k.businessName || k.business_name || k.business || "—",
+                location: k.city || k.location || "—",
+                role: k.role || "Seller",
+                balance: k.balance || "₹0",
+                kycStatus:
+                  k.status === "Approved" ||
+                  k.status === "Verified" ||
+                  k.status === "approved"
+                    ? "Verified"
+                    : k.status === "Rejected" || k.status === "rejected"
+                      ? "Rejected"
+                      : "Pending",
+                docType: k.docType || "KYC Document",
+                aadhaar_url: k.aadhaar_url,
+                pan_url: k.pan_url,
+                joinedAt: k.createdAt
+                  ? new Date(k.createdAt).toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                    })
+                  : "Recent",
+              }));
 
-              {!kycTab ? (
-                <>
-                  {/* Task 11: Pending Verifications real-time card */}
-                  <div
-                    className="rounded-2xl p-4"
-                    style={{
-                      background: "#FFF7ED",
-                      border: "1px solid #FED7AA",
-                    }}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="font-bold text-sm"
-                          style={{ color: "#92400E" }}
-                        >
-                          Pending Verifications
-                        </span>
-                        <span
-                          className="text-xs font-black px-2 py-0.5 rounded-full animate-pulse"
-                          style={{ background: "#F97316", color: "white" }}
-                        >
-                          {pendingCount}
-                        </span>
-                      </div>
-                      <span className="text-[10px] text-orange-500">
-                        Live • Auto-updates
+              // Sort: Pending first, then Verified, then Rejected
+              const sortOrder = { Pending: 0, Verified: 1, Rejected: 2 };
+              const sorted = [...localKyc].sort(
+                (a, b) => sortOrder[a.kycStatus] - sortOrder[b.kycStatus],
+              );
+
+              const filtered = sorted.filter((u) => {
+                const q = userSearch.toLowerCase();
+                const matchSearch =
+                  q === "" ||
+                  u.name.toLowerCase().includes(q) ||
+                  u.phone.includes(q) ||
+                  u.businessName.toLowerCase().includes(q);
+                if (!matchSearch) return false;
+                if (kycFilter === "All") return true;
+                return u.kycStatus === kycFilter;
+              });
+
+              const pendingCount2 = sorted.filter(
+                (u) => u.kycStatus === "Pending",
+              ).length;
+              const verifiedCount = sorted.filter(
+                (u) => u.kycStatus === "Verified",
+              ).length;
+              const rejectedCount = sorted.filter(
+                (u) => u.kycStatus === "Rejected",
+              ).length;
+
+              return (
+                <div className="space-y-4">
+                  {/* Header + filter */}
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="font-bold text-sm"
+                        style={{ color: "#1E293B" }}
+                      >
+                        User Management
+                      </span>
+                      <span
+                        className="text-xs font-black px-2 py-0.5 rounded-full"
+                        style={{ background: "#F97316", color: "white" }}
+                      >
+                        {pendingCount2} Pending
                       </span>
                     </div>
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {pendingUsers.map((u) => (
-                        <div
-                          key={u.id}
-                          className="flex items-center justify-between py-2 px-3 rounded-xl"
-                          style={{
-                            background: "white",
-                            border: "1px solid #FED7AA",
-                          }}
-                        >
-                          <div>
-                            <p className="text-sm font-semibold text-[#1E293B]">
-                              {u.name}
-                            </p>
-                            <p className="text-xs text-gray-400">
-                              {u.business} • {u.mobile}
-                            </p>
-                          </div>
-                          <div className="flex gap-1.5">
-                            <button
-                              type="button"
-                              data-ocid="admin.pending.approve.button"
-                              onClick={() => {
-                                setPendingUsers((prev) =>
-                                  prev.filter((x) => x.id !== u.id),
-                                );
-                                setPendingCount((prev) =>
-                                  Math.max(0, prev - 1),
-                                );
-                                // Trigger auto-redirect on PendingVerificationPage
-                                localStorage.setItem(
-                                  "77m_verification_status",
-                                  "verified",
-                                );
-                                localStorage.setItem("77m_is_verified", "true");
-                                toast.success(
-                                  "User approved — they can now access the portal",
-                                );
-                              }}
-                              className="text-xs font-bold px-2.5 py-1 rounded-lg"
-                              style={{ background: "#16A34A", color: "white" }}
-                            >
-                              Approve
-                            </button>
-                            <button
-                              type="button"
-                              data-ocid="admin.pending.reject.button"
-                              onClick={() => {
-                                setPendingUsers((prev) =>
-                                  prev.filter((x) => x.id !== u.id),
-                                );
-                                setPendingCount((prev) =>
-                                  Math.max(0, prev - 1),
-                                );
-                                toast.error("User rejected");
-                              }}
-                              className="text-xs font-bold px-2.5 py-1 rounded-lg"
-                              style={{ background: "#DC2626", color: "white" }}
-                            >
-                              Reject
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                      {pendingUsers.length === 0 && (
-                        <p className="text-xs text-center text-gray-400 py-2">
-                          No pending verifications
-                        </p>
-                      )}
-                    </div>
+                    {/* Filter dropdown */}
+                    <select
+                      data-ocid="admin.users.filter.select"
+                      value={kycFilter}
+                      onChange={(e) =>
+                        setKycFilter(
+                          e.target.value as
+                            | "All"
+                            | "Pending"
+                            | "Verified"
+                            | "Rejected",
+                        )
+                      }
+                      className="text-xs font-semibold px-3 py-1.5 rounded-xl outline-none"
+                      style={{
+                        background: "#1E293B",
+                        color: "#F8FAFC",
+                        border: "1px solid #E2E8F0",
+                      }}
+                    >
+                      <option value="All">All Users ({sorted.length})</option>
+                      <option value="Pending">
+                        Only Pending ({pendingCount2})
+                      </option>
+                      <option value="Verified">
+                        Only Verified ({verifiedCount})
+                      </option>
+                      <option value="Rejected">
+                        Only Rejected ({rejectedCount})
+                      </option>
+                    </select>
                   </div>
 
+                  {/* Search */}
                   <div
                     className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
                     style={{
@@ -1143,7 +1180,7 @@ export default function AdminDashboard() {
                     <input
                       data-ocid="admin.users.search_input"
                       type="text"
-                      placeholder="Search users..."
+                      placeholder="Search name, phone, or business…"
                       value={userSearch}
                       onChange={(e) => setUserSearch(e.target.value)}
                       className="flex-1 bg-transparent text-sm outline-none"
@@ -1151,81 +1188,111 @@ export default function AdminDashboard() {
                     />
                   </div>
 
+                  {/* Unified user table */}
                   <div className="space-y-2">
-                    {filteredUsers.map((user) => (
+                    {filtered.length === 0 && (
+                      <p
+                        className="text-xs text-center text-gray-400 py-6"
+                        data-ocid="admin.users.empty_state"
+                      >
+                        No {kycFilter.toLowerCase()} users found
+                      </p>
+                    )}
+                    {filtered.map((user, i) => (
                       <div
                         key={user.id}
-                        className="rounded-xl p-3"
+                        data-ocid={`admin.users.item.${i + 1}`}
+                        className="rounded-xl p-4"
                         style={{
                           background: "#FFFFFF",
-                          border: "1px solid #E2E8F0",
+                          border:
+                            user.kycStatus === "Pending"
+                              ? "1px solid #FED7AA"
+                              : "1px solid #E2E8F0",
                         }}
-                        data-ocid={`admin.users.item.${MOCK_USERS.indexOf(user) + 1}`}
                       >
+                        {/* Top row: name + status badge */}
                         <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <p className="font-semibold text-sm text-[#1E293B]">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm text-[#1E293B] truncate">
                               {user.name}
                             </p>
                             <p className="text-xs" style={{ color: "#9CA3AF" }}>
-                              {user.id} · Balance: {user.balance}
+                              {user.phone} · {user.role}
                             </p>
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            <span
-                              className="text-xs px-2 py-0.5 rounded-full font-semibold"
-                              style={{
-                                background:
-                                  user.role === "Dealer"
-                                    ? "rgba(59,130,246,0.15)"
-                                    : user.role === "Seller"
-                                      ? "rgba(168,85,247,0.15)"
-                                      : "rgba(34,197,94,0.15)",
-                                color:
-                                  user.role === "Dealer"
-                                    ? "#3B82F6"
-                                    : user.role === "Seller"
-                                      ? "#A855F7"
-                                      : "#22C55E",
-                              }}
-                            >
-                              {user.role}
-                            </span>
-                            <span
-                              className="text-xs px-2 py-0.5 rounded-full font-semibold"
-                              style={{
-                                background:
-                                  user.status === "Active"
-                                    ? "rgba(34,197,94,0.1)"
-                                    : "rgba(239,68,68,0.1)",
-                                color:
-                                  user.status === "Active"
-                                    ? "#22C55E"
-                                    : "#EF4444",
-                              }}
-                            >
-                              {user.status}
-                            </span>
-                          </div>
+                          {/* Color-coded status badge */}
+                          <span
+                            className="text-xs px-2 py-0.5 rounded-full font-bold flex-shrink-0 ml-2"
+                            style={{
+                              background:
+                                user.kycStatus === "Verified"
+                                  ? "#DCFCE7"
+                                  : user.kycStatus === "Rejected"
+                                    ? "#FEE2E2"
+                                    : "#FEF9C3",
+                              color:
+                                user.kycStatus === "Verified"
+                                  ? "#166534"
+                                  : user.kycStatus === "Rejected"
+                                    ? "#991B1B"
+                                    : "#92400E",
+                            }}
+                          >
+                            {user.kycStatus}
+                          </span>
                         </div>
-                        <div className="flex gap-2">
+
+                        {/* Details: Business + Location */}
+                        <div className="flex gap-3 mb-2 flex-wrap">
+                          {user.businessName !== "—" && (
+                            <span className="text-[10px] text-gray-500">
+                              🏢 {user.businessName}
+                            </span>
+                          )}
+                          {user.location !== "—" && (
+                            <span className="text-[10px] text-gray-500">
+                              📍 {user.location}
+                            </span>
+                          )}
+                          <span className="text-[10px] text-gray-400">
+                            Joined {user.joinedAt}
+                          </span>
+                          <span className="text-[10px] text-gray-400">
+                            {user.docType}
+                          </span>
+                        </div>
+
+                        {/* Action row */}
+                        <div className="flex gap-2 flex-wrap">
+                          {/* View Document button (Task 4) */}
+                          <button
+                            type="button"
+                            data-ocid="admin.users.view_doc.button"
+                            onClick={() => {
+                              const url = user.aadhaar_url || user.pan_url;
+                              if (url) {
+                                window.open(url, "_blank");
+                              } else {
+                                toast.info("No document uploaded yet");
+                              }
+                            }}
+                            className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-lg"
+                            style={{
+                              background: "#F8FAFC",
+                              color: "#64748B",
+                              border: "1px solid #E2E8F0",
+                            }}
+                          >
+                            <Eye className="w-3 h-3" /> View Doc
+                          </button>
                           <ActionBtn
-                            label="Freeze Wallet"
+                            label="Freeze"
                             color="#EF4444"
                             onClick={() =>
                               toast.error(`Wallet frozen for ${user.name}`)
                             }
                             ocid="admin.users.freeze.button"
-                          />
-                          <ActionBtn
-                            label="Reset Password"
-                            color="#3B82F6"
-                            onClick={() =>
-                              toast.success(
-                                `Password reset sent to ${user.name}`,
-                              )
-                            }
-                            ocid="admin.users.reset.button"
                           />
                           <ActionBtn
                             label="Message"
@@ -1235,199 +1302,90 @@ export default function AdminDashboard() {
                             }
                             ocid="admin.users.message.button"
                           />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <div className="space-y-3">
-                  {/* KYC filter tabs */}
-                  <div className="flex gap-1.5 flex-wrap">
-                    {(["All", "Pending", "Verified", "Rejected"] as const).map(
-                      (f) => (
-                        <button
-                          key={f}
-                          type="button"
-                          data-ocid={`admin.kyc.filter.${f.toLowerCase()}.tab`}
-                          onClick={() => setKycFilter(f)}
-                          className="px-3 py-1.5 rounded-xl text-xs font-semibold"
-                          style={{
-                            background: kycFilter === f ? "#3B82F6" : "#1E293B",
-                            color: kycFilter === f ? "white" : "#94A3B8",
-                            border: "1px solid #E2E8F0",
-                          }}
-                        >
-                          {f}
-                          {f !== "All" && (
-                            <span className="ml-1 text-[9px]">
-                              (
-                              {
-                                kycItems.filter(
-                                  (k) =>
-                                    k.status === f ||
-                                    (f === "Verified" &&
-                                      k.status === "Approved"),
-                                ).length
-                              }
-                              )
-                            </span>
-                          )}
-                        </button>
-                      ),
-                    )}
-                  </div>
-
-                  {kycItems
-                    .filter((k) => {
-                      if (kycFilter === "All") return true;
-                      if (kycFilter === "Verified")
-                        return (
-                          k.status === "Approved" || k.status === "Verified"
-                        );
-                      return k.status === kycFilter;
-                    })
-                    .map((kyc, i) => (
-                      <div
-                        key={kyc.id}
-                        className="rounded-xl p-4"
-                        style={{
-                          background: "#FFFFFF",
-                          border: "1px solid #E2E8F0",
-                        }}
-                        data-ocid={`admin.kyc.item.${i + 1}`}
-                      >
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <p className="font-semibold text-sm text-[#1E293B]">
-                              {kyc.business}
-                            </p>
-                            <p className="text-xs" style={{ color: "#9CA3AF" }}>
-                              {kyc.id} · {kyc.docType}
-                            </p>
-                          </div>
-                          <span
-                            className="text-xs px-2 py-0.5 rounded-full font-semibold"
-                            style={{
-                              background:
-                                kyc.status === "Approved" ||
-                                kyc.status === "Verified"
-                                  ? "rgba(34,197,94,0.1)"
-                                  : kyc.status === "Rejected"
-                                    ? "rgba(239,68,68,0.1)"
-                                    : "rgba(245,158,11,0.1)",
-                              color:
-                                kyc.status === "Approved" ||
-                                kyc.status === "Verified"
-                                  ? "#22C55E"
-                                  : kyc.status === "Rejected"
-                                    ? "#EF4444"
-                                    : "#F59E0B",
-                            }}
-                          >
-                            {kyc.status}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3 mb-3">
-                          <div
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
-                            style={{
-                              background: "#F8FAFC",
-                              color: "#9CA3AF",
-                              border: "1px solid #E2E8F0",
-                            }}
-                          >
-                            <Eye className="w-3.5 h-3.5" /> View Document
-                          </div>
-                        </div>
-                        {kyc.status === "Pending" && (
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              data-ocid="admin.kyc.approve.button"
-                              onClick={() => {
-                                setKycItems((prev) =>
-                                  prev.map((k) =>
-                                    k.id === kyc.id
-                                      ? { ...k, status: "Approved" }
-                                      : k,
-                                  ),
-                                );
-                                setPendingCount((prev) =>
-                                  Math.max(0, prev - 1),
-                                );
-                                // Trigger auto-redirect on PendingVerificationPage
-                                localStorage.setItem(
-                                  "77m_verification_status",
-                                  "verified",
-                                );
-                                localStorage.setItem("77m_is_verified", "true");
-                                // Update kyc submissions in localStorage
-                                try {
-                                  const kycSubs = JSON.parse(
-                                    localStorage.getItem(
-                                      "77m_kyc_submissions",
-                                    ) || "[]",
+                          {/* Approve/Reject — only for Pending */}
+                          {user.kycStatus === "Pending" && (
+                            <>
+                              <button
+                                type="button"
+                                data-ocid="admin.users.approve.button"
+                                onClick={() => {
+                                  setKycItems((prev) =>
+                                    prev.map((k) =>
+                                      k.id === user.id
+                                        ? { ...k, status: "Approved" }
+                                        : k,
+                                    ),
                                   );
-                                  const updated = kycSubs.map((k: any) =>
-                                    k.id === kyc.id
-                                      ? { ...k, status: "approved" }
-                                      : k,
+                                  setPendingCount((prev) =>
+                                    Math.max(0, prev - 1),
                                   );
                                   localStorage.setItem(
-                                    "77m_kyc_submissions",
-                                    JSON.stringify(updated),
+                                    "77m_verification_status",
+                                    "verified",
                                   );
-                                } catch {}
-                                toast.success(
-                                  "KYC Approved — user now has full access",
-                                );
-                              }}
-                              className="flex-1 py-2 rounded-xl text-sm font-semibold text-white"
-                              style={{ background: "#22C55E" }}
-                            >
-                              Approve
-                            </button>
-                            <button
-                              type="button"
-                              data-ocid="admin.kyc.reject.button"
-                              onClick={() => {
-                                setKycItems((prev) =>
-                                  prev.map((k) =>
-                                    k.id === kyc.id
-                                      ? { ...k, status: "Rejected" }
-                                      : k,
-                                  ),
-                                );
-                                toast.error(`KYC rejected for ${kyc.business}`);
-                              }}
-                              className="flex-1 py-2 rounded-xl text-sm font-semibold"
-                              style={{
-                                background: "rgba(239,68,68,0.1)",
-                                color: "#EF4444",
-                                border: "1px solid rgba(239,68,68,0.3)",
-                              }}
-                            >
-                              Reject
-                            </button>
-                          </div>
-                        )}
+                                  localStorage.setItem(
+                                    "77m_is_verified",
+                                    "true",
+                                  );
+                                  try {
+                                    const kycSubs = JSON.parse(
+                                      localStorage.getItem(
+                                        "77m_kyc_submissions",
+                                      ) || "[]",
+                                    );
+                                    const updated = kycSubs.map((k: any) =>
+                                      k.id === user.id
+                                        ? { ...k, status: "approved" }
+                                        : k,
+                                    );
+                                    localStorage.setItem(
+                                      "77m_kyc_submissions",
+                                      JSON.stringify(updated),
+                                    );
+                                  } catch {}
+                                  toast.success(
+                                    "Approved — user can now access the portal",
+                                  );
+                                }}
+                                className="text-xs font-bold px-2.5 py-1 rounded-lg"
+                                style={{
+                                  background: "#16A34A",
+                                  color: "white",
+                                }}
+                              >
+                                ✓ Approve
+                              </button>
+                              <button
+                                type="button"
+                                data-ocid="admin.users.reject.button"
+                                onClick={() => {
+                                  setKycItems((prev) =>
+                                    prev.map((k) =>
+                                      k.id === user.id
+                                        ? { ...k, status: "Rejected" }
+                                        : k,
+                                    ),
+                                  );
+                                  toast.error(`Rejected: ${user.name}`);
+                                }}
+                                className="text-xs font-bold px-2.5 py-1 rounded-lg"
+                                style={{
+                                  background: "rgba(239,68,68,0.1)",
+                                  color: "#EF4444",
+                                  border: "1px solid rgba(239,68,68,0.3)",
+                                }}
+                              >
+                                ✕ Reject
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     ))}
-                  {kycItems.filter((k) => {
-                    if (kycFilter === "All") return true;
-                    if (kycFilter === "Verified")
-                      return k.status === "Approved" || k.status === "Verified";
-                    return k.status === kycFilter;
-                  }).length === 0 && (
-                    <p className="text-xs text-center text-gray-400 py-4">
-                      No {kycFilter.toLowerCase()} KYC records
-                    </p>
-                  )}
+                  </div>
                 </div>
-              )}
-            </div>
-          )}
+              );
+            })()}
 
           {/* ===== LISTINGS ===== */}
           {activeSection === "listings" && (

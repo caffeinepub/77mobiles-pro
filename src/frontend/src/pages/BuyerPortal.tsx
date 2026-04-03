@@ -507,7 +507,7 @@ function CategoryListingView({
   });
 
   return (
-    <div className="bg-[#F8FAFC] min-h-screen pb-24">
+    <div className="bg-[#F8FAFC] min-h-screen pb-safe-nav">
       {/* Header */}
       <header
         className="sticky top-0 z-30 bg-white px-4 py-3"
@@ -904,7 +904,7 @@ export default function BuyerPortal() {
   }
 
   return (
-    <div className="bg-[#F8FAFC] min-h-screen pb-24">
+    <div className="bg-[#F8FAFC] min-h-screen pb-safe-nav">
       {/* Auto-sliding Carousel */}
       <div id="listing-grid" className="px-3 pt-3">
         <PortalCarousel

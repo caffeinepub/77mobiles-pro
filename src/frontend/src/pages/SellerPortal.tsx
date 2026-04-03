@@ -16,6 +16,7 @@ import type { CarouselSlide } from "../components/PortalCarousel";
 import RecentSalesSlider from "../components/RecentSalesSlider";
 import { useApp } from "../contexts/AppContext";
 import { SELLER_LISTINGS, getDeviceImage } from "../data/demoListings";
+import { BidStore } from "../stores/BidStore";
 import { formatINR } from "../utils/format";
 
 const SELLER_CAROUSEL_SLIDES: CarouselSlide[] = [
@@ -100,9 +101,25 @@ export default function SellerPortal() {
     return localStorage.getItem("77m_hide_demo") === "true";
   });
 
+  // Task 5+6: Track current high bid per listing
+  const [bidMap, setBidMap] = useState<Record<string, number>>({});
+
   useEffect(() => {
     const t = setTimeout(() => setGridLoading(false), 1200);
     return () => clearTimeout(t);
+  }, []);
+
+  // Task 5: Subscribe to all bids in real-time
+  useEffect(() => {
+    const unsub = BidStore.subscribeAllBids((listingId, bids) => {
+      if (bids.length === 0) return;
+      const highest = Math.max(...bids.map((b) => b.amount));
+      setBidMap((prev) => {
+        if (prev[listingId] === highest) return prev;
+        return { ...prev, [listingId]: highest };
+      });
+    });
+    return unsub;
   }, []);
 
   // Merge static + shared listings
@@ -141,8 +158,22 @@ export default function SellerPortal() {
     navigate({ to: "/send-offer" });
   };
 
+  // Task 6: Get formatted bid/price string for a listing card
+  const getListingPriceLabel = (listingId: string, basePrice: number) => {
+    const currentBid = bidMap[listingId];
+    if (currentBid && currentBid > 0) {
+      const inr = new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: "INR",
+        maximumFractionDigits: 0,
+      }).format(currentBid / 100);
+      return { label: "Current Bid", value: inr, isBid: true };
+    }
+    return { label: "Base", value: formatINR(basePrice), isBid: false };
+  };
+
   return (
-    <div className="bg-[#F8FAFC] min-h-screen pb-24">
+    <div className="bg-[#F8FAFC] min-h-screen pb-safe-nav">
       {/* Auto-sliding carousel */}
       <div className="px-3 pt-3 pb-3">
         <PortalCarousel slides={SELLER_CAROUSEL_SLIDES} intervalMs={5000} />
@@ -390,6 +421,10 @@ export default function SellerPortal() {
             <div className="grid grid-cols-2 gap-2.5 pb-2">
               {filtered.map((listing, idx) => {
                 const isActive = listing.status === "Active";
+                const priceInfo = getListingPriceLabel(
+                  listing.listingId,
+                  listing.basePrice,
+                );
                 return (
                   <div
                     key={listing.listingId ?? idx}
@@ -500,12 +535,20 @@ export default function SellerPortal() {
                           </span>
                         )}
                       </div>
-                      <p
-                        className="font-black text-[12px] mt-0.5"
-                        style={{ color: "#1D4ED8" }}
-                      >
-                        {formatINR(listing.basePrice)}
-                      </p>
+                      {/* Task 6: Show current bid or base price */}
+                      <div className="flex items-baseline gap-1 mt-0.5">
+                        <p
+                          className="font-black text-[12px]"
+                          style={{
+                            color: priceInfo.isBid ? "#16A34A" : "#1D4ED8",
+                          }}
+                        >
+                          {priceInfo.value}
+                        </p>
+                        <span className="text-[8px] text-gray-400">
+                          {priceInfo.label}
+                        </span>
+                      </div>
                       {isActive && listing.endsAt && (
                         <div className="mt-0.5">
                           <AuctionTimer
@@ -525,6 +568,10 @@ export default function SellerPortal() {
             <div className="space-y-2.5 pb-2">
               {filtered.map((listing, idx) => {
                 const isActive = listing.status === "Active";
+                const priceInfo = getListingPriceLabel(
+                  listing.listingId,
+                  listing.basePrice,
+                );
                 return (
                   <div
                     key={listing.listingId ?? idx}
@@ -588,18 +635,40 @@ export default function SellerPortal() {
                               Verified
                             </span>
                           )}
+                          <span
+                            style={{
+                              background: conditionColor(listing.condition).bg,
+                              color: conditionColor(listing.condition).text,
+                            }}
+                            className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+                          >
+                            {listing.condition}
+                          </span>
+                          {listing.warranty && Number(listing.warranty) > 0 && (
+                            <span className="text-[9px] text-gray-400">
+                              ~{String(listing.warranty)}mo
+                            </span>
+                          )}
                         </div>
                         <p className="text-[10px] text-gray-400">
-                          {listing.condition}
+                          {listing.brand}
                         </p>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p
-                          className="font-black text-[14px]"
-                          style={{ color: "#1D4ED8" }}
-                        >
-                          {formatINR(listing.basePrice)}
-                        </p>
+                        {/* Task 6: Show current bid or base price */}
+                        <div className="flex flex-col items-end">
+                          <p
+                            className="font-black text-[14px]"
+                            style={{
+                              color: priceInfo.isBid ? "#16A34A" : "#1D4ED8",
+                            }}
+                          >
+                            {priceInfo.value}
+                          </p>
+                          <span className="text-[9px] text-gray-400">
+                            {priceInfo.label}
+                          </span>
+                        </div>
                         {isActive && listing.endsAt && (
                           <div className="mt-1">
                             <AuctionTimer

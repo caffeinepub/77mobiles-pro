@@ -176,6 +176,83 @@ export default function SearchOverlay({ onClose }: Props) {
     if (query.trim().length > 0) setSubmitted(true);
   };
 
+  const handleScanInSearch = async () => {
+    if (!("BarcodeDetector" in window)) {
+      const imei = window.prompt("Enter IMEI or barcode manually:");
+      if (imei) {
+        setQuery(imei);
+        setTimeout(() => {
+          if (imei.trim().length > 0) setSubmitted(true);
+        }, 100);
+      }
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+      });
+      const video = document.createElement("video");
+      video.srcObject = stream;
+      video.setAttribute("playsinline", "true");
+      await video.play();
+
+      const detector = new (window as any).BarcodeDetector({
+        formats: ["ean_13", "code_128", "qr_code", "code_39"],
+      });
+
+      const overlay = document.createElement("div");
+      overlay.style.cssText =
+        "position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;";
+      video.style.cssText = "width:100%;max-width:430px;height:auto;";
+      const closeBtn = document.createElement("button");
+      closeBtn.textContent = "Cancel";
+      closeBtn.style.cssText =
+        "margin-top:16px;padding:12px 32px;background:#1D4ED8;color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer;";
+      overlay.appendChild(video);
+      overlay.appendChild(closeBtn);
+      document.body.appendChild(overlay);
+
+      let scanning = true;
+      closeBtn.onclick = () => {
+        scanning = false;
+        for (const t of stream.getTracks()) t.stop();
+        if (document.body.contains(overlay)) document.body.removeChild(overlay);
+      };
+
+      const scan = async () => {
+        if (!scanning) return;
+        try {
+          const barcodes = await detector.detect(video);
+          if (barcodes.length > 0) {
+            scanning = false;
+            for (const t of stream.getTracks()) t.stop();
+            if (document.body.contains(overlay))
+              document.body.removeChild(overlay);
+            const val = barcodes[0].rawValue;
+            setQuery(val);
+            setTimeout(() => {
+              if (val.trim().length > 0) setSubmitted(true);
+            }, 100);
+          } else {
+            requestAnimationFrame(scan);
+          }
+        } catch {
+          requestAnimationFrame(scan);
+        }
+      };
+      requestAnimationFrame(scan);
+    } catch (err) {
+      console.error("Scanner error", err);
+      const imei = window.prompt("Camera not available. Enter IMEI manually:");
+      if (imei) {
+        setQuery(imei);
+        setTimeout(() => {
+          if (imei.trim().length > 0) setSubmitted(true);
+        }, 100);
+      }
+    }
+  };
+
   const showSuggestions = query.length > 0 && !submitted;
 
   return (
@@ -224,6 +301,7 @@ export default function SearchOverlay({ onClose }: Props) {
         <button
           type="button"
           data-ocid="search.scan_button"
+          onClick={handleScanInSearch}
           className="w-9 h-9 flex items-center justify-center rounded-full flex-shrink-0"
           style={{ background: "#EFF6FF" }}
         >
