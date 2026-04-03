@@ -74,6 +74,8 @@ export default function AppShell() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [showScanner, setShowScanner] = useState(false);
+  const [manualImei, setManualImei] = useState("");
+  const [hasBarcodeDetector, setHasBarcodeDetector] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [categoriesVisible, setCategoriesVisible] = useState(true);
   const [showSearch, setShowSearch] = useState(false);
@@ -81,6 +83,26 @@ export default function AppShell() {
   const lastScrollY = useRef(0);
 
   const isSubPage = activeTab !== "home";
+
+  // Start camera when scanner opens
+  useEffect(() => {
+    if (!showScanner) return;
+    setHasBarcodeDetector("BarcodeDetector" in window);
+    navigator.mediaDevices
+      .getUserMedia({ video: { facingMode: "environment" } })
+      .then((stream) => {
+        if (videoRef.current) videoRef.current.srcObject = stream;
+      })
+      .catch(() => {
+        // Camera failed, will show manual input
+      });
+    return () => {
+      if (videoRef.current?.srcObject) {
+        for (const t of (videoRef.current.srcObject as MediaStream).getTracks())
+          t.stop();
+      }
+    };
+  }, [showScanner]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -274,22 +296,7 @@ export default function AppShell() {
                     data-ocid="header.camera.button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if ("BarcodeDetector" in window) {
-                        setShowScanner(true);
-                        navigator.mediaDevices
-                          .getUserMedia({
-                            video: { facingMode: "environment" },
-                          })
-                          .then((stream) => {
-                            setTimeout(() => {
-                              if (videoRef.current)
-                                videoRef.current.srcObject = stream;
-                            }, 100);
-                          })
-                          .catch(() => setShowSearch(true));
-                      } else {
-                        setShowSearch(true);
-                      }
+                      setShowScanner(true);
                     }}
                     className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
                     style={{ background: "#EFF6FF" }}
@@ -435,8 +442,10 @@ export default function AppShell() {
               </p>
               <button
                 type="button"
+                data-ocid="scanner.close.button"
                 onClick={() => {
                   setShowScanner(false);
+                  setManualImei("");
                   if (videoRef.current?.srcObject) {
                     for (const t of (
                       videoRef.current.srcObject as MediaStream
@@ -461,6 +470,7 @@ export default function AppShell() {
                 muted
                 className="w-full h-full object-cover"
                 onCanPlay={() => {
+                  if (!hasBarcodeDetector) return;
                   const detector = new (window as any).BarcodeDetector({
                     formats: ["qr_code", "code_128", "ean_13", "code_39"],
                   });
@@ -476,6 +486,7 @@ export default function AppShell() {
                         setSearchQuery(val);
                         clearInterval(scan);
                         setShowScanner(false);
+                        setManualImei("");
                         for (const t of (
                           videoRef.current?.srcObject as MediaStream
                         )?.getTracks() ?? [])
@@ -483,11 +494,6 @@ export default function AppShell() {
                       }
                     } catch {}
                   }, 500);
-                  navigator.mediaDevices
-                    .getUserMedia({ video: { facingMode: "environment" } })
-                    .then((stream) => {
-                      if (videoRef.current) videoRef.current.srcObject = stream;
-                    });
                 }}
               />
               <div
@@ -503,8 +509,49 @@ export default function AppShell() {
                 />
               </div>
             </div>
+
+            {/* Manual IMEI input — when BarcodeDetector is unavailable */}
+            {!hasBarcodeDetector && (
+              <div className="mt-4">
+                <p className="text-center text-xs text-amber-300 mb-2 font-medium">
+                  Scanner not supported on this browser. Enter manually:
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    data-ocid="scanner.manual_imei.input"
+                    value={manualImei}
+                    onChange={(e) => setManualImei(e.target.value)}
+                    placeholder="Enter IMEI / barcode"
+                    className="flex-1 px-3 py-2.5 rounded-xl text-sm font-bold outline-none"
+                    style={{
+                      background: "rgba(255,255,255,0.12)",
+                      border: "1px solid rgba(255,255,255,0.25)",
+                      color: "white",
+                    }}
+                  />
+                  <button
+                    type="button"
+                    data-ocid="scanner.manual_imei.submit_button"
+                    onClick={() => {
+                      if (manualImei.trim()) {
+                        setSearchQuery(manualImei.trim());
+                        setShowScanner(false);
+                        setManualImei("");
+                      }
+                    }}
+                    className="px-4 py-2.5 rounded-xl font-bold text-sm text-white"
+                    style={{ background: "#1D4ED8" }}
+                  >
+                    Search
+                  </button>
+                </div>
+              </div>
+            )}
+
             <p className="text-center text-xs text-gray-400 mt-3">
-              Point camera at barcode or IMEI number
+              {hasBarcodeDetector ? "Point camera at barcode or IMEI" : ""}
             </p>
           </div>
         </div>

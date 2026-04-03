@@ -273,6 +273,33 @@ export default function AuthPage() {
       createdAt: BigInt(Date.now()) * 1_000_000n,
     };
     login(profile);
+
+    // Task 2: Simulate Firestore write for verified profile
+    localStorage.setItem(
+      "77m_seller_profile",
+      JSON.stringify({
+        status: "verified",
+        kyc_submitted: true,
+        phone: phoneNumber,
+        documents: { pan_url: "", aadhaar_url: "" },
+        createdAt: Date.now(),
+      }),
+    );
+    toast("Profile synced to database");
+
+    // Task 3: Append to KYC submissions for admin panel
+    const kycKey = "77m_kyc_submissions";
+    const existingKyc = JSON.parse(localStorage.getItem(kycKey) || "[]");
+    const newEntry = {
+      id: crypto.randomUUID(),
+      business: `New Dealer ${phoneNumber.slice(-4)}`,
+      phone: phoneNumber,
+      status: "pending",
+      docType: "PAN Card",
+      createdAt: Date.now(),
+    };
+    localStorage.setItem(kycKey, JSON.stringify([newEntry, ...existingKyc]));
+
     toast.success("Welcome to 77mobiles.pro — Your account is now active!");
     goToApp(UserRole.businessBuyer);
     setLoading(false);

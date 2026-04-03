@@ -9,6 +9,7 @@ import {
   DollarSign,
   Download,
   Eye,
+  Image,
   LayoutDashboard,
   Menu,
   Package,
@@ -33,6 +34,7 @@ type AdminSection =
   | "payments"
   | "diagnostics"
   | "portal-controls"
+  | "slider-management"
   | "settings"
   | "auditlog";
 
@@ -49,6 +51,7 @@ const NAV_ITEMS: {
   { id: "payments", label: "Payments", Icon: CreditCard },
   { id: "diagnostics", label: "Diagnostics", Icon: Activity },
   { id: "portal-controls", label: "Portal Controls", Icon: SlidersHorizontal },
+  { id: "slider-management", label: "Slider Management", Icon: Image },
   { id: "settings", label: "Settings", Icon: Settings },
   { id: "auditlog", label: "Audit Log", Icon: ClipboardList },
 ];
@@ -421,6 +424,10 @@ export default function AdminDashboard() {
   const [globalSearch, setGlobalSearch] = useState("");
   const [userSearch, setUserSearch] = useState("");
   const [kycTab, setKycTab] = useState(false);
+  const [kycFilter, setKycFilter] = useState<
+    "All" | "Pending" | "Verified" | "Rejected"
+  >("All");
+  const [kycItems, setKycItems] = useState(MOCK_KYC);
   const [listingTab, setListingTab] = useState<"queue" | "auctions">("queue");
   const [auctionTimers, setAuctionTimers] = useState(
     MOCK_AUCTIONS.map((a) => a.timeLeft),
@@ -502,6 +509,42 @@ export default function AdminDashboard() {
     "buyer" | "seller" | "both"
   >("both");
   const [newBannerPreview, setNewBannerPreview] = useState("");
+
+  // Task 3: Load KYC submissions from localStorage and subscribe to storage events
+  useEffect(() => {
+    if (!authenticated) return;
+    const loadKyc = () => {
+      try {
+        const stored = localStorage.getItem("77m_kyc_submissions");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const mapped = parsed.map((k: any) => ({
+            id: k.id,
+            business: k.business,
+            docType: k.docType,
+            status:
+              k.status === "pending"
+                ? "Pending"
+                : k.status === "approved"
+                  ? "Approved"
+                  : "Pending",
+          }));
+          setKycItems((prev) => {
+            const existingIds = new Set(prev.map((x) => x.id));
+            const newItems = mapped.filter((x: any) => !existingIds.has(x.id));
+            if (newItems.length > 0) return [...newItems, ...prev];
+            return prev;
+          });
+        }
+      } catch {}
+    };
+    loadKyc();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "77m_kyc_submissions") loadKyc();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [authenticated]);
 
   // Task 11: Real-time new user listener simulation (like Firebase onSnapshot)
   useEffect(() => {
@@ -1190,83 +1233,165 @@ export default function AdminDashboard() {
                 </>
               ) : (
                 <div className="space-y-3">
-                  {MOCK_KYC.map((kyc, i) => (
-                    <div
-                      key={kyc.id}
-                      className="rounded-xl p-4"
-                      style={{
-                        background: "#FFFFFF",
-                        border: "1px solid #E2E8F0",
-                      }}
-                      data-ocid={`admin.kyc.item.${i + 1}`}
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <p className="font-semibold text-sm text-[#1E293B]">
-                            {kyc.business}
-                          </p>
-                          <p className="text-xs" style={{ color: "#9CA3AF" }}>
-                            {kyc.id} · {kyc.docType}
-                          </p>
-                        </div>
-                        <span
-                          className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                  {/* KYC filter tabs */}
+                  <div className="flex gap-1.5 flex-wrap">
+                    {(["All", "Pending", "Verified", "Rejected"] as const).map(
+                      (f) => (
+                        <button
+                          key={f}
+                          type="button"
+                          data-ocid={`admin.kyc.filter.${f.toLowerCase()}.tab`}
+                          onClick={() => setKycFilter(f)}
+                          className="px-3 py-1.5 rounded-xl text-xs font-semibold"
                           style={{
-                            background:
-                              kyc.status === "Approved"
-                                ? "rgba(34,197,94,0.1)"
-                                : "rgba(245,158,11,0.1)",
-                            color:
-                              kyc.status === "Approved" ? "#22C55E" : "#F59E0B",
-                          }}
-                        >
-                          {kyc.status}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3 mb-3">
-                        <div
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
-                          style={{
-                            background: "#F8FAFC",
-                            color: "#9CA3AF",
+                            background: kycFilter === f ? "#3B82F6" : "#1E293B",
+                            color: kycFilter === f ? "white" : "#94A3B8",
                             border: "1px solid #E2E8F0",
                           }}
                         >
-                          <Eye className="w-3.5 h-3.5" /> View Document
-                        </div>
-                      </div>
-                      {kyc.status === "Pending" && (
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            data-ocid="admin.kyc.approve.button"
-                            onClick={() =>
-                              toast.success(`KYC approved for ${kyc.business}`)
-                            }
-                            className="flex-1 py-2 rounded-xl text-sm font-semibold text-white"
-                            style={{ background: "#22C55E" }}
-                          >
-                            Approve
-                          </button>
-                          <button
-                            type="button"
-                            data-ocid="admin.kyc.reject.button"
-                            onClick={() =>
-                              toast.error(`KYC rejected for ${kyc.business}`)
-                            }
-                            className="flex-1 py-2 rounded-xl text-sm font-semibold"
+                          {f}
+                          {f !== "All" && (
+                            <span className="ml-1 text-[9px]">
+                              (
+                              {
+                                kycItems.filter(
+                                  (k) =>
+                                    k.status === f ||
+                                    (f === "Verified" &&
+                                      k.status === "Approved"),
+                                ).length
+                              }
+                              )
+                            </span>
+                          )}
+                        </button>
+                      ),
+                    )}
+                  </div>
+
+                  {kycItems
+                    .filter((k) => {
+                      if (kycFilter === "All") return true;
+                      if (kycFilter === "Verified")
+                        return (
+                          k.status === "Approved" || k.status === "Verified"
+                        );
+                      return k.status === kycFilter;
+                    })
+                    .map((kyc, i) => (
+                      <div
+                        key={kyc.id}
+                        className="rounded-xl p-4"
+                        style={{
+                          background: "#FFFFFF",
+                          border: "1px solid #E2E8F0",
+                        }}
+                        data-ocid={`admin.kyc.item.${i + 1}`}
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <p className="font-semibold text-sm text-[#1E293B]">
+                              {kyc.business}
+                            </p>
+                            <p className="text-xs" style={{ color: "#9CA3AF" }}>
+                              {kyc.id} · {kyc.docType}
+                            </p>
+                          </div>
+                          <span
+                            className="text-xs px-2 py-0.5 rounded-full font-semibold"
                             style={{
-                              background: "rgba(239,68,68,0.1)",
-                              color: "#EF4444",
-                              border: "1px solid rgba(239,68,68,0.3)",
+                              background:
+                                kyc.status === "Approved" ||
+                                kyc.status === "Verified"
+                                  ? "rgba(34,197,94,0.1)"
+                                  : kyc.status === "Rejected"
+                                    ? "rgba(239,68,68,0.1)"
+                                    : "rgba(245,158,11,0.1)",
+                              color:
+                                kyc.status === "Approved" ||
+                                kyc.status === "Verified"
+                                  ? "#22C55E"
+                                  : kyc.status === "Rejected"
+                                    ? "#EF4444"
+                                    : "#F59E0B",
                             }}
                           >
-                            Reject
-                          </button>
+                            {kyc.status}
+                          </span>
                         </div>
-                      )}
-                    </div>
-                  ))}
+                        <div className="flex items-center gap-3 mb-3">
+                          <div
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+                            style={{
+                              background: "#F8FAFC",
+                              color: "#9CA3AF",
+                              border: "1px solid #E2E8F0",
+                            }}
+                          >
+                            <Eye className="w-3.5 h-3.5" /> View Document
+                          </div>
+                        </div>
+                        {kyc.status === "Pending" && (
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              data-ocid="admin.kyc.approve.button"
+                              onClick={() => {
+                                setKycItems((prev) =>
+                                  prev.map((k) =>
+                                    k.id === kyc.id
+                                      ? { ...k, status: "Approved" }
+                                      : k,
+                                  ),
+                                );
+                                setPendingCount((prev) =>
+                                  Math.max(0, prev - 1),
+                                );
+                                toast.success(
+                                  "KYC Approved — user now has full access",
+                                );
+                              }}
+                              className="flex-1 py-2 rounded-xl text-sm font-semibold text-white"
+                              style={{ background: "#22C55E" }}
+                            >
+                              Approve
+                            </button>
+                            <button
+                              type="button"
+                              data-ocid="admin.kyc.reject.button"
+                              onClick={() => {
+                                setKycItems((prev) =>
+                                  prev.map((k) =>
+                                    k.id === kyc.id
+                                      ? { ...k, status: "Rejected" }
+                                      : k,
+                                  ),
+                                );
+                                toast.error(`KYC rejected for ${kyc.business}`);
+                              }}
+                              className="flex-1 py-2 rounded-xl text-sm font-semibold"
+                              style={{
+                                background: "rgba(239,68,68,0.1)",
+                                color: "#EF4444",
+                                border: "1px solid rgba(239,68,68,0.3)",
+                              }}
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  {kycItems.filter((k) => {
+                    if (kycFilter === "All") return true;
+                    if (kycFilter === "Verified")
+                      return k.status === "Approved" || k.status === "Verified";
+                    return k.status === kycFilter;
+                  }).length === 0 && (
+                    <p className="text-xs text-center text-gray-400 py-4">
+                      No {kycFilter.toLowerCase()} KYC records
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -2351,6 +2476,214 @@ export default function AdminDashboard() {
               >
                 {portalSaveSuccess ? "✓ Changes Saved" : "Save Changes"}
               </button>
+            </div>
+          )}
+
+          {/* ===== SLIDER MANAGEMENT ===== */}
+          {activeSection === "slider-management" && (
+            <div className="space-y-4">
+              <div
+                className="rounded-2xl p-4"
+                style={{ background: "#FFFFFF", border: "1px solid #E2E8F0" }}
+              >
+                <p className="font-bold text-sm text-[#1E293B] mb-1">
+                  Slider Management
+                </p>
+                <p className="text-xs text-gray-400 mb-4">
+                  Upload and manage banners shown on the Buyer and Seller portal
+                  home screens.
+                </p>
+
+                {/* Upload New Banner */}
+                <div className="space-y-3 mb-6">
+                  <p className="text-xs font-bold text-gray-500 uppercase">
+                    Upload New Banner
+                  </p>
+                  <div>
+                    <label
+                      htmlFor="slider-mgmt-upload"
+                      className="flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer text-sm font-semibold"
+                      style={{
+                        background: "#F1F5F9",
+                        border: "1.5px dashed #CBD5E1",
+                        color: "#64748B",
+                      }}
+                    >
+                      <Image className="w-4 h-4" />
+                      {newBannerPreview
+                        ? "Image selected ✓"
+                        : "Choose image..."}
+                      <input
+                        id="slider-mgmt-upload"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) =>
+                              setNewBannerPreview(ev.target?.result as string);
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                    </label>
+                    {newBannerPreview && (
+                      <img
+                        src={newBannerPreview}
+                        alt="Banner preview"
+                        className="mt-2 rounded-xl h-16 w-full object-cover"
+                      />
+                    )}
+                  </div>
+                  <input
+                    data-ocid="admin.slider.title.input"
+                    type="text"
+                    value={newBannerTitle}
+                    onChange={(e) => setNewBannerTitle(e.target.value)}
+                    placeholder="Banner title..."
+                    className="w-full px-3 py-2 rounded-xl text-sm outline-none"
+                    style={{
+                      background: "#F8FAFC",
+                      border: "1px solid #E2E8F0",
+                      color: "#1E293B",
+                    }}
+                  />
+                  <select
+                    data-ocid="admin.slider.target.select"
+                    value={newBannerTarget}
+                    onChange={(e) =>
+                      setNewBannerTarget(
+                        e.target.value as "buyer" | "seller" | "both",
+                      )
+                    }
+                    className="w-full px-3 py-2 rounded-xl text-sm outline-none"
+                    style={{
+                      background: "#F8FAFC",
+                      border: "1px solid #E2E8F0",
+                      color: "#1E293B",
+                    }}
+                  >
+                    <option value="both">Both Portals</option>
+                    <option value="buyer">Buyer Portal Only</option>
+                    <option value="seller">Seller Portal Only</option>
+                  </select>
+                  <button
+                    type="button"
+                    data-ocid="admin.slider.publish.button"
+                    onClick={() => {
+                      if (!newBannerTitle) {
+                        toast.error("Enter a banner title");
+                        return;
+                      }
+                      setBanners((prev) => [
+                        {
+                          id: `banner-${Date.now()}`,
+                          imageUrl: newBannerPreview,
+                          title: newBannerTitle,
+                          target: newBannerTarget,
+                          active: true,
+                        },
+                        ...prev,
+                      ]);
+                      setNewBannerTitle("");
+                      setNewBannerPreview("");
+                      toast.success(
+                        "Banner published — portals updated in real-time!",
+                      );
+                    }}
+                    className="w-full py-2.5 rounded-xl font-bold text-white text-sm"
+                    style={{ background: "#1D4ED8" }}
+                  >
+                    Publish Banner
+                  </button>
+                </div>
+
+                {/* Banner list */}
+                <p className="text-xs font-bold text-gray-500 uppercase mb-2">
+                  Active Banners ({banners.length})
+                </p>
+                <div className="space-y-2">
+                  {banners.map((banner, bi) => (
+                    <div
+                      key={banner.id}
+                      className="flex items-center gap-3 p-3 rounded-xl"
+                      style={{
+                        background: "#F8FAFC",
+                        border: "1px solid #E2E8F0",
+                      }}
+                      data-ocid={`admin.slider.banner.item.${bi + 1}`}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-[#1E293B] truncate">
+                          {banner.title}
+                        </p>
+                        <span
+                          className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+                          style={{
+                            background:
+                              banner.target === "both"
+                                ? "#EFF6FF"
+                                : banner.target === "buyer"
+                                  ? "#F0FDF4"
+                                  : "#FFF7ED",
+                            color:
+                              banner.target === "both"
+                                ? "#1D4ED8"
+                                : banner.target === "buyer"
+                                  ? "#16A34A"
+                                  : "#F97316",
+                          }}
+                        >
+                          {banner.target === "both"
+                            ? "Both"
+                            : banner.target === "buyer"
+                              ? "Buyer"
+                              : "Seller"}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        data-ocid="admin.slider.banner.toggle"
+                        onClick={() => {
+                          setBanners((prev) =>
+                            prev.map((b) =>
+                              b.id === banner.id
+                                ? { ...b, active: !b.active }
+                                : b,
+                            ),
+                          );
+                          toast.success(
+                            `Banner ${banner.active ? "deactivated" : "activated"}`,
+                          );
+                        }}
+                        className="text-[10px] font-bold px-2 py-1 rounded-lg"
+                        style={{
+                          background: banner.active ? "#D1FAE5" : "#F1F5F9",
+                          color: banner.active ? "#065F46" : "#94A3B8",
+                        }}
+                      >
+                        {banner.active ? "ON" : "OFF"}
+                      </button>
+                      <button
+                        type="button"
+                        data-ocid="admin.slider.banner.delete_button"
+                        onClick={() => {
+                          setBanners((prev) =>
+                            prev.filter((b) => b.id !== banner.id),
+                          );
+                          toast.success("Banner removed");
+                        }}
+                        className="w-6 h-6 flex items-center justify-center rounded-lg"
+                        style={{ background: "#FEE2E2", color: "#DC2626" }}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
 

@@ -1,6 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft,
+  BarChart2,
   Bell,
   Building2,
   CheckCircle,
@@ -17,6 +18,7 @@ import {
   Settings,
   Shield,
   Star,
+  TrendingUp,
   User,
 } from "lucide-react";
 import { useState } from "react";
@@ -55,7 +57,12 @@ export default function ProfilePage() {
   const { mode, setMode } = useApp();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [view, setView] = useState<"profile" | "account" | "help">("profile");
+  const [view, setView] = useState<
+    "profile" | "account" | "help" | "analytics"
+  >("profile");
+  const [analyticsFilter, setAnalyticsFilter] = useState<
+    "7days" | "30days" | "alltime"
+  >("7days");
   const [notifEnabled, setNotifEnabled] = useState(true);
   const [notifDenied, setNotifDenied] = useState(false);
 
@@ -374,6 +381,182 @@ export default function ProfilePage() {
     );
   }
 
+  // ── Analytics sub-page ───────────────────────────────────────────────────────
+  if (view === "analytics") {
+    const CHART_HEIGHTS_SELLER = [40, 60, 35, 80, 55, 70, 90];
+    const CHART_HEIGHTS_BUYER = [30, 50, 65, 45, 75, 55, 40];
+    const heights =
+      mode === "seller" ? CHART_HEIGHTS_SELLER : CHART_HEIGHTS_BUYER;
+    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+    return (
+      <div className="px-4 pt-4 pb-24 bg-[#F8F9FA] min-h-screen">
+        <button
+          type="button"
+          onClick={() => setView("profile")}
+          className="flex items-center gap-2 mb-4 text-sm font-semibold"
+          style={{ color: "#1D4ED8" }}
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Profile
+        </button>
+        <h2 className="font-black text-lg text-gray-900 mb-1">My Analytics</h2>
+        <p className="text-xs text-gray-500 mb-4">
+          {mode === "seller"
+            ? "Your selling activity"
+            : "Your bidding activity"}
+        </p>
+
+        {/* Time filter tabs */}
+        <div
+          className="flex gap-1 mb-4 p-1 rounded-xl"
+          style={{ background: "#F3F4F6" }}
+        >
+          {[
+            { key: "7days", label: "7 Days" },
+            { key: "30days", label: "30 Days" },
+            { key: "alltime", label: "All Time" },
+          ].map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              data-ocid={`analytics.filter.${f.key}.tab`}
+              onClick={() =>
+                setAnalyticsFilter(f.key as typeof analyticsFilter)
+              }
+              className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all"
+              style={{
+                background:
+                  analyticsFilter === f.key ? "#1D4ED8" : "transparent",
+                color: analyticsFilter === f.key ? "white" : "#6B7280",
+              }}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Stat cards */}
+        {mode === "seller" ? (
+          <div className="grid grid-cols-2 gap-2.5 mb-4">
+            {[
+              {
+                label: "Total Listings",
+                value: "20",
+                icon: "📦",
+                color: "#1D4ED8",
+              },
+              {
+                label: "Active Auctions",
+                value: "17",
+                icon: "🔥",
+                color: "#F97316",
+              },
+              { label: "Sold Items", value: "3", icon: "✅", color: "#22C55E" },
+              {
+                label: "Total Revenue",
+                value: "₹4,85,000",
+                icon: "💰",
+                color: "#8B5CF6",
+              },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                data-ocid={`analytics.seller.${stat.label.toLowerCase().replace(/ /g, "_")}.card`}
+                className="bg-white rounded-2xl p-3.5"
+                style={{
+                  border: "1px solid #e5e7eb",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                }}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-lg">{stat.icon}</span>
+                  <TrendingUp
+                    className="w-3 h-3"
+                    style={{ color: stat.color }}
+                  />
+                </div>
+                <p className="font-black text-lg" style={{ color: stat.color }}>
+                  {stat.value}
+                </p>
+                <p className="text-[10px] text-gray-500 font-medium">
+                  {stat.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            {[
+              {
+                label: "Bids Placed",
+                value: "12",
+                icon: "🏷️",
+                color: "#1D4ED8",
+              },
+              { label: "Won", value: "3", icon: "🏆", color: "#22C55E" },
+              {
+                label: "Spent",
+                value: "₹2,14,500",
+                icon: "💳",
+                color: "#8B5CF6",
+              },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                data-ocid={`analytics.buyer.${stat.label.toLowerCase().replace(/ /g, "_")}.card`}
+                className="bg-white rounded-2xl p-3"
+                style={{
+                  border: "1px solid #e5e7eb",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                }}
+              >
+                <span className="text-xl">{stat.icon}</span>
+                <p
+                  className="font-black text-base mt-1"
+                  style={{ color: stat.color }}
+                >
+                  {stat.value}
+                </p>
+                <p className="text-[9px] text-gray-500 font-medium">
+                  {stat.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Activity chart */}
+        <div
+          className="bg-white rounded-2xl p-4"
+          style={{
+            border: "1px solid #e5e7eb",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+          }}
+        >
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">
+            7-Day Activity
+          </p>
+          <div className="flex items-end gap-2 h-24">
+            {heights.map((h, i) => (
+              <div key={days[i]} className="flex flex-col items-center flex-1">
+                <div
+                  className="w-full rounded-t-md transition-all"
+                  style={{
+                    height: `${h}%`,
+                    background: i === 6 ? "#1D4ED8" : "#BFDBFE",
+                    minHeight: "4px",
+                  }}
+                />
+                <span className="text-[9px] text-gray-400 mt-1">{days[i]}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ── Help sub-page ─────────────────────────────────────────────────────────────
   if (view === "help") {
     return (
@@ -550,6 +733,12 @@ export default function ProfilePage() {
             action: () => setView("account"),
           },
           {
+            icon: BarChart2,
+            label: "My Analytics",
+            ocid: "profile.analytics.link",
+            action: () => setView("analytics"),
+          },
+          {
             icon: HelpCircle,
             label: "Help & Support",
             ocid: "profile.help.link",
@@ -562,7 +751,7 @@ export default function ProfilePage() {
             data-ocid={item.ocid}
             className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
             style={{
-              borderBottom: idx < 1 ? "1px solid #f3f4f6" : "none",
+              borderBottom: idx < 2 ? "1px solid #f3f4f6" : "none",
             }}
             onClick={item.action}
           >

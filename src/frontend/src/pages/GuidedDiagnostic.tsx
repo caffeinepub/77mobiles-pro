@@ -54,12 +54,14 @@ export default function GuidedDiagnostic({
 
   // Touch test — dynamic grid based on window dimensions
   const [touchedSquares, setTouchedSquares] = useState<Set<number>>(new Set());
+  const [isPointerDown, setIsPointerDown] = useState(false);
   const [gridDims, setGridDims] = useState<{ rows: number; cols: number }>(
     () => ({
-      cols: Math.max(4, Math.floor(window.innerWidth / 60)),
-      rows: Math.max(6, Math.floor(window.innerHeight / 60)),
+      cols: Math.max(8, Math.round(window.innerWidth / 32)),
+      rows: Math.max(12, Math.round(window.innerHeight / 32)),
     }),
   );
+  const gridContainerRef = useRef<HTMLDivElement>(null);
 
   const GRID_COLS = gridDims.cols;
   const GRID_ROWS = gridDims.rows;
@@ -70,13 +72,39 @@ export default function GuidedDiagnostic({
   useEffect(() => {
     const onResize = () => {
       setGridDims({
-        cols: Math.max(4, Math.floor(window.innerWidth / 60)),
-        rows: Math.max(6, Math.floor(window.innerHeight / 60)),
+        cols: Math.max(8, Math.round(window.innerWidth / 32)),
+        rows: Math.max(12, Math.round(window.innerHeight / 32)),
       });
     };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
+
+  // Auto-advance when all squares are touched
+  useEffect(() => {
+    if (step === 1 && touchedSquares.size >= TOTAL_SQUARES) {
+      navigator.vibrate?.([200, 100, 200]);
+      setTimeout(() => setStep(2), 800);
+    }
+  }, [touchedSquares.size, TOTAL_SQUARES, step]);
+
+  const handleGridPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isPointerDown || !gridContainerRef.current) return;
+    const rect = gridContainerRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const cellWidth = rect.width / GRID_COLS;
+    const cellHeight = rect.height / GRID_ROWS;
+    const col = Math.floor(x / cellWidth);
+    const row = Math.floor(y / cellHeight);
+    if (col >= 0 && col < GRID_COLS && row >= 0 && row < GRID_ROWS) {
+      const idx = row * GRID_COLS + col;
+      setTouchedSquares((prev) => {
+        if (prev.has(idx)) return prev;
+        return new Set([...prev, idx]);
+      });
+    }
+  };
 
   // Remove body overflow when touch test is active
   useEffect(() => {
@@ -525,79 +553,108 @@ export default function GuidedDiagnostic({
             />
           </div>
 
-          {/* Full-screen touch grid */}
+          {/* Full-screen touch grid — Samsung-style pan drawing */}
           <div
+            ref={gridContainerRef}
             style={{
               flex: 1,
               display: "grid",
               gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`,
               gridTemplateRows: `repeat(${GRID_ROWS}, 1fr)`,
-              gap: "2px",
+              gap: "1px",
               padding: "2px",
               touchAction: "none",
               userSelect: "none",
               WebkitUserSelect: "none",
+              position: "relative",
             }}
+            onPointerDown={(e) => {
+              (e.target as Element).setPointerCapture?.(e.pointerId);
+              setIsPointerDown(true);
+              handleGridPointerMove(e);
+            }}
+            onPointerMove={handleGridPointerMove}
+            onPointerUp={() => setIsPointerDown(false)}
+            onPointerCancel={() => setIsPointerDown(false)}
           >
             {GRID_SQUARES.map((squareIdx) => (
               <div
                 key={`touch-square-${squareIdx}`}
-                data-ocid={`diagnostic.touch_square.${squareIdx + 1}`}
                 style={{
                   background: touchedSquares.has(squareIdx)
                     ? "#22c55e"
-                    : "white",
-                  border: "1px solid #e5e7eb",
-                  borderRadius: 4,
-                  cursor: "crosshair",
-                  transition: "background 0.15s",
-                }}
-                onPointerEnter={() => {
-                  setTouchedSquares((prev) => {
-                    const next = new Set([...prev, squareIdx]);
-                    if (next.size >= TOTAL_SQUARES * 0.9) {
-                      setTimeout(() => setStep(2), 600);
-                    }
-                    return next;
-                  });
+                    : "#1E293B",
+                  border: "0.5px solid rgba(255,255,255,0.12)",
+                  borderRadius: 2,
+                  transition: "background 0.1s",
                 }}
               />
             ))}
           </div>
 
-          {/* Success overlay */}
-          {touchProgress >= 90 && (
+          {/* Clear button */}
+          <div
+            style={{
+              padding: "8px 12px",
+              display: "flex",
+              justifyContent: "center",
+              flexShrink: 0,
+              background: "rgba(0,0,0,0.5)",
+            }}
+          >
+            <button
+              type="button"
+              data-ocid="diagnostic.touch_clear.button"
+              onClick={() => setTouchedSquares(new Set())}
+              style={{
+                padding: "6px 20px",
+                borderRadius: 8,
+                background: "rgba(255,255,255,0.15)",
+                color: "white",
+                fontWeight: 700,
+                fontSize: 12,
+                border: "1px solid rgba(255,255,255,0.3)",
+                cursor: "pointer",
+              }}
+            >
+              Clear
+            </button>
+          </div>
+
+          {/* Auto-advance at 100% — no button needed */}
+          {touchProgress >= 100 && (
             <div
               style={{
                 position: "absolute",
-                bottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)",
-                left: "50%",
-                transform: "translateX(-50%)",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "rgba(34,197,94,0.15)",
                 zIndex: 10,
+                pointerEvents: "none",
               }}
             >
-              <button
-                type="button"
-                data-ocid="diagnostic.touch_next.button"
-                onClick={() => setStep(2)}
-                style={{
-                  padding: "12px 32px",
-                  borderRadius: 12,
-                  background: "#1D4ED8",
-                  color: "white",
-                  fontWeight: 800,
-                  fontSize: 14,
-                  border: "none",
-                  cursor: "pointer",
-                  boxShadow: "0 4px 16px rgba(29,78,216,0.4)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
-                <CheckCircle style={{ width: 16, height: 16 }} />
-                Touch Test Passed! Continue
-              </button>
+              <div style={{ textAlign: "center" }}>
+                <CheckCircle
+                  style={{
+                    width: 48,
+                    height: 48,
+                    color: "#22c55e",
+                    margin: "0 auto",
+                  }}
+                />
+                <p
+                  style={{
+                    color: "#22c55e",
+                    fontWeight: 800,
+                    fontSize: 16,
+                    marginTop: 8,
+                  }}
+                >
+                  Test Complete!
+                </p>
+              </div>
             </div>
           )}
         </div>

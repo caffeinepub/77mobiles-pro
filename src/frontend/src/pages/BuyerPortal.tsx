@@ -1051,8 +1051,12 @@ export default function BuyerPortal() {
                 className="bg-white rounded-2xl p-8 text-center"
                 style={{ border: "1px solid #e5e7eb" }}
               >
-                <p className="font-bold text-sm text-gray-400">
-                  No listings found
+                <p className="text-2xl mb-2">🔍</p>
+                <p className="font-bold text-sm text-gray-800 mb-1">
+                  No active listings available
+                </p>
+                <p className="text-xs text-gray-400">
+                  Check back soon for new auctions
                 </p>
               </div>
             ) : (

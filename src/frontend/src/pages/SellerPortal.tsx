@@ -96,6 +96,9 @@ export default function SellerPortal() {
 
   const [gridLoading, setGridLoading] = useState(true);
   const [listView, setListView] = useState<"list" | "grid">("list");
+  const [hideDemoListings, setHideDemoListings] = useState<boolean>(() => {
+    return localStorage.getItem("77m_hide_demo") === "true";
+  });
 
   useEffect(() => {
     const t = setTimeout(() => setGridLoading(false), 1200);
@@ -103,7 +106,27 @@ export default function SellerPortal() {
   }, []);
 
   // Merge static + shared listings
-  const allListings = [...sharedListings, ...SELLER_LISTINGS];
+  const baseListings = [...sharedListings, ...SELLER_LISTINGS];
+
+  // Auto-hide demo listings when user has real listings
+  useEffect(() => {
+    if (sharedListings.length > 0 && !hideDemoListings) {
+      setHideDemoListings(true);
+      localStorage.setItem("77m_hide_demo", "true");
+    }
+  }, [sharedListings.length, hideDemoListings]);
+
+  const toggleHideDemo = () => {
+    setHideDemoListings((prev) => {
+      const next = !prev;
+      localStorage.setItem("77m_hide_demo", String(next));
+      return next;
+    });
+  };
+
+  const allListings = hideDemoListings
+    ? baseListings.filter((l) => !(l as any).isDemo)
+    : baseListings;
 
   const filtered = allListings.filter((l) => {
     const q = searchQuery.toLowerCase();
@@ -231,6 +254,21 @@ export default function SellerPortal() {
           <span style={{ color: "#94A3B8", fontSize: "12px", fontWeight: 500 }}>
             {allListings.length} total
           </span>
+          {/* Demo mode toggle */}
+          <button
+            type="button"
+            data-ocid="seller.demo_toggle.toggle"
+            onClick={toggleHideDemo}
+            className="text-[9px] font-bold px-2 py-0.5 rounded-full ml-1 transition-all"
+            style={{
+              background: hideDemoListings ? "#D1FAE5" : "#F1F5F9",
+              color: hideDemoListings ? "#065F46" : "#6B7280",
+              border: "1px solid",
+              borderColor: hideDemoListings ? "#A7F3D0" : "#E2E8F0",
+            }}
+          >
+            {hideDemoListings ? "Show All" : "Hide Demo"}
+          </button>
           {/* View toggle */}
           <div className="flex items-center gap-1 ml-auto">
             <button
@@ -341,9 +379,11 @@ export default function SellerPortal() {
               className="bg-white rounded-2xl p-8 text-center"
               style={{ border: "1px solid #e5e7eb" }}
             >
-              <p className="font-bold text-sm text-gray-400">
+              <p className="text-2xl mb-2">📦</p>
+              <p className="font-bold text-sm text-gray-800 mb-1">
                 No listings found
               </p>
+              <p className="text-xs text-gray-400">Tap + to start selling</p>
             </div>
           ) : listView === "grid" ? (
             // ─── Grid View (2 columns) ───

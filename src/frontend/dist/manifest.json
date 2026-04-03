@@ -7,10 +7,10 @@
   "scope": "/",
   "orientation": "portrait",
   "theme_color": "#1D4ED8",
-  "background_color": "#0047AB",
+  "background_color": "#1D4ED8",
   "categories": ["shopping", "business"],
-  "related_applications": [],
   "screenshots": [],
+  "related_applications": [],
   "icons": [
     {
       "src": "/assets/generated/icon-77m-maskable-192.dim_192x192.png",
