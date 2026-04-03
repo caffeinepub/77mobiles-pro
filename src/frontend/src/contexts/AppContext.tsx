@@ -83,7 +83,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [activeCategory, setActiveCategory] = useState("smartphones");
   const [sharedListings, setSharedListings] = useState<any[]>([]);
   const [isDemoMode, setIsDemoModeState] = useState<boolean>(() => {
-    return localStorage.getItem("77m_demo_mode") !== "false";
+    return localStorage.getItem("77m_demo_mode") === "true";
   });
   const [watchlistIds, setWatchlistIds] = useState<Set<string>>(() => {
     try {

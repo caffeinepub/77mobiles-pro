@@ -1,5 +1,5 @@
 /* scope: / */
-const CACHE_NAME = '77mobiles-v2';
+const CACHE_NAME = '77mobiles-v3';
 const PRECACHE_URLS = [
   '/',
   '/index.html',
@@ -13,13 +13,22 @@ const PRECACHE_URLS = [
   '/assets/generated/category-spareparts-transparent.dim_200x240.png',
 ];
 
-// Install: pre-cache critical assets
+// Install: pre-cache critical assets — do NOT call skipWaiting() here to avoid clearing sessions
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(PRECACHE_URLS).catch(() => {});
-    }).then(() => self.skipWaiting())
+    })
+    // Intentionally NOT calling skipWaiting() during install
+    // skipWaiting is only called via postMessage to preserve active sessions
   );
+});
+
+// Listen for SKIP_WAITING message from the app
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 // Activate: clean up old caches + claim clients
@@ -33,15 +42,11 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch: network-first for API/backend, cache-first for static assets
+// Fetch: network-first for navigation, cache-first for static assets
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-
-  // Skip non-GET and cross-origin requests
   if (event.request.method !== 'GET') return;
   if (url.origin !== self.location.origin) return;
-
-  // ICP canister calls — always network
   if (url.pathname.startsWith('/api/') || url.pathname.includes('canister')) return;
 
   event.respondWith(
@@ -54,12 +59,9 @@ self.addEventListener('fetch', (event) => {
         return response;
       }).catch(() => cached);
 
-      // For HTML navigation — network first, fall back to cache
       if (event.request.mode === 'navigate') {
         return networkFetch.catch(() => caches.match('/index.html'));
       }
-
-      // For assets — cache first, then network
       return cached || networkFetch;
     })
   );

@@ -61,8 +61,9 @@ export default function BottomNav() {
         background: "rgba(255,255,255,0.88)",
         borderTop: "1px solid rgba(229,231,235,0.7)",
         boxShadow: "0 -2px 12px rgba(0,0,0,0.06)",
-        height: "calc(80px + env(safe-area-inset-bottom))",
-        paddingBottom: "calc(env(safe-area-inset-bottom) + 8px)",
+        height: "80px",
+        boxSizing: "content-box",
+        paddingBottom: "env(safe-area-inset-bottom, 20px)",
         // No margin-bottom — fixed position handles placement
       }}
     >

@@ -470,7 +470,7 @@ export default function AdminDashboard() {
   );
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [isDemoMode, setIsDemoMode] = useState(
-    () => localStorage.getItem("77m_demo_mode") !== "false",
+    () => localStorage.getItem("77m_demo_mode") === "true",
   );
   const [newRegistrations, setNewRegistrations] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -548,6 +548,47 @@ export default function AdminDashboard() {
     "buyer" | "seller" | "both"
   >("both");
   const [newBannerPreview, setNewBannerPreview] = useState("");
+
+  // Task 7: KYC document lightbox
+  const [docModal, setDocModal] = useState<{
+    url: string;
+    name: string;
+  } | null>(null);
+
+  // Task 8: Admin bell notifications
+  const [showBellPanel, setShowBellPanel] = useState(false);
+  const [adminNotifs, setAdminNotifs] = useState([
+    {
+      id: "n1",
+      text: "New KYC submission: PhoneHub Surat",
+      time: "2 min ago",
+      read: false,
+    },
+    {
+      id: "n2",
+      text: "High-value bid: ₹1,12,000 on Galaxy Fold 6",
+      time: "5 min ago",
+      read: false,
+    },
+    {
+      id: "n3",
+      text: "Dispute filed by Dealer #178",
+      time: "12 min ago",
+      read: false,
+    },
+    {
+      id: "n4",
+      text: "New listing pending approval: iPhone 17 Pro",
+      time: "18 min ago",
+      read: true,
+    },
+    {
+      id: "n5",
+      text: "Wallet withdrawal request: ₹50,000 from Dealer #217",
+      time: "1 hr ago",
+      read: true,
+    },
+  ]);
 
   // Task 3: Load KYC submissions from localStorage and subscribe to storage events
   useEffect(() => {
@@ -908,14 +949,69 @@ export default function AdminDashboard() {
             />
           </div>
 
-          <button
-            type="button"
-            className="p-2 rounded-xl relative"
-            style={{ background: "rgba(29,78,216,0.08)", color: "#1D4ED8" }}
-          >
-            <Bell className="w-5 h-5" />
-            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full" />
-          </button>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowBellPanel((p) => !p)}
+              className="p-2 rounded-xl relative"
+              style={{ background: "rgba(29,78,216,0.08)", color: "#1D4ED8" }}
+            >
+              <Bell className="w-5 h-5" />
+              {adminNotifs.filter((n) => !n.read).length > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-white text-[8px] font-bold flex items-center justify-center">
+                  {adminNotifs.filter((n) => !n.read).length}
+                </span>
+              )}
+            </button>
+            {showBellPanel && (
+              <div
+                className="absolute right-0 top-10 w-72 bg-white rounded-2xl shadow-xl z-50 overflow-hidden"
+                style={{ border: "1px solid #E2E8F0" }}
+              >
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                  <span className="font-bold text-sm text-gray-900">
+                    Notifications
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAdminNotifs((prev) =>
+                        prev.map((n) => ({ ...n, read: true })),
+                      );
+                    }}
+                    className="text-[10px] font-semibold"
+                    style={{ color: "#1D4ED8" }}
+                  >
+                    Mark all read
+                  </button>
+                </div>
+                <div className="max-h-64 overflow-y-auto">
+                  {adminNotifs.map((n) => (
+                    <button
+                      key={n.id}
+                      type="button"
+                      className="w-full text-left px-4 py-3 border-b border-gray-50 hover:bg-gray-50"
+                      style={{ background: n.read ? "white" : "#EFF6FF" }}
+                      onClick={() =>
+                        setAdminNotifs((prev) =>
+                          prev.map((x) =>
+                            x.id === n.id ? { ...x, read: true } : x,
+                          ),
+                        )
+                      }
+                    >
+                      <p className="text-xs font-semibold text-gray-800">
+                        {n.text}
+                      </p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">
+                        {n.time}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </header>
 
         {/* Page Content */}
@@ -1271,10 +1367,12 @@ export default function AdminDashboard() {
                             data-ocid="admin.users.view_doc.button"
                             onClick={() => {
                               const url = user.aadhaar_url || user.pan_url;
-                              if (url) {
-                                window.open(url, "_blank");
+                              if (url?.startsWith("http")) {
+                                setDocModal({ url, name: user.name });
                               } else {
-                                toast.info("No document uploaded yet");
+                                toast.info(
+                                  "No document uploaded yet for this user",
+                                );
                               }
                             }}
                             className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-lg"
@@ -2777,6 +2875,41 @@ export default function AdminDashboard() {
           }
         }
       `}</style>
+
+      {/* Task 7: KYC Document Lightbox */}
+      {docModal && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.85)" }}
+          onClick={() => setDocModal(null)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setDocModal(null);
+          }}
+          aria-label="Document preview"
+        >
+          <div
+            className="relative max-w-[90vw] max-h-[90vh] rounded-2xl overflow-hidden bg-white p-2"
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            onKeyDown={(e: React.KeyboardEvent) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setDocModal(null)}
+              className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center z-10"
+            >
+              <X className="w-4 h-4 text-white" />
+            </button>
+            <p className="text-xs font-semibold text-gray-500 mb-2 px-2">
+              KYC Document — {docModal.name}
+            </p>
+            <img
+              src={docModal.url}
+              alt="KYC Document"
+              className="max-w-[85vw] max-h-[80vh] rounded-xl object-contain"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

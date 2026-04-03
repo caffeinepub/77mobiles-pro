@@ -15,7 +15,6 @@ import { toast } from "sonner";
 import { useApp } from "../contexts/AppContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useActor } from "../hooks/useActor";
-import GuidedDiagnostic from "./GuidedDiagnostic";
 
 const BRANDS = [
   "Apple",
@@ -33,22 +32,33 @@ const BRANDS = [
   "iQOO",
   "Poco",
   "Redmi",
+  "Other / Not Listed",
 ];
 
 const MODELS: Record<string, string[]> = {
   Apple: [
     "iPhone 17 Pro Max",
     "iPhone 17 Pro",
+    "iPhone 17 Air",
     "iPhone 17",
+    "iPhone 17e",
     "iPhone 16 Pro Max",
     "iPhone 16 Pro",
     "iPhone 16",
     "iPhone 15 Pro Max",
     "iPhone 15 Pro",
     "iPhone 15",
+    "iPhone 14 Pro Max",
     "iPhone 14 Pro",
     "iPhone 14",
+    "iPhone 13 Pro Max",
+    "iPhone 13 Pro",
     "iPhone 13",
+    "iPhone 13 Mini",
+    "iPhone 12 Pro Max",
+    "iPhone 12 Pro",
+    "iPhone 12",
+    "iPhone 12 Mini",
   ],
   Samsung: [
     "Samsung S26 Ultra",
@@ -58,17 +68,39 @@ const MODELS: Record<string, string[]> = {
     "Samsung S25+",
     "Samsung S25",
     "Samsung S24 Ultra",
+    "Samsung S24+",
     "Samsung S24",
+    "Samsung S23 Ultra",
+    "Samsung S23+",
+    "Samsung S23",
+    "Samsung S22 Ultra",
+    "Samsung S22+",
+    "Samsung S22",
+    "Samsung S21 Ultra",
+    "Samsung S21+",
+    "Samsung S21",
+    "Galaxy Z Fold 8",
+    "Galaxy Z Fold 7",
     "Galaxy Z Fold6",
+    "Galaxy Z Flip 8",
+    "Galaxy Z Flip 7",
     "Galaxy Z Flip6",
     "Galaxy A55",
+    "Galaxy A35",
   ],
   OnePlus: [
+    "OnePlus 13R",
     "OnePlus 13",
+    "OnePlus 12R",
     "OnePlus 12",
+    "OnePlus 11R",
     "OnePlus 11",
+    "OnePlus 10 Pro",
+    "OnePlus 10R",
+    "OnePlus 10T",
     "OnePlus Nord 4",
     "OnePlus Nord CE4",
+    "OnePlus Nord 3",
   ],
   Xiaomi: ["Xiaomi 14 Ultra", "Xiaomi 14 Pro", "Xiaomi 14", "Xiaomi 13 Pro"],
   Realme: ["Realme GT 6", "Realme GT Neo 6", "Realme 12 Pro+"],
@@ -82,6 +114,7 @@ const MODELS: Record<string, string[]> = {
   iQOO: ["iQOO 12", "iQOO Neo 9 Pro"],
   Poco: ["Poco X6 Pro", "Poco F6 Pro"],
   Redmi: ["Redmi Note 13 Pro+", "Redmi Note 13 Pro"],
+  "Other / Not Listed": ["Other Device"],
 };
 
 const STORAGES = ["64GB", "128GB", "256GB", "512GB", "1TB"];
@@ -97,7 +130,7 @@ const COLORS = [
   "Red",
   "Other",
 ];
-const CONDITIONS = [
+const _CONDITIONS = [
   "New",
   "Like New",
   "Gently Used",
@@ -145,15 +178,6 @@ const MODEL_SPECS: Record<string, { storages: string[]; colors: string[] }> = {
     storages: ["128GB", "256GB", "512GB"],
     colors: ["Ultramarine", "Teal", "Pink", "White", "Black"],
   },
-  "iPhone 16 Pro Max": {
-    storages: ["256GB", "512GB", "1TB"],
-    colors: [
-      "Black Titanium",
-      "White Titanium",
-      "Desert Titanium",
-      "Natural Titanium",
-    ],
-  },
   "iPhone 16 Pro": {
     storages: ["128GB", "256GB", "512GB", "1TB"],
     colors: [
@@ -176,10 +200,6 @@ const MODEL_SPECS: Record<string, { storages: string[]; colors: string[] }> = {
       "Natural Titanium",
     ],
   },
-  "iPhone 14 Pro": {
-    storages: ["128GB", "256GB", "512GB", "1TB"],
-    colors: ["Deep Purple", "Gold", "Silver", "Space Black"],
-  },
   "Galaxy S24 Ultra": {
     storages: ["256GB", "512GB", "1TB"],
     colors: [
@@ -200,6 +220,190 @@ const MODEL_SPECS: Record<string, { storages: string[]; colors: string[] }> = {
   "Pixel 9 Pro": {
     storages: ["128GB", "256GB", "512GB", "1TB"],
     colors: ["Obsidian", "Porcelain", "Hazel", "Rose Quartz"],
+  },
+  "iPhone 17 Air": {
+    storages: ["128GB", "256GB", "512GB"],
+    colors: ["White", "Black", "Ultramarine", "Teal", "Pink"],
+  },
+  "iPhone 17e": {
+    storages: ["128GB", "256GB"],
+    colors: ["Black", "White", "Pink", "Teal"],
+  },
+  "iPhone 16 Pro Max": {
+    storages: ["256GB", "512GB", "1TB"],
+    colors: [
+      "Black Titanium",
+      "White Titanium",
+      "Desert Titanium",
+      "Natural Titanium",
+    ],
+  },
+  "iPhone 15 Pro Max": {
+    storages: ["256GB", "512GB", "1TB"],
+    colors: [
+      "Black Titanium",
+      "White Titanium",
+      "Blue Titanium",
+      "Natural Titanium",
+    ],
+  },
+  "iPhone 14 Pro Max": {
+    storages: ["128GB", "256GB", "512GB", "1TB"],
+    colors: ["Deep Purple", "Gold", "Silver", "Space Black"],
+  },
+  "iPhone 14 Pro": {
+    storages: ["128GB", "256GB", "512GB", "1TB"],
+    colors: ["Deep Purple", "Gold", "Silver", "Space Black"],
+  },
+  "iPhone 14": {
+    storages: ["128GB", "256GB", "512GB"],
+    colors: [
+      "Midnight",
+      "Starlight",
+      "Product Red",
+      "Purple",
+      "Blue",
+      "Yellow",
+    ],
+  },
+  "iPhone 13 Pro Max": {
+    storages: ["128GB", "256GB", "512GB", "1TB"],
+    colors: ["Alpine Green", "Sierra Blue", "Gold", "Silver", "Graphite"],
+  },
+  "iPhone 13 Pro": {
+    storages: ["128GB", "256GB", "512GB", "1TB"],
+    colors: ["Alpine Green", "Sierra Blue", "Gold", "Silver", "Graphite"],
+  },
+  "iPhone 13": {
+    storages: ["128GB", "256GB", "512GB"],
+    colors: ["Midnight", "Starlight", "Product Red", "Pink", "Blue", "Green"],
+  },
+  "iPhone 13 Mini": {
+    storages: ["128GB", "256GB", "512GB"],
+    colors: ["Midnight", "Starlight", "Product Red", "Pink", "Blue", "Green"],
+  },
+  "iPhone 12 Pro Max": {
+    storages: ["128GB", "256GB", "512GB"],
+    colors: ["Pacific Blue", "Gold", "Silver", "Graphite"],
+  },
+  "iPhone 12 Pro": {
+    storages: ["128GB", "256GB", "512GB"],
+    colors: ["Pacific Blue", "Gold", "Silver", "Graphite"],
+  },
+  "iPhone 12": {
+    storages: ["64GB", "128GB", "256GB"],
+    colors: ["Black", "White", "Product Red", "Green", "Blue", "Purple"],
+  },
+  "iPhone 12 Mini": {
+    storages: ["64GB", "128GB", "256GB"],
+    colors: ["Black", "White", "Product Red", "Green", "Blue", "Purple"],
+  },
+  "Samsung S26 Ultra": {
+    storages: ["256GB", "512GB", "1TB"],
+    colors: [
+      "Titanium Black",
+      "Titanium Silver",
+      "Titanium Blue",
+      "Titanium White",
+    ],
+  },
+  "Samsung S25 Ultra": {
+    storages: ["256GB", "512GB", "1TB"],
+    colors: [
+      "Titanium Black",
+      "Titanium Gray",
+      "Titanium Blue",
+      "Titanium White",
+    ],
+  },
+  "Samsung S25+": {
+    storages: ["256GB", "512GB"],
+    colors: ["Ice Blue", "Mint", "Silver Shadow", "Navy"],
+  },
+  "Samsung S25": {
+    storages: ["128GB", "256GB", "512GB"],
+    colors: ["Icyblue", "Mint", "Navy", "Silver Shadow"],
+  },
+  "Samsung S24+": {
+    storages: ["256GB", "512GB"],
+    colors: ["Cobalt Violet", "Onyx Black", "Marble Gray", "Jade Green"],
+  },
+  "Samsung S24": {
+    storages: ["128GB", "256GB"],
+    colors: ["Cobalt Violet", "Onyx Black", "Marble Gray", "Amber Yellow"],
+  },
+  "Samsung S23 Ultra": {
+    storages: ["256GB", "512GB", "1TB"],
+    colors: ["Phantom Black", "Cream", "Green", "Lavender"],
+  },
+  "Samsung S22 Ultra": {
+    storages: ["128GB", "256GB", "512GB", "1TB"],
+    colors: ["Phantom Black", "Phantom White", "Burgundy", "Green"],
+  },
+  "Samsung S21 Ultra": {
+    storages: ["128GB", "256GB"],
+    colors: [
+      "Phantom Black",
+      "Phantom Silver",
+      "Phantom Titanium",
+      "Phantom Navy",
+      "Phantom Brown",
+    ],
+  },
+  "Galaxy Z Fold 8": {
+    storages: ["256GB", "512GB", "1TB"],
+    colors: ["Phantom Black", "Icy Blue", "Gray Green"],
+  },
+  "Galaxy Z Fold 7": {
+    storages: ["256GB", "512GB"],
+    colors: ["Phantom Black", "Silver Shadow", "Navy"],
+  },
+  "Galaxy Z Fold6": {
+    storages: ["256GB", "512GB", "1TB"],
+    colors: ["Silver Shadow", "Pink", "Navy"],
+  },
+  "Galaxy Z Flip 8": {
+    storages: ["256GB", "512GB"],
+    colors: ["Mint", "Blue", "Yellow", "White", "Pink"],
+  },
+  "Galaxy Z Flip 7": {
+    storages: ["256GB"],
+    colors: ["Mint", "Blue", "Graphite", "White"],
+  },
+  "Galaxy Z Flip6": {
+    storages: ["256GB", "512GB"],
+    colors: [
+      "Crafted Black",
+      "Silver Shadow",
+      "Yellow",
+      "Blue",
+      "Mint",
+      "White",
+    ],
+  },
+  "OnePlus 13R": {
+    storages: ["128GB", "256GB"],
+    colors: ["Nebula Noir", "Astral Trail"],
+  },
+  "OnePlus 13": {
+    storages: ["256GB", "512GB"],
+    colors: ["Midnight Ocean", "Arctic Dawn", "Black Eclipse"],
+  },
+  "OnePlus 12R": {
+    storages: ["128GB", "256GB"],
+    colors: ["Iron Gray", "Cool Blue"],
+  },
+  "OnePlus 12": {
+    storages: ["256GB", "512GB"],
+    colors: ["Silky Black", "Flowy Emerald"],
+  },
+  "OnePlus 11": {
+    storages: ["128GB", "256GB"],
+    colors: ["Eternal Green", "Titan Black"],
+  },
+  "OnePlus 10 Pro": {
+    storages: ["128GB", "256GB"],
+    colors: ["Volcanic Black", "Emerald Forest"],
   },
   "Pixel 9": {
     storages: ["128GB", "256GB"],
@@ -241,10 +445,8 @@ function luhnCheck(imei: string): boolean {
 
 export default function CreateListing() {
   const navigate = useNavigate();
-  const [showDiagnostic, setShowDiagnostic] = useState(false);
-  const [diagnosticResult, setDiagnosticResult] = useState<any>(null);
   const { actor } = useActor();
-  const { addSharedListing, isDemoMode } = useApp();
+  const { addSharedListing } = useApp();
   const { user } = useAuth();
   const search = useSearch({ strict: false }) as SearchParams;
 
@@ -261,6 +463,11 @@ export default function CreateListing() {
   const [condition, setCondition] = useState(
     isScrap ? "Cracked/Damaged" : "Like New",
   );
+  const [conditionChips, setConditionChips] = useState<string[]>([]);
+  const [billStatus, setBillStatus] = useState<string>("");
+  const [countryOrigin, setCountryOrigin] = useState<string>("India");
+  const [countrySearch, setCountrySearch] = useState<string>("");
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [age, setAge] = useState("3-6 months");
   const [auctionType, setAuctionType] = useState("Live20min");
   const [basePrice, setBasePrice] = useState(""); // clean numeric string
@@ -330,125 +537,9 @@ export default function CreateListing() {
       return;
     }
 
-    // Step 2: Luhn passed — call real IMEI lookup API
-    setImeiStatus("loading");
-
-    const controller = new AbortController();
-    verifyTimer.current = setTimeout(() => controller.abort(), 8000);
-
-    // DHRU BULK API v6.1 — IMEI to Brand/Model/Name (Service ID 11)
-    // Use alpha.imeicheck.com GET endpoint when in live mode
-    const apiKey = "iNinq-Oj2x1-KR8aV-3HalS-IDt2Y-jsWQl";
-    const liveApiUrl = `https://alpha.imeicheck.com/api/php-api/create?key=${apiKey}&service=11&imei=${digits}`;
-
-    (isDemoMode
-      ? Promise.reject(new Error("demo_mode"))
-      : fetch(liveApiUrl, { signal: controller.signal })
-    )
-      .then(async (res) => {
-        if (!res.ok) throw new Error("API error");
-        return res.json();
-      })
-      .then((data) => {
-        if (verifyTimer.current) clearTimeout(verifyTimer.current);
-        // Handle alpha.imeicheck.com response: { status: "success", object: { ... } }
-        // Also handle DHRU direct response fields for backward compat
-        if (data?.status === "failed") {
-          setImeiStatus("error");
-          setImeiError(
-            data.message || "Device not found — enter details manually.",
-          );
-          return;
-        }
-        // Extract device info from nested object or direct fields
-        const obj = data?.object || data;
-        const modelName =
-          obj?.deviceName ||
-          obj?.modelName ||
-          obj?.model_name ||
-          obj?.name ||
-          obj?.result ||
-          obj?.model ||
-          data?.model_name ||
-          data?.name ||
-          null;
-        const brandName =
-          obj?.brand ||
-          obj?.brand_name ||
-          data?.brand_name ||
-          data?.brand ||
-          null;
-        const storageVal =
-          obj?.capacity ||
-          obj?.storage ||
-          obj?.storage_gb ||
-          data?.storage ||
-          data?.storage_gb ||
-          null;
-        const colorVal = obj?.color || obj?.color_name || data?.color || null;
-
-        if (!modelName && !brandName) throw new Error("empty_response");
-
-        const device: VerifiedDevice = {
-          model_name:
-            [brandName, modelName].filter(Boolean).join(" ").trim() ||
-            modelName ||
-            "",
-          storage_gb: storageVal || "",
-          color_name: colorVal || "",
-        };
-        setVerifiedDevice(device);
-        setEditedSpecs({
-          model_name: device.model_name,
-          storage_gb: device.storage_gb,
-          color_name: device.color_name,
-        });
-        setImeiStatus("success");
-      })
-      .catch(() => {
-        if (verifyTimer.current) clearTimeout(verifyTimer.current);
-        // Task 9: Simulate success for test IMEI or when Luhn passes
-        if (digits === "357260078905471") {
-          const mockDevice: VerifiedDevice = {
-            model_name: "Apple iPhone 15 Pro",
-            storage_gb: "256GB",
-            color_name: "Black Titanium",
-          };
-          setVerifiedDevice(mockDevice);
-          setEditedSpecs({
-            model_name: mockDevice.model_name,
-            storage_gb: mockDevice.storage_gb,
-            color_name: mockDevice.color_name,
-          });
-          setImeiStatus("success");
-          return;
-        }
-        // Simulate success for any Luhn-valid IMEI to show the UI (demo mode)
-        const prefix = digits.slice(0, 8);
-        const mockBrands: Record<string, { brand: string; model: string }> = {
-          "35726007": { brand: "Apple", model: "iPhone 15 Pro" },
-          "35327010": { brand: "Apple", model: "iPhone 16 Pro Max" },
-          "35904020": { brand: "Samsung", model: "Galaxy S25 Ultra" },
-          "35121040": { brand: "OnePlus", model: "OnePlus 13" },
-          "86453000": { brand: "Samsung", model: "Galaxy S24" },
-        };
-        const match = mockBrands[prefix];
-        if (match) {
-          const mockDevice: VerifiedDevice = {
-            model_name: `${match.brand} ${match.model}`,
-            storage_gb: "128GB",
-            color_name: "Black",
-          };
-          setVerifiedDevice(mockDevice);
-          setEditedSpecs(mockDevice);
-          setImeiStatus("success");
-        } else {
-          setImeiStatus("error");
-          setImeiError(
-            "Device not found — you can still continue and enter details manually in the next steps.",
-          );
-        }
-      });
+    // Step 2: Luhn passed — show valid IMEI format (no API call)
+    // IMEI API removed per Task 11. Use local validation only.
+    setImeiStatus("success");
   };
 
   const compressImage = (file: File): Promise<string> => {
@@ -536,7 +627,8 @@ export default function CreateListing() {
       title: autoTitle,
       model: finalModel,
       brand: brand,
-      condition: condition,
+      condition:
+        conditionChips.length > 0 ? conditionChips.join(", ") : condition,
       auctionType: auctionType,
       basePrice: BigInt(basePriceVal),
       endsAt: nowTs + durationNs,
@@ -553,6 +645,8 @@ export default function CreateListing() {
       usbVerified: false,
       screenPassCertified: false,
       isDemo: false,
+      countryOrigin: countryOrigin,
+      billStatus: billStatus,
       sealedBox: age === "Sealed Box (New)",
     };
     try {
@@ -625,64 +719,6 @@ export default function CreateListing() {
             <h2 className="font-black text-xl" style={{ color: "#002F34" }}>
               Add IMEI & Photos
             </h2>
-
-            {/* Guided Diagnostic CTA */}
-            <button
-              type="button"
-              data-ocid="create.run_diagnostic.button"
-              onClick={() => setShowDiagnostic(true)}
-              className="w-full flex items-center justify-between px-4 py-3 rounded-2xl"
-              style={{ background: "#EFF6FF", border: "1.5px solid #BFDBFE" }}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-8 h-8 rounded-xl flex items-center justify-center"
-                  style={{ background: "#1D4ED8" }}
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="white"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="w-4 h-4"
-                    aria-hidden="true"
-                  >
-                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div className="text-left">
-                  <p className="text-sm font-bold" style={{ color: "#1D4ED8" }}>
-                    Run Device Diagnostic
-                    {diagnosticResult && (
-                      <span
-                        className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                        style={{ background: "#D1FAE5", color: "#065F46" }}
-                      >
-                        Score: {diagnosticResult.score}
-                        {diagnosticResult.verified ? " ✓ Verified" : ""}
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-[10px] text-blue-500">
-                    Touch test, camera check, screen test & battery health
-                  </p>
-                </div>
-              </div>
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#1D4ED8"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-4 h-4 flex-shrink-0"
-                aria-hidden="true"
-              >
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </button>
 
             {/* IMEI input — FIRST / TOP */}
             <div
@@ -1391,39 +1427,159 @@ export default function CreateListing() {
           </div>
         )}
 
-        {/* STEP 4: Condition + Age */}
+        {/* STEP 4: Condition + Age + Bill Status + Country */}
         {step === 4 && (
           <div className="px-4 pt-5 pb-6 space-y-5">
+            {/* Quick Grade */}
             <div>
               <h2
-                className="font-black text-xl mb-4"
+                className="font-black text-xl mb-3"
                 style={{ color: "#002F34" }}
               >
                 Condition
               </h2>
-              <div className="grid grid-cols-2 gap-3">
-                {CONDITIONS.map((c) => (
+              <p className="text-xs text-gray-500 mb-3">
+                Quick Grade (selecting New/Like New clears all chip selections)
+              </p>
+              <div className="grid grid-cols-2 gap-2.5 mb-4">
+                {["New", "Like New"].map((c) => (
                   <button
                     type="button"
                     key={c}
-                    data-ocid={`create.condition.${c
-                      .toLowerCase()
-                      .replace(/ /g, "_")}.button`}
+                    data-ocid={`create.condition.${c.toLowerCase().replace(/ /g, "_")}.button`}
                     onClick={() => {
-                      if (!isScrap) {
-                        setCondition(c);
-                      }
+                      setCondition(c);
+                      setConditionChips([]);
                     }}
-                    disabled={isScrap && c !== "Fair"}
-                    className="py-3.5 rounded-xl text-sm font-bold"
+                    className="py-3 rounded-xl text-sm font-bold"
                     style={{
-                      background: condition === c ? "#1D4ED8" : "white",
-                      color: condition === c ? "white" : "#002F34",
+                      background:
+                        condition === c && conditionChips.length === 0
+                          ? "#1D4ED8"
+                          : "white",
+                      color:
+                        condition === c && conditionChips.length === 0
+                          ? "white"
+                          : "#002F34",
                       border:
-                        condition === c
+                        condition === c && conditionChips.length === 0
                           ? "2px solid #1D4ED8"
                           : "1px solid #e5e7eb",
-                      opacity: isScrap && c !== "Fair" ? 0.4 : 1,
+                    }}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+
+              {/* Screen Condition Chips */}
+              <div
+                className="bg-white rounded-2xl p-4 space-y-3"
+                style={{ border: "1px solid #e5e7eb" }}
+              >
+                <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">
+                  Screen
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    "Minor scratches on screen",
+                    "Major scratches on screen",
+                    "Display cracked",
+                  ].map((chip) => {
+                    const isSelected = conditionChips.includes(chip);
+                    return (
+                      <button
+                        type="button"
+                        key={chip}
+                        data-ocid={`create.chip.${chip.toLowerCase().replace(/ /g, "_")}.toggle`}
+                        onClick={() => {
+                          setCondition("Detailed");
+                          setConditionChips((prev) =>
+                            prev.includes(chip)
+                              ? prev.filter((c) => c !== chip)
+                              : [...prev, chip],
+                          );
+                        }}
+                        className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
+                        style={{
+                          background: isSelected ? "#1D4ED8" : "#F3F4F6",
+                          color: isSelected ? "white" : "#374151",
+                          border: isSelected
+                            ? "2px solid #1D4ED8"
+                            : "2px solid transparent",
+                        }}
+                      >
+                        {chip}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <p className="text-xs font-bold text-gray-700 uppercase tracking-wide pt-1">
+                  Body
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    "Minor scratches on body",
+                    "Major scratches on body",
+                    "Back door crack",
+                    "Body broken",
+                  ].map((chip) => {
+                    const isSelected = conditionChips.includes(chip);
+                    return (
+                      <button
+                        type="button"
+                        key={chip}
+                        data-ocid={`create.chip.${chip.toLowerCase().replace(/ /g, "_")}.toggle`}
+                        onClick={() => {
+                          setCondition("Detailed");
+                          setConditionChips((prev) =>
+                            prev.includes(chip)
+                              ? prev.filter((c) => c !== chip)
+                              : [...prev, chip],
+                          );
+                        }}
+                        className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
+                        style={{
+                          background: isSelected ? "#1D4ED8" : "#F3F4F6",
+                          color: isSelected ? "white" : "#374151",
+                          border: isSelected
+                            ? "2px solid #1D4ED8"
+                            : "2px solid transparent",
+                        }}
+                      >
+                        {chip}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Other condition options */}
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                {["Gently Used", "Refurbished", "Cracked/Damaged"].map((c) => (
+                  <button
+                    type="button"
+                    key={c}
+                    data-ocid={`create.condition.${c.toLowerCase().replace(/ /g, "_")}.button`}
+                    onClick={() => {
+                      setCondition(c);
+                      setConditionChips([]);
+                    }}
+                    className="py-2.5 rounded-xl text-xs font-bold"
+                    style={{
+                      background:
+                        condition === c && conditionChips.length === 0
+                          ? "#1D4ED8"
+                          : "white",
+                      color:
+                        condition === c && conditionChips.length === 0
+                          ? "white"
+                          : "#002F34",
+                      border:
+                        condition === c && conditionChips.length === 0
+                          ? "2px solid #1D4ED8"
+                          : "1px solid #e5e7eb",
                     }}
                   >
                     {c}
@@ -1431,6 +1587,8 @@ export default function CreateListing() {
                 ))}
               </div>
             </div>
+
+            {/* How Old */}
             <div>
               <h2
                 className="font-black text-lg mb-3"
@@ -1448,6 +1606,7 @@ export default function CreateListing() {
                   setAge(newAge);
                   if (newAge === "Sealed Box (New)") {
                     setCondition("New");
+                    setConditionChips([]);
                   }
                 }}
               >
@@ -1458,6 +1617,120 @@ export default function CreateListing() {
                 ))}
               </select>
             </div>
+
+            {/* Country / Region of Origin */}
+            <div>
+              <h2
+                className="font-black text-base mb-2"
+                style={{ color: "#002F34" }}
+              >
+                Country / Region of Origin
+              </h2>
+              <div className="relative">
+                <input
+                  type="text"
+                  data-ocid="create.country.input"
+                  value={countrySearch || countryOrigin}
+                  onFocus={() => {
+                    setShowCountryDropdown(true);
+                    setCountrySearch("");
+                  }}
+                  onChange={(e) => setCountrySearch(e.target.value)}
+                  onBlur={() =>
+                    setTimeout(() => setShowCountryDropdown(false), 150)
+                  }
+                  placeholder="Search country..."
+                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold outline-none bg-white"
+                  style={{ color: "#002F34" }}
+                />
+                {showCountryDropdown && (
+                  <div className="absolute top-full left-0 right-0 z-50 bg-white rounded-xl shadow-lg border border-gray-200 max-h-48 overflow-y-auto mt-1">
+                    {[
+                      "India",
+                      "UAE",
+                      "USA",
+                      "UK",
+                      "Singapore",
+                      "China",
+                      "Japan",
+                      "South Korea",
+                      "Germany",
+                      "France",
+                      "Australia",
+                      "Canada",
+                      "Italy",
+                      "Netherlands",
+                      "Taiwan",
+                      "Hong Kong",
+                      "Malaysia",
+                      "Thailand",
+                      "Vietnam",
+                      "Bangladesh",
+                    ]
+                      .filter((c) =>
+                        c
+                          .toLowerCase()
+                          .includes((countrySearch || "").toLowerCase()),
+                      )
+                      .map((c) => (
+                        <button
+                          type="button"
+                          key={c}
+                          onClick={() => {
+                            setCountryOrigin(c);
+                            setCountrySearch("");
+                            setShowCountryDropdown(false);
+                          }}
+                          className="w-full px-4 py-2.5 text-left text-sm font-semibold hover:bg-blue-50"
+                          style={{
+                            color: countryOrigin === c ? "#1D4ED8" : "#002F34",
+                          }}
+                        >
+                          {c}
+                        </button>
+                      ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Replacement & Bill Status */}
+            <div>
+              <h2
+                className="font-black text-base mb-2"
+                style={{ color: "#002F34" }}
+              >
+                Replacement & Bill Status
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  "Replaced device (Same Box)",
+                  "Replaced device with Bill",
+                  "Replaced device (Different Box) with Invoice",
+                  "Only Phone",
+                  "Complete Box + Bill",
+                ].map((opt) => (
+                  <button
+                    type="button"
+                    key={opt}
+                    data-ocid={`create.bill.${opt.toLowerCase().replace(/[^a-z0-9]/g, "_")}.button`}
+                    onClick={() => setBillStatus(opt === billStatus ? "" : opt)}
+                    className="px-3 py-2 rounded-xl text-xs font-semibold"
+                    style={{
+                      background: billStatus === opt ? "#1D4ED8" : "#F3F4F6",
+                      color: billStatus === opt ? "white" : "#374151",
+                      border:
+                        billStatus === opt
+                          ? "2px solid #1D4ED8"
+                          : "2px solid transparent",
+                    }}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <button
               type="button"
               data-ocid="create.step4.primary_button"
@@ -1608,15 +1881,6 @@ export default function CreateListing() {
         )}
       </div>
       {/* Guided Diagnostic overlay */}
-      {showDiagnostic && (
-        <GuidedDiagnostic
-          onClose={() => setShowDiagnostic(false)}
-          onAttach={(r) => {
-            setDiagnosticResult(r);
-            setShowDiagnostic(false);
-          }}
-        />
-      )}
     </div>
   );
 }

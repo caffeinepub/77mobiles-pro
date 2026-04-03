@@ -605,13 +605,6 @@ function CategoryListingView({
                   }}
                 >
                   {getCategoryIcon()}
-                  {/* AI Verified badge */}
-                  <span
-                    className="absolute top-2 left-2 text-[8px] font-bold px-1.5 py-0.5 rounded-full"
-                    style={{ background: "#D1FAE5", color: "#065F46" }}
-                  >
-                    AI Verified ✓
-                  </span>
                 </div>
                 {/* Card body */}
                 <div className="p-2.5 flex flex-col gap-1 flex-1">
@@ -1368,15 +1361,6 @@ export default function BuyerPortal() {
                                 Live
                               </span>
                             )}
-                            <span
-                              className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                              style={{
-                                background: "#F0FDF4",
-                                color: "#166534",
-                              }}
-                            >
-                              {"\u2713"} Verified
-                            </span>
                           </div>
 
                           {/* Condition + countdown — always visible */}

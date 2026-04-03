@@ -672,14 +672,6 @@ export default function ListingDetail() {
         <div className="px-4 py-4 space-y-4">
           <div>
             <div className="flex items-center gap-2 flex-wrap mb-1">
-              {listing.usbVerified && (
-                <span
-                  className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full"
-                  style={{ background: "#F3E8FF", color: "#7c3aed" }}
-                >
-                  <Zap className="w-3 h-3" /> 77mobiles Pro Certified
-                </span>
-              )}
               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
                 {listing.condition}
               </span>
@@ -703,22 +695,6 @@ export default function ListingDetail() {
             <p className="text-sm text-gray-800 leading-relaxed">
               {listing.description}
             </p>
-            {listing.usbVerified && (
-              <div
-                className="mt-3 flex items-start gap-2 p-3 rounded-xl"
-                style={{ background: "#eff6ff", border: "1px solid #bfdbfe" }}
-              >
-                {/* Task 1: #007AFF → #1D4ED8 */}
-                <ShieldCheck
-                  className="w-4 h-4 flex-shrink-0 mt-0.5"
-                  style={{ color: "#1D4ED8" }}
-                />
-                <p className="text-xs" style={{ color: "#1D4ED8" }}>
-                  Fully functional, 100% screen pass. USB-verified by 77mobiles
-                  Pro diagnostic system.
-                </p>
-              </div>
-            )}
           </div>
 
           {/* 2. Bidding Card or Seller Management Panel */}
@@ -846,32 +822,6 @@ export default function ListingDetail() {
             </div>
           )}
 
-          {/* 5. USB Verified */}
-          {listing.usbVerified && (
-            <div
-              className="flex items-start gap-3 p-4 rounded-2xl"
-              style={{ border: "2px solid #bfdbfe", background: "#eff6ff" }}
-            >
-              {/* Task 1: #007AFF → #1D4ED8 */}
-              <ShieldCheck
-                className="w-6 h-6 flex-shrink-0 mt-0.5"
-                style={{ color: "#1D4ED8" }}
-              />
-              <div>
-                <p
-                  className="font-bold text-sm mb-1"
-                  style={{ color: "#1D4ED8" }}
-                >
-                  USB-Verified by 77mobiles Pro
-                </p>
-                <p className="text-xs text-blue-600">
-                  Device was physically tested using 77mobiles diagnostic
-                  system.
-                </p>
-              </div>
-            </div>
-          )}
-
           {/* 6. Device Verification HUD */}
           <div
             className="bg-white rounded-2xl p-4"
@@ -959,7 +909,7 @@ export default function ListingDetail() {
                   className="text-xs font-bold"
                   style={{ color: "#16A34A" }}
                 >
-                  Verified
+                  IMEI Valid
                 </span>
                 <span className="text-[9px] font-mono text-gray-500">
                   {mode === "buyer" ? "354812093847561" : "35****3847561"}

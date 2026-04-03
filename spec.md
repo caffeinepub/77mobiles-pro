@@ -1,34 +1,47 @@
-# 77mobiles.pro
+# 77mobiles.pro — Batch Update (Tasks 1-15)
 
 ## Current State
-Full-stack PWA B2B electronics auction marketplace. Frontend is React/TypeScript with Tailwind. Key files: BottomNav.tsx, AuthPage.tsx, AdminDashboard.tsx, SellerPortal.tsx, WalletPage.tsx, SearchOverlay.tsx, BidStore.ts, index.css.
+PWA with Seller, Buyer, and Admin portals. Auth uses localStorage. Bottom nav has existing safe-area CSS. Login is phone-only (no password). Diagnostic flow is visible. IMEI API is wired but removable. Listing cards show Verified badge. CreateListing has simple condition buttons and no country/bill status fields. AdminDashboard has bell icon but inactive; KYC cards show mock data. Profile page has basic analytics stub.
 
 ## Requested Changes (Diff)
 
 ### Add
-- Login screen: 'Login as Seller' / 'Login as Buyer' role toggle with session persistence (localStorage)
-- Search scanner: wire `onClick` on the ScanBarcode icon in SearchOverlay to open camera BarcodeDetector flow (same as IMEI scanner)
-- Wallet demo mode: add mock transaction state mutations so Add Money / Withdraw buttons work in demo
-- Seller listing cards: show current high bid amount on each card in My Listings section
+- IndexedDB session store for auth persistence (Task 1)
+- Service worker skip-waiting + session-safe update flow (Task 1)
+- Password field to registration and login forms; email-mapped Firebase Auth pattern (Task 2)
+- 100dvh container, content-box nav, env() safe-area, margin-bottom scroll offset (Task 3)
+- Auction winner auto-select logic + in-app + WhatsApp notifications (Task 5)
+- KYC doc lightbox modal in AdminDashboard (Task 7)
+- Bell notification panel with real-time alerts in admin header (Task 8)
+- Profile mini-dashboard with 2x2 analytics grid (Task 9)
+- Multi-select condition chips, bill status section, country searchable dropdown (Tasks 14-15)
+- Comprehensive device catalog (Apple/Samsung/OnePlus up to 2026) (Task 13)
 
 ### Modify
-- **BottomNav**: set `z-index: 9999`, use `100svh` instead of `100vh` for any viewport-height references, ensure the outer nav uses `paddingBottom: calc(env(safe-area-inset-bottom) + 8px)` so content clears home bar on iPhone; remove any `margin-bottom` conflict on the nav container itself; ensure the main scrollable content has `padding-bottom` equal to nav height + safe-area
-- **index.css**: replace all `100vh` / `min-height: 100vh` with `100svh`; add `.pb-safe-nav { padding-bottom: calc(80px + env(safe-area-inset-bottom)); }` utility; ensure html/body have `height: 100%` not `100vh`
-- **AuthPage login flow**: add Seller/Buyer toggle tabs; on login, normalize phone by stripping/adding +91 before localStorage lookup; read `77m_role` from storage for auto-routing; persist role on successful login
-- **AdminDashboard Users section**: merge `pending` sub-tab and main user table into a single unified table; add Filter dropdown (All / Pending / Verified / Rejected); sort pending to top; show color-coded badges (yellow=Pending, green=Verified, red=Rejected); keep Approve/Reject inline buttons only for pending rows; show Full Name + Phone (not UID) in the KYC cards
-- **AdminDashboard KYC cards**: map `data.name` and `data.phone_number` fields instead of doc ID; add Business Name + Location fields; fix View Document button to use download URL (open in new tab); use `onSnapshot` listener for real-time refresh
-- **BidStore / SellerPortal**: ensure `subscribeBids` fires correctly and SellerPortal listing cards subscribe to the BidStore and re-render with latest `current_high_bid` when a bid is placed in buyer portal
-- **WalletPage**: in demo mode (isDemoMode from localStorage), wire Add Money button to add mock ₹5,000 to local balance state and push a mock transaction entry; wire Withdraw to deduct and push transaction
+- sw.js: bump cache version, add skip-waiting message handler (Task 1)
+- manifest.json: stable start_url="/" (already correct, verify)
+- AuthContext: persist session in IndexedDB instead of localStorage (Task 1)
+- AuthPage: replace OTP-only login with phone+password single box; add password field to registration (Task 2)
+- BottomNav + AppShell: 100dvh, content-box, env(safe-area-inset-bottom,20px) (Task 3)
+- AppContext/SellerPortal/BuyerPortal: isDemoMode default false, remove demo banners (Task 4)
+- AdminDashboard: real-time KYC doc modal, full field display, bell panel (Tasks 7-8)
+- ListingDetail + BuyerPortal + SellerPortal: remove Verified/usbVerified badge (Task 12)
+- CreateListing: hide diagnostic button, remove IMEI lookup, add comprehensive device list, multi-select condition chips, bill status, country selector (Tasks 10-11, 13-15)
 
 ### Remove
-- Separate 'Users' and 'KYC Verification' navigation buttons in Admin — replace with single 'User Management' entry
+- Demo mode top banner (yellow DEMO MODE bar) (Task 4)
+- GuidedDiagnostic trigger button in CreateListing (Task 10)
+- IMEI API call / imeicheck.com fetch logic (Task 11)
+- usbVerified / Verified badge from listing cards and detail pages (Task 12)
 
 ## Implementation Plan
-1. Fix BottomNav z-index to 9999, padding-bottom with safe-area, no margin-bottom conflict
-2. Fix index.css: replace vh with svh for containers, add pb-safe-nav utility
-3. Fix AuthPage: add Seller/Buyer toggle, normalize +91 prefix, persist role
-4. Fix AdminDashboard Users+KYC: unified table, filter dropdown, sorted pending, real field names
-5. Fix SellerPortal listing cards: subscribe to BidStore per listing and display current_high_bid
-6. Fix BidStore to emit updates that SellerPortal subscribes to correctly
-7. Fix WalletPage demo mode: mock add/withdraw transactions
-8. Fix SearchOverlay scanner: wire ScanBarcode button onClick to BarcodeDetector camera flow
+1. Update sw.js with skip-waiting handler + bumped cache name
+2. Update AuthContext to use IndexedDB with localStorage fallback
+3. Rewrite AuthPage login to phone+password, add password fields to registration forms
+4. CSS triple-lock in index.css and BottomNav
+5. Remove demo banner from AppContext/AppShell; set isDemoMode default to false
+6. Auction winner automation in AuctionTimer/BidStore
+7. Admin KYC modal + bell notification panel
+8. Profile analytics mini-dashboard
+9. CreateListing: hide diagnostic, remove IMEI, add comprehensive models, multi-select condition chips, bill status, country selector
+10. Remove Verified badges from ListingDetail and BuyerPortal
