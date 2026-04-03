@@ -70,6 +70,7 @@ export default function AppShell() {
     setActiveTab,
     activeCategory,
     setActiveCategory,
+    isDemoMode,
   } = useApp();
   const scrollRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -140,6 +141,16 @@ export default function AppShell() {
       className="scroll-container"
       style={{ height: "100dvh", overflowY: "auto" }}
     >
+      {/* Demo Mode Banner */}
+      {isDemoMode && (
+        <div
+          className="sticky top-0 z-[100] text-center py-1 text-xs font-black tracking-wider"
+          style={{ background: "#FDE047", color: "#78350F" }}
+        >
+          DEMO MODE — Test data active
+        </div>
+      )}
+
       {/* STICKY HEADER */}
       {!isWalletTab && (
         <div className="sticky top-0 z-50">

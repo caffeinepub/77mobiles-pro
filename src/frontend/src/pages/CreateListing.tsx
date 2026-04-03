@@ -244,7 +244,7 @@ export default function CreateListing() {
   const [showDiagnostic, setShowDiagnostic] = useState(false);
   const [diagnosticResult, setDiagnosticResult] = useState<any>(null);
   const { actor } = useActor();
-  const { addSharedListing } = useApp();
+  const { addSharedListing, isDemoMode } = useApp();
   const { user } = useAuth();
   const search = useSearch({ strict: false }) as SearchParams;
 
@@ -337,36 +337,57 @@ export default function CreateListing() {
     verifyTimer.current = setTimeout(() => controller.abort(), 8000);
 
     // DHRU BULK API v6.1 — IMEI to Brand/Model/Name (Service ID 11)
-    const formData = new URLSearchParams();
-    formData.append("username", "MOHAMMEDIBRAHIM486");
-    formData.append("apikey", "iNinq-Oj2x1-KR8aV-3HalS-IDt2Y-jsWQl");
-    formData.append("service", "11");
-    formData.append("imei", digits);
+    // Use alpha.imeicheck.com GET endpoint when in live mode
+    const apiKey = "iNinq-Oj2x1-KR8aV-3HalS-IDt2Y-jsWQl";
+    const liveApiUrl = `https://alpha.imeicheck.com/api/php-api/create?key=${apiKey}&service=11&imei=${digits}`;
 
-    fetch("https://dhru.checkimei.com/api/", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: formData.toString(),
-      signal: controller.signal,
-    })
+    (isDemoMode
+      ? Promise.reject(new Error("demo_mode"))
+      : fetch(liveApiUrl, { signal: controller.signal })
+    )
       .then(async (res) => {
         if (!res.ok) throw new Error("API error");
         return res.json();
       })
       .then((data) => {
         if (verifyTimer.current) clearTimeout(verifyTimer.current);
-        // DHRU response fields: model_name, brand_name, name, result
+        // Handle alpha.imeicheck.com response: { status: "success", object: { ... } }
+        // Also handle DHRU direct response fields for backward compat
+        if (data?.status === "failed") {
+          setImeiStatus("error");
+          setImeiError(
+            data.message || "Device not found — enter details manually.",
+          );
+          return;
+        }
+        // Extract device info from nested object or direct fields
+        const obj = data?.object || data;
         const modelName =
+          obj?.deviceName ||
+          obj?.modelName ||
+          obj?.model_name ||
+          obj?.name ||
+          obj?.result ||
+          obj?.model ||
           data?.model_name ||
           data?.name ||
-          data?.result ||
-          data?.model ||
-          data?.deviceName ||
           null;
-        const brandName = data?.brand_name || data?.brand || null;
+        const brandName =
+          obj?.brand ||
+          obj?.brand_name ||
+          data?.brand_name ||
+          data?.brand ||
+          null;
         const storageVal =
-          data?.storage || data?.storage_gb || data?.capacity || null;
-        const colorVal = data?.color || data?.color_name || null;
+          obj?.capacity ||
+          obj?.storage ||
+          obj?.storage_gb ||
+          data?.storage ||
+          data?.storage_gb ||
+          null;
+        const colorVal = obj?.color || obj?.color_name || data?.color || null;
+
+        if (!modelName && !brandName) throw new Error("empty_response");
 
         const device: VerifiedDevice = {
           model_name:

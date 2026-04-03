@@ -42,6 +42,8 @@ interface AppContextType {
   setActiveCategory: (c: string) => void;
   sharedListings: any[];
   addSharedListing: (listing: any) => void;
+  isDemoMode: boolean;
+  setIsDemoMode: (v: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType>({
@@ -64,6 +66,8 @@ const AppContext = createContext<AppContextType>({
   setActiveCategory: () => {},
   sharedListings: [],
   addSharedListing: () => {},
+  isDemoMode: true,
+  setIsDemoMode: () => {},
 });
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -78,6 +82,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [showPostLead, setShowPostLead] = useState(false);
   const [activeCategory, setActiveCategory] = useState("smartphones");
   const [sharedListings, setSharedListings] = useState<any[]>([]);
+  const [isDemoMode, setIsDemoModeState] = useState<boolean>(() => {
+    return localStorage.getItem("77m_demo_mode") !== "false";
+  });
   const [watchlistIds, setWatchlistIds] = useState<Set<string>>(() => {
     try {
       const stored = localStorage.getItem("77m_watchlist");
@@ -120,6 +127,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setActiveTab("home");
     setSearchQuery("");
     setActiveCategory("smartphones");
+  };
+
+  const setIsDemoMode = (v: boolean) => {
+    setIsDemoModeState(v);
+    localStorage.setItem("77m_demo_mode", String(v));
   };
 
   const toggleWatchlist = (id: string) => {
@@ -180,6 +192,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setActiveCategory,
         sharedListings,
         addSharedListing,
+        isDemoMode,
+        setIsDemoMode,
       }}
     >
       {children}

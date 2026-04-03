@@ -433,6 +433,9 @@ export default function AdminDashboard() {
     MOCK_AUCTIONS.map((a) => a.timeLeft),
   );
   const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(
+    () => localStorage.getItem("77m_demo_mode") !== "false",
+  );
   const [newRegistrations, setNewRegistrations] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [ipWhitelist, setIpWhitelist] = useState("192.168.1.0/24");
@@ -1086,6 +1089,12 @@ export default function AdminDashboard() {
                                 setPendingCount((prev) =>
                                   Math.max(0, prev - 1),
                                 );
+                                // Trigger auto-redirect on PendingVerificationPage
+                                localStorage.setItem(
+                                  "77m_verification_status",
+                                  "verified",
+                                );
+                                localStorage.setItem("77m_is_verified", "true");
                                 toast.success(
                                   "User approved — they can now access the portal",
                                 );
@@ -1347,6 +1356,29 @@ export default function AdminDashboard() {
                                 setPendingCount((prev) =>
                                   Math.max(0, prev - 1),
                                 );
+                                // Trigger auto-redirect on PendingVerificationPage
+                                localStorage.setItem(
+                                  "77m_verification_status",
+                                  "verified",
+                                );
+                                localStorage.setItem("77m_is_verified", "true");
+                                // Update kyc submissions in localStorage
+                                try {
+                                  const kycSubs = JSON.parse(
+                                    localStorage.getItem(
+                                      "77m_kyc_submissions",
+                                    ) || "[]",
+                                  );
+                                  const updated = kycSubs.map((k: any) =>
+                                    k.id === kyc.id
+                                      ? { ...k, status: "approved" }
+                                      : k,
+                                  );
+                                  localStorage.setItem(
+                                    "77m_kyc_submissions",
+                                    JSON.stringify(updated),
+                                  );
+                                } catch {}
                                 toast.success(
                                   "KYC Approved — user now has full access",
                                 );
@@ -1893,6 +1925,46 @@ export default function AdminDashboard() {
                   </p>
                 </div>
               </div>
+
+              <SectionBlock title="Environment Mode">
+                <div className="space-y-3">
+                  <div
+                    className="p-3 rounded-xl flex items-center justify-between"
+                    style={{
+                      background: isDemoMode ? "#FEF9C3" : "#D1FAE5",
+                      border: `1px solid ${isDemoMode ? "#FDE047" : "#6EE7B7"}`,
+                    }}
+                  >
+                    <div>
+                      <p
+                        className="font-bold text-sm"
+                        style={{ color: isDemoMode ? "#92400E" : "#065F46" }}
+                      >
+                        {isDemoMode ? "DEMO MODE ACTIVE" : "LIVE MODE ACTIVE"}
+                      </p>
+                      <p
+                        className="text-xs mt-0.5"
+                        style={{ color: isDemoMode ? "#B45309" : "#047857" }}
+                      >
+                        {isDemoMode
+                          ? "Using mock data. IMEI API bypassed. OTP: 123456"
+                          : "All systems connected to live Firestore"}
+                      </p>
+                    </div>
+                  </div>
+                  <ToggleRow
+                    label="Demo Mode"
+                    sub="Show demo banners, bypass IMEI API, use static user counts"
+                    value={isDemoMode}
+                    onChange={(v) => {
+                      setIsDemoMode(v);
+                      localStorage.setItem("77m_demo_mode", String(v));
+                      toast.success(`Switched to ${v ? "Demo" : "Live"} mode`);
+                    }}
+                    ocid="admin.settings.demo_mode.switch"
+                  />
+                </div>
+              </SectionBlock>
 
               <SectionBlock title="System Controls">
                 <div className="space-y-4">

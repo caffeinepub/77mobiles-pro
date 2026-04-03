@@ -111,9 +111,7 @@ export default function WalletPage() {
       description: "Wallet Top-Up",
       theme: { color: "#1D4ED8" },
       handler: (_response: any) => {
-        toast.success(
-          `\u20b9${addAmount.toLocaleString("en-IN")} added to wallet!`,
-        );
+        toast.success(`₹${addAmount.toLocaleString("en-IN")} added to wallet!`);
         setShowAmountInput(false);
       },
       prefill: { name: "Dealer", email: "dealer@77mobiles.pro" },
@@ -152,7 +150,7 @@ export default function WalletPage() {
             marginBottom: "4px",
           }}
         >
-          \u20b93,42,500
+          ₹3,42,500
         </p>
         <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>
           {mode === "seller" ? "Ready for Payout" : "Available for bidding"}
@@ -255,7 +253,7 @@ export default function WalletPage() {
                   cursor: "pointer",
                 }}
               >
-                \u20b9{amt.toLocaleString("en-IN")}
+                ₹{amt.toLocaleString("en-IN")}
               </button>
             ))}
           </div>
@@ -291,7 +289,7 @@ export default function WalletPage() {
               cursor: "pointer",
             }}
           >
-            Pay \u20b9{addAmount.toLocaleString("en-IN")} via Razorpay
+            Pay ₹{addAmount.toLocaleString("en-IN")} via Razorpay
           </button>
         </div>
       )}
@@ -318,7 +316,7 @@ export default function WalletPage() {
               margin: 0,
             }}
           >
-            \u20b985,000 in Escrow
+            ₹85,000 in Escrow
           </p>
           <p style={{ fontSize: "11px", color: "#64748B", margin: 0 }}>
             Active bid on Samsung S24 Ultra
@@ -397,7 +395,7 @@ export default function WalletPage() {
                   color: tx.type === "credit" ? "#16A34A" : "#DC2626",
                 }}
               >
-                {tx.type === "credit" ? "+" : "-"}\u20b9
+                {tx.type === "credit" ? "+" : "-"}₹
                 {tx.amount.toLocaleString("en-IN")}
               </span>
             </div>

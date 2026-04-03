@@ -7,11 +7,11 @@ interface Props {
 
 export default function PlatformFeeCard({ bidAmountINR }: Props) {
   const tiers = [
-    { range: "\u20b90 \u2013 \u20b910,000", fee: "\u20b9800" },
-    { range: "\u20b910,001 \u2013 \u20b930,000", fee: "\u20b91,000" },
-    { range: "\u20b930,001 \u2013 \u20b960,000", fee: "\u20b91,300" },
-    { range: "\u20b960,001 \u2013 \u20b91,00,000", fee: "\u20b91,500" },
-    { range: "\u20b91,00,001+", fee: "\u20b92,000" },
+    { range: "₹0 – ₹10,000", fee: "₹800" },
+    { range: "₹10,001 – ₹30,000", fee: "₹1,000" },
+    { range: "₹30,001 – ₹60,000", fee: "₹1,300" },
+    { range: "₹60,001 – ₹1,00,000", fee: "₹1,500" },
+    { range: "₹1,00,001+", fee: "₹2,000" },
   ];
 
   const platformFee = bidAmountINR ? getPlatformFee(bidAmountINR) : null;
@@ -26,7 +26,7 @@ export default function PlatformFeeCard({ bidAmountINR }: Props) {
           <DollarSign className="w-4 h-4 text-primary" />
         </div>
         <h3 className="font-bold text-foreground text-sm">
-          \u20b9 Platform Fee Structure
+          ₹ Platform Fee Structure
         </h3>
       </div>
 

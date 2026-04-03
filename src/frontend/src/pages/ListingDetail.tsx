@@ -229,19 +229,26 @@ function BiddingCard({
   currentBid,
 }: { listing: Listing; currentBid: number }) {
   const [liveBid, setLiveBid] = useState(currentBid);
+  const [pricePulsing, setPricePulsing] = useState(false);
   const [bidAmount, setBidAmount] = useState("");
   const [placing, setPlacing] = useState(false);
   const { actor } = useActor();
   const [secs, setSecs] = useState(0);
   const ref = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Task 1: Subscribe to BidStore for real-time bid updates
+  // Task 1+5: Subscribe to BidStore for real-time bid updates with pulse animation
   useEffect(() => {
     const unsub = BidStore.subscribeBids(listing.listingId, (bids) => {
       if (bids.length > 0) {
         const highestBid = Math.max(...bids.map((b) => b.amount));
-        // Use functional update to avoid stale closure on liveBid
-        setLiveBid((prev) => (highestBid > prev ? highestBid : prev));
+        setLiveBid((prev) => {
+          if (highestBid > prev) {
+            setPricePulsing(true);
+            setTimeout(() => setPricePulsing(false), 2000);
+            return highestBid;
+          }
+          return prev;
+        });
       }
     });
     return unsub;
@@ -313,7 +320,7 @@ function BiddingCard({
         amount: amountPaise,
         placedAt: Date.now(),
       });
-      toast.success("Bid placed! (Demo mode)");
+      toast.success("Bid placed successfully!");
       // Task 6B: Haptic feedback on successful bid
       if (typeof navigator.vibrate === "function")
         navigator.vibrate([100, 50, 100]);
@@ -328,8 +335,17 @@ function BiddingCard({
       className="rounded-2xl p-4"
       style={{ background: "#EFF6FF", border: "1px solid #bfdbfe" }}
     >
-      <div className="flex items-center justify-between mb-3">
-        <span className="font-black text-sm text-gray-900">
+      <div
+        className="flex items-center justify-between mb-3 rounded-xl px-2 py-1"
+        style={{
+          transition: "background-color 0.3s ease",
+          background: pricePulsing ? "#DCFCE7" : "transparent",
+        }}
+      >
+        <span
+          className="font-black text-sm"
+          style={{ color: pricePulsing ? "#16A34A" : "#111827" }}
+        >
           Current High Bid: {formatINR(liveBid)}
         </span>
         {/* Task 1: #007AFF → #1D4ED8 */}
@@ -752,6 +768,7 @@ export default function ListingDetail() {
                         time: "9m ago",
                       },
                     ]
+                      .sort((a, b) => b.amount - a.amount)
                       .slice(0, Math.min(bidCount, 3))
                       .map((bid) => (
                         <div

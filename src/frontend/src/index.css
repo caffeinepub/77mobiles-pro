@@ -4,6 +4,21 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent horizontal shaking and improve scroll stability */
+html,
+body {
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Fix flickering during transitions */
+* {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-transform: translate3d(0, 0, 0);
+}
+
 @font-face {
   font-family: "Plus Jakarta Sans";
   src: url("/assets/fonts/PlusJakartaSans.woff2") format("woff2");

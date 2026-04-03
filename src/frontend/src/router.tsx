@@ -17,6 +17,7 @@ import MarketDemandPage from "./pages/MarketDemandPage";
 import MarketTrendsPage from "./pages/MarketTrendsPage";
 import PaymentCheckout from "./pages/PaymentCheckout";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import PendingVerificationPage from "./pages/PendingVerificationPage";
 import SellCategoryScreen from "./pages/SellCategoryScreen";
 import SellChoiceScreen from "./pages/SellChoiceScreen";
 import SendOfferScreen from "./pages/SendOfferScreen";
@@ -40,9 +41,23 @@ const indexRoute = createRoute({
   component: AuthPage,
 });
 
+const pendingVerificationRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/pending-verification",
+  component: PendingVerificationPage,
+});
+
 const appRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/app",
+  beforeLoad: () => {
+    const isVerified = localStorage.getItem("77m_is_verified");
+    const status = localStorage.getItem("77m_verification_status");
+    // If they've registered but not verified, redirect to pending
+    if (status === "pending" && isVerified !== "true") {
+      throw redirect({ to: "/pending-verification" });
+    }
+  },
   component: AppShell,
 });
 
@@ -172,6 +187,7 @@ const chatsRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
+  pendingVerificationRoute,
   appRoute,
   adminRoute,
   sellerRoute,

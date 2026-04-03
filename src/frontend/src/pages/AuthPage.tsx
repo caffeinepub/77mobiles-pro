@@ -99,8 +99,6 @@ export default function AuthPage() {
       };
       if (actor) await actor.registerUser(profile);
       login(profile);
-      toast.success("Registered as Seller Dealer!");
-      goToApp(UserRole.sellerDealer);
     } catch {
       const profile = {
         userId: crypto.randomUUID(),
@@ -112,11 +110,28 @@ export default function AuthPage() {
         createdAt: BigInt(Date.now()) * 1_000_000n,
       };
       login(profile);
-      toast.success("Welcome to Seller Portal!");
-      goToApp(UserRole.sellerDealer);
     } finally {
       setLoading(false);
     }
+    // Post-registration: set pending verification status
+    localStorage.setItem("77m_verification_status", "pending");
+    localStorage.setItem("77m_is_verified", "false");
+    const kycKey = "77m_kyc_submissions";
+    const existingKycS = JSON.parse(localStorage.getItem(kycKey) || "[]");
+    const newKycEntryS = {
+      id: crypto.randomUUID(),
+      business: sellerBusiness || "My Business",
+      phone: sellerMobile,
+      status: "pending",
+      docType: "PAN Card",
+      createdAt: Date.now(),
+    };
+    localStorage.setItem(
+      kycKey,
+      JSON.stringify([newKycEntryS, ...existingKycS]),
+    );
+    toast.success("Registration submitted \u2014 pending verification");
+    navigate({ to: "/pending-verification" });
   };
 
   const handleRegisterBuyer = async () => {
@@ -141,8 +156,6 @@ export default function AuthPage() {
       };
       if (actor) await actor.registerUser(profile);
       login(profile);
-      toast.success("Registered as Business Buyer!");
-      goToApp(UserRole.businessBuyer);
     } catch {
       const profile = {
         userId: crypto.randomUUID(),
@@ -154,11 +167,28 @@ export default function AuthPage() {
         createdAt: BigInt(Date.now()) * 1_000_000n,
       };
       login(profile);
-      toast.success("Welcome to Buyer Portal!");
-      goToApp(UserRole.businessBuyer);
     } finally {
       setLoading(false);
     }
+    // Post-registration: set pending verification status
+    localStorage.setItem("77m_verification_status", "pending");
+    localStorage.setItem("77m_is_verified", "false");
+    const kycKeyB = "77m_kyc_submissions";
+    const existingKycB = JSON.parse(localStorage.getItem(kycKeyB) || "[]");
+    const newKycEntryB = {
+      id: crypto.randomUUID(),
+      business: buyerBusiness || "My Business",
+      phone: buyerMobile,
+      status: "pending",
+      docType: "GST Certificate",
+      createdAt: Date.now(),
+    };
+    localStorage.setItem(
+      kycKeyB,
+      JSON.stringify([newKycEntryB, ...existingKycB]),
+    );
+    toast.success("Registration submitted \u2014 pending verification");
+    navigate({ to: "/pending-verification" });
   };
 
   const handleLogin = () => {
@@ -180,7 +210,12 @@ export default function AuthPage() {
     };
     login(profile);
     toast.success("Logged in successfully!");
-    goToApp(loginRole);
+    const loginVerifStatus = localStorage.getItem("77m_verification_status");
+    if (loginVerifStatus === "pending") {
+      navigate({ to: "/pending-verification" });
+    } else {
+      goToApp(loginRole);
+    }
   };
 
   // ── Phone OTP flow handlers ──
@@ -274,7 +309,9 @@ export default function AuthPage() {
     };
     login(profile);
 
-    // Task 2: Simulate Firestore write for verified profile
+    // Verified phone user — mark as verified
+    localStorage.setItem("77m_verification_status", "verified");
+    localStorage.setItem("77m_is_verified", "true");
     localStorage.setItem(
       "77m_seller_profile",
       JSON.stringify({
@@ -285,7 +322,6 @@ export default function AuthPage() {
         createdAt: Date.now(),
       }),
     );
-    toast("Profile synced to database");
 
     // Task 3: Append to KYC submissions for admin panel
     const kycKey = "77m_kyc_submissions";
