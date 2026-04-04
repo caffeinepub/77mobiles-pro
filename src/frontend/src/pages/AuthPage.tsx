@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { UserRole } from "../backend.d";
 import { useAuth } from "../contexts/AuthContext";
 import { useActor } from "../hooks/useActor";
+import { isPhoneApproved } from "../utils/portalSettings";
 
 // Credential store key in localStorage (simulates Firebase Auth)
 const CREDS_KEY = "77m_auth_credentials";
@@ -56,7 +57,9 @@ function verifyCredential(
   const expected2 = btoa(`+91${norm}:${password}:77mobiles`);
   if (entry.passwordHash !== expected && entry.passwordHash !== expected2)
     return null;
-  // Check if admin approved this user
+  // Primary check: per-user phone approval from admin
+  if (isPhoneApproved(norm)) return { ...entry, status: "verified" };
+  // Secondary check: KYC submission status
   const kycSubs: any[] = JSON.parse(
     localStorage.getItem("77m_kyc_submissions") || "[]",
   );

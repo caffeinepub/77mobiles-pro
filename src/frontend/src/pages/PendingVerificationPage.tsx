@@ -1,34 +1,128 @@
 import { useNavigate } from "@tanstack/react-router";
 import { Clock, LogOut, Mail, Phone, Shield } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "../contexts/AuthContext";
+import { isPhoneApproved } from "../utils/portalSettings";
+
+/** Resolve the current user's phone from session or most-recent pending KYC submission. */
+function resolveUserPhone(): string {
+  try {
+    const session = JSON.parse(
+      localStorage.getItem("77m_phone_session") || "null",
+    );
+    if (session?.phone)
+      return String(session.phone).replace(/^\+91/, "").replace(/^0+/, "");
+    const subs: { phone?: string; status?: string }[] = JSON.parse(
+      localStorage.getItem("77m_kyc_submissions") || "[]",
+    );
+    const pending = subs.find((k) => k.status === "pending");
+    if (pending?.phone)
+      return String(pending.phone).replace(/^\+91/, "").replace(/^0+/, "");
+  } catch {}
+  return "";
+}
+
+/** Unified approval check — checks all approval signals */
+function checkApproval(): boolean {
+  const phone = resolveUserPhone();
+
+  // 1. Per-user phone approval (primary) — set by Admin via approveUserByPhone()
+  if (phone && isPhoneApproved(phone)) return true;
+
+  // 2. Direct isVerified flag — may be set by admin or login flow
+  if (localStorage.getItem("77m_is_verified") === "true") return true;
+
+  // 3. KYC submission status changed to approved/verified
+  try {
+    const subs: { phone?: string; status?: string }[] = JSON.parse(
+      localStorage.getItem("77m_kyc_submissions") || "[]",
+    );
+    const myPhone = phone;
+    const myEntry = myPhone
+      ? subs.find(
+          (k) => k.phone?.replace(/^\+91/, "").replace(/^0+/, "") === myPhone,
+        )
+      : null;
+    if (
+      myEntry?.status === "Approved" ||
+      myEntry?.status === "approved" ||
+      myEntry?.status === "verified"
+    )
+      return true;
+  } catch {}
+
+  return false;
+}
 
 export default function PendingVerificationPage() {
   const navigate = useNavigate();
   const { logout } = useAuth();
   const [isApproved, setIsApproved] = useState(false);
+  const approvedRef = useRef(false);
 
-  // Poll localStorage every 5 seconds for admin approval
+  // biome-ignore lint/correctness/useExhaustiveDependencies: navigate is stable
   useEffect(() => {
-    const check = () => {
-      const status = localStorage.getItem("77m_verification_status");
-      if (status === "verified") {
-        setIsApproved(true);
-        localStorage.setItem("77m_is_verified", "true");
-        toast.success("Your account is now active! Welcome to 77mobiles.pro");
-        setTimeout(() => navigate({ to: "/app" }), 1500);
+    // Guard: if already approved on mount, redirect immediately
+    if (checkApproval()) {
+      handleApproval();
+      return;
+    }
+
+    function handleApproval() {
+      if (approvedRef.current) return; // prevent double-fire
+      approvedRef.current = true;
+      localStorage.setItem("77m_is_verified", "true");
+      localStorage.setItem("77m_verification_status", "verified");
+      setIsApproved(true);
+      toast.success("Your account is now active! Welcome to 77mobiles.pro");
+      setTimeout(() => navigate({ to: "/app" }), 1500);
+    }
+
+    // 1. Poll every 3s (fast polling for reliability)
+    const interval = setInterval(() => {
+      if (checkApproval()) handleApproval();
+    }, 3000);
+
+    // 2. Listen for storage events (fired when Admin panel changes localStorage
+    //    from the same window via window.dispatchEvent OR from another tab natively)
+    function onStorageEvent(e: StorageEvent) {
+      if (
+        e.key === "77m_approved_phones" ||
+        e.key === "77m_is_verified" ||
+        e.key === "77m_verification_status" ||
+        e.key === "77m_kyc_submissions"
+      ) {
+        if (checkApproval()) handleApproval();
       }
+    }
+    window.addEventListener("storage", onStorageEvent);
+
+    // 3. BroadcastChannel for instant same-origin cross-tab/same-tab communication
+    let channel: BroadcastChannel | null = null;
+    try {
+      channel = new BroadcastChannel("77m_kyc_channel");
+      channel.onmessage = (e) => {
+        if (e.data?.type === "KYC_APPROVED") {
+          handleApproval();
+        }
+      };
+    } catch {
+      // BroadcastChannel not supported in this env — polling covers it
+    }
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", onStorageEvent);
+      channel?.close();
     };
-    check(); // immediate check
-    const interval = setInterval(check, 5000);
-    return () => clearInterval(interval);
   }, [navigate]);
 
   const handleSignOut = () => {
     logout();
     localStorage.removeItem("77m_verification_status");
     localStorage.removeItem("77m_is_verified");
+    localStorage.removeItem("77m_phone_session");
     navigate({ to: "/" });
   };
 
@@ -96,7 +190,7 @@ export default function PendingVerificationPage() {
           </div>
           <div>
             <p className="font-bold text-sm text-gray-900">KYC Under Review</p>
-            <p className="text-xs text-gray-500">Auto-refreshing every 5s</p>
+            <p className="text-xs text-gray-500">Checking for approval...</p>
           </div>
           <div
             className="ml-auto w-2 h-2 rounded-full animate-pulse"

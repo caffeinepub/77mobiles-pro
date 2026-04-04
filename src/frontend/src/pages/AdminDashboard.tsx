@@ -27,6 +27,13 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BidStore } from "../stores/BidStore";
+import {
+  approveUserByPhone,
+  readBanners,
+  readPortalSettings,
+  writeBanners,
+  writePortalSettings,
+} from "../utils/portalSettings";
 
 type AdminSection =
   | "dashboard"
@@ -63,6 +70,8 @@ interface BannerSlide {
   title: string;
   target: "buyer" | "seller" | "both";
   active: boolean;
+  link?: string;
+  createdAt: number;
 }
 
 function formatTime(seconds: number) {
@@ -105,13 +114,25 @@ export default function AdminDashboard() {
     Record<number, string>
   >({});
 
-  // Portal Controls state
-  const [buyerMinBid, setBuyerMinBid] = useState(500);
-  const [buyerAuctionDuration, setBuyerAuctionDuration] = useState(20);
-  const [buyerMaxListings, setBuyerMaxListings] = useState(20);
-  const [sellerListingFee, setSellerListingFee] = useState(0);
-  const [sellerMaxPhotos, setSellerMaxPhotos] = useState(6);
-  const [sellerAutoExpire, setSellerAutoExpire] = useState(14);
+  // Portal Controls state — initialized from persisted settings
+  const [buyerMinBid, setBuyerMinBid] = useState(
+    () => readPortalSettings().buyerMinBidIncrement,
+  );
+  const [buyerAuctionDuration, setBuyerAuctionDuration] = useState(
+    () => readPortalSettings().buyerAuctionDuration,
+  );
+  const [buyerMaxListings, setBuyerMaxListings] = useState(
+    () => readPortalSettings().buyerMaxListings,
+  );
+  const [sellerListingFee, setSellerListingFee] = useState(
+    () => readPortalSettings().sellerListingFee,
+  );
+  const [sellerMaxPhotos, setSellerMaxPhotos] = useState(
+    () => readPortalSettings().sellerMaxPhotos,
+  );
+  const [sellerAutoExpire, setSellerAutoExpire] = useState(
+    () => readPortalSettings().sellerAutoExpireDays,
+  );
   const [portalSaveSuccess, setPortalSaveSuccess] = useState(false);
   const [activeBenchmarkIdx, setActiveBenchmarkIdx] = useState<number | null>(
     null,
@@ -155,14 +176,15 @@ export default function AdminDashboard() {
   ]);
   const [pendingCount, setPendingCount] = useState(3);
 
-  // Task 12: Slider Management state
-  const [banners, setBanners] = useState<BannerSlide[]>([
+  // Task 12: Slider Management state — load from persisted storage
+  const DEFAULT_BANNERS: BannerSlide[] = [
     {
       id: "b1",
       imageUrl: "",
       title: "iPhone 16 Pro — Bidding War!",
       target: "both",
       active: true,
+      createdAt: Date.now(),
     },
     {
       id: "b2",
@@ -170,6 +192,7 @@ export default function AdminDashboard() {
       title: "Samsung S25 Ultra Auction",
       target: "buyer",
       active: true,
+      createdAt: Date.now(),
     },
     {
       id: "b3",
@@ -177,8 +200,16 @@ export default function AdminDashboard() {
       title: "Bulk MacBook Pro Deals",
       target: "seller",
       active: false,
+      createdAt: Date.now(),
     },
-  ]);
+  ];
+  const [banners, setBanners] = useState<BannerSlide[]>(() => {
+    const stored = readBanners();
+    if (stored.length > 0) return stored;
+    // Persist defaults so portals can read them immediately
+    writeBanners(DEFAULT_BANNERS);
+    return DEFAULT_BANNERS;
+  });
   const [newBannerTitle, setNewBannerTitle] = useState("");
   const [newBannerTarget, setNewBannerTarget] = useState<
     "buyer" | "seller" | "both"
@@ -1446,13 +1477,8 @@ export default function AdminDashboard() {
                                   setPendingCount((prev) =>
                                     Math.max(0, prev - 1),
                                   );
-                                  localStorage.setItem(
-                                    "77m_verification_status",
-                                    "verified",
-                                  );
-                                  localStorage.setItem(
-                                    "77m_is_verified",
-                                    "true",
+                                  approveUserByPhone(
+                                    (user.phone as string) || "",
                                   );
                                   try {
                                     const kycSubs = JSON.parse(
@@ -2339,7 +2365,11 @@ export default function AdminDashboard() {
                       max={2000}
                       step={100}
                       value={buyerMinBid}
-                      onChange={(e) => setBuyerMinBid(Number(e.target.value))}
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        setBuyerMinBid(v);
+                        writePortalSettings({ buyerMinBidIncrement: v });
+                      }}
                       className="w-full accent-blue-600"
                       style={{ accentColor: "#1D4ED8" }}
                     />
@@ -2374,9 +2404,11 @@ export default function AdminDashboard() {
                       max={60}
                       step={5}
                       value={buyerAuctionDuration}
-                      onChange={(e) =>
-                        setBuyerAuctionDuration(Number(e.target.value))
-                      }
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        setBuyerAuctionDuration(v);
+                        writePortalSettings({ buyerAuctionDuration: v });
+                      }}
                       className="w-full"
                       style={{ accentColor: "#1D4ED8" }}
                     />
@@ -2411,9 +2443,11 @@ export default function AdminDashboard() {
                       max={50}
                       step={5}
                       value={buyerMaxListings}
-                      onChange={(e) =>
-                        setBuyerMaxListings(Number(e.target.value))
-                      }
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        setBuyerMaxListings(v);
+                        writePortalSettings({ buyerMaxListings: v });
+                      }}
                       className="w-full"
                       style={{ accentColor: "#1D4ED8" }}
                     />
@@ -2454,9 +2488,11 @@ export default function AdminDashboard() {
                       max={500}
                       step={50}
                       value={sellerListingFee}
-                      onChange={(e) =>
-                        setSellerListingFee(Number(e.target.value))
-                      }
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        setSellerListingFee(v);
+                        writePortalSettings({ sellerListingFee: v });
+                      }}
                       className="w-full"
                       style={{ accentColor: "#1D4ED8" }}
                     />
@@ -2491,9 +2527,11 @@ export default function AdminDashboard() {
                       max={10}
                       step={1}
                       value={sellerMaxPhotos}
-                      onChange={(e) =>
-                        setSellerMaxPhotos(Number(e.target.value))
-                      }
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        setSellerMaxPhotos(v);
+                        writePortalSettings({ sellerMaxPhotos: v });
+                      }}
                       className="w-full"
                       style={{ accentColor: "#1D4ED8" }}
                     />
@@ -2528,9 +2566,11 @@ export default function AdminDashboard() {
                       max={30}
                       step={1}
                       value={sellerAutoExpire}
-                      onChange={(e) =>
-                        setSellerAutoExpire(Number(e.target.value))
-                      }
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        setSellerAutoExpire(v);
+                        writePortalSettings({ sellerAutoExpireDays: v });
+                      }}
                       className="w-full"
                       style={{ accentColor: "#1D4ED8" }}
                     />
@@ -2672,8 +2712,13 @@ export default function AdminDashboard() {
                           title: newBannerTitle,
                           target: newBannerTarget,
                           active: true,
+                          createdAt: Date.now(),
                         };
-                        setBanners((prev) => [newBanner, ...prev]);
+                        setBanners((prev) => {
+                          const updated = [newBanner, ...prev];
+                          writeBanners(updated);
+                          return updated;
+                        });
                         setNewBannerTitle("");
                         setNewBannerPreview("");
                         toast.success(
@@ -2753,13 +2798,15 @@ export default function AdminDashboard() {
                               type="button"
                               data-ocid="admin.slider.banner.toggle"
                               onClick={() => {
-                                setBanners((prev) =>
-                                  prev.map((b) =>
+                                setBanners((prev) => {
+                                  const updated = prev.map((b) =>
                                     b.id === banner.id
                                       ? { ...b, active: !b.active }
                                       : b,
-                                  ),
-                                );
+                                  );
+                                  writeBanners(updated);
+                                  return updated;
+                                });
                                 toast.success(
                                   `Banner ${banner.active ? "deactivated" : "activated"} successfully`,
                                 );
@@ -2778,9 +2825,13 @@ export default function AdminDashboard() {
                               type="button"
                               data-ocid="admin.slider.banner.delete_button"
                               onClick={() => {
-                                setBanners((prev) =>
-                                  prev.filter((b) => b.id !== banner.id),
-                                );
+                                setBanners((prev) => {
+                                  const updated = prev.filter(
+                                    (b) => b.id !== banner.id,
+                                  );
+                                  writeBanners(updated);
+                                  return updated;
+                                });
                                 toast.success("Banner removed");
                               }}
                               className="w-6 h-6 flex items-center justify-center rounded-lg"
@@ -2812,6 +2863,14 @@ export default function AdminDashboard() {
                 type="button"
                 data-ocid="admin.portal.save.button"
                 onClick={() => {
+                  writePortalSettings({
+                    buyerMinBidIncrement: buyerMinBid,
+                    buyerAuctionDuration,
+                    buyerMaxListings,
+                    sellerListingFee,
+                    sellerMaxPhotos,
+                    sellerAutoExpireDays: sellerAutoExpire,
+                  });
                   setPortalSaveSuccess(true);
                   toast.success("Portal settings saved successfully!");
                   setTimeout(() => setPortalSaveSuccess(false), 3000);
@@ -2922,16 +2981,21 @@ export default function AdminDashboard() {
                         toast.error("Enter a banner title");
                         return;
                       }
-                      setBanners((prev) => [
-                        {
-                          id: `banner-${Date.now()}`,
-                          imageUrl: newBannerPreview,
-                          title: newBannerTitle,
-                          target: newBannerTarget,
-                          active: true,
-                        },
-                        ...prev,
-                      ]);
+                      setBanners((prev) => {
+                        const updated = [
+                          {
+                            id: `banner-${Date.now()}`,
+                            imageUrl: newBannerPreview,
+                            title: newBannerTitle,
+                            target: newBannerTarget,
+                            active: true,
+                            createdAt: Date.now(),
+                          },
+                          ...prev,
+                        ];
+                        writeBanners(updated);
+                        return updated;
+                      });
                       setNewBannerTitle("");
                       setNewBannerPreview("");
                       toast.success(
@@ -2992,13 +3056,15 @@ export default function AdminDashboard() {
                         type="button"
                         data-ocid="admin.slider.banner.toggle"
                         onClick={() => {
-                          setBanners((prev) =>
-                            prev.map((b) =>
+                          setBanners((prev) => {
+                            const updated = prev.map((b) =>
                               b.id === banner.id
                                 ? { ...b, active: !b.active }
                                 : b,
-                            ),
-                          );
+                            );
+                            writeBanners(updated);
+                            return updated;
+                          });
                           toast.success(
                             `Banner ${banner.active ? "deactivated" : "activated"}`,
                           );
@@ -3015,9 +3081,13 @@ export default function AdminDashboard() {
                         type="button"
                         data-ocid="admin.slider.banner.delete_button"
                         onClick={() => {
-                          setBanners((prev) =>
-                            prev.filter((b) => b.id !== banner.id),
-                          );
+                          setBanners((prev) => {
+                            const updated = prev.filter(
+                              (b) => b.id !== banner.id,
+                            );
+                            writeBanners(updated);
+                            return updated;
+                          });
                           toast.success("Banner removed");
                         }}
                         className="w-6 h-6 flex items-center justify-center rounded-lg"
@@ -3412,11 +3482,7 @@ export default function AdminDashboard() {
                         ),
                       );
                       setPendingCount((prev) => Math.max(0, prev - 1));
-                      localStorage.setItem(
-                        "77m_verification_status",
-                        "verified",
-                      );
-                      localStorage.setItem("77m_is_verified", "true");
+                      approveUserByPhone((selectedUser.phone as string) || "");
                       try {
                         const kycSubs = JSON.parse(
                           localStorage.getItem("77m_kyc_submissions") || "[]",

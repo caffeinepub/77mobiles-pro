@@ -27,6 +27,7 @@ import {
 import { useActor } from "../hooks/useActor";
 import { BidStore } from "../stores/BidStore";
 import { formatINR } from "../utils/format";
+import { readPortalSettings } from "../utils/portalSettings";
 
 // ─── Image Carousel ───────────────────────────────────────────────────────────────
 function mockFallback(id: string): Listing {
@@ -383,8 +384,11 @@ function BiddingCard({
   const s = secs % 60;
   const timerStr = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   const basePrice = Number(listing.basePrice) / 100;
+  const { buyerMinBidIncrement: minIncrement } = readPortalSettings();
   const minBid =
-    liveBid > Number(listing.basePrice) ? liveBid / 100 + 500 : basePrice;
+    liveBid > Number(listing.basePrice)
+      ? liveBid / 100 + minIncrement
+      : basePrice;
   const [bidValid, setBidValid] = useState(true);
 
   // Task 12: Wallet balance validation

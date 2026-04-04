@@ -22,6 +22,63 @@ import SellCategoryScreen from "./pages/SellCategoryScreen";
 import SellChoiceScreen from "./pages/SellChoiceScreen";
 import SendOfferScreen from "./pages/SendOfferScreen";
 import USBDiagnostic from "./pages/USBDiagnostic";
+import { isPhoneApproved } from "./utils/portalSettings";
+
+/** Check all approval signals — mirrors the logic in PendingVerificationPage */
+function resolveUserPhone(): string {
+  try {
+    const session = JSON.parse(
+      localStorage.getItem("77m_phone_session") || "null",
+    );
+    if (session?.phone)
+      return String(session.phone).replace(/^\+91/, "").replace(/^0+/, "");
+    const subs: { phone?: string; status?: string }[] = JSON.parse(
+      localStorage.getItem("77m_kyc_submissions") || "[]",
+    );
+    const pending = subs.find((k) => k.status === "pending");
+    if (pending?.phone)
+      return String(pending.phone).replace(/^\+91/, "").replace(/^0+/, "");
+  } catch {}
+  return "";
+}
+
+function isUserVerified(): boolean {
+  // Direct verified flag
+  if (localStorage.getItem("77m_is_verified") === "true") return true;
+
+  // Per-phone approval
+  const phone = resolveUserPhone();
+  if (phone && isPhoneApproved(phone)) {
+    // Sync the flag so subsequent checks are instant
+    localStorage.setItem("77m_is_verified", "true");
+    localStorage.setItem("77m_verification_status", "verified");
+    return true;
+  }
+
+  // KYC submission status
+  try {
+    const subs: { phone?: string; status?: string }[] = JSON.parse(
+      localStorage.getItem("77m_kyc_submissions") || "[]",
+    );
+    const myPhone = phone;
+    const myEntry = myPhone
+      ? subs.find(
+          (k) => k.phone?.replace(/^\+91/, "").replace(/^0+/, "") === myPhone,
+        )
+      : null;
+    if (
+      myEntry?.status === "Approved" ||
+      myEntry?.status === "approved" ||
+      myEntry?.status === "verified"
+    ) {
+      localStorage.setItem("77m_is_verified", "true");
+      localStorage.setItem("77m_verification_status", "verified");
+      return true;
+    }
+  } catch {}
+
+  return false;
+}
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -44,6 +101,12 @@ const indexRoute = createRoute({
 const pendingVerificationRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/pending-verification",
+  // If the user is already verified, skip this screen and go straight to /app
+  beforeLoad: () => {
+    if (isUserVerified()) {
+      throw redirect({ to: "/app" });
+    }
+  },
   component: PendingVerificationPage,
 });
 
@@ -51,10 +114,9 @@ const appRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/app",
   beforeLoad: () => {
-    const isVerified = localStorage.getItem("77m_is_verified");
     const status = localStorage.getItem("77m_verification_status");
-    // If they've registered but not verified, redirect to pending
-    if (status === "pending" && isVerified !== "true") {
+    // Only block if explicitly in pending state AND not verified through any channel
+    if (status === "pending" && !isUserVerified()) {
       throw redirect({ to: "/pending-verification" });
     }
   },
