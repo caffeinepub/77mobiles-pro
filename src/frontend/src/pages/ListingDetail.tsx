@@ -465,7 +465,9 @@ function BiddingCard({
   const handleBid = async () => {
     const amount = Number.parseFloat(bidAmount);
     if (!amount || amount * 100 <= liveBid) {
-      toast.error("Minimum bid increment is ₹500");
+      toast.error(
+        `Minimum bid increment is ₹${minIncrement.toLocaleString("en-IN")}`,
+      );
       return;
     }
     // Task 12: Check wallet balance
@@ -612,7 +614,7 @@ function BiddingCard({
       </div>
       {!bidValid && (
         <p className="text-[10px] text-red-500 mb-2">
-          Minimum bid increment is ₹500
+          {`Minimum bid increment is ₹${minIncrement.toLocaleString("en-IN")}`}
         </p>
       )}
       {bidAmt > 0 && !hasEnoughBalance && (

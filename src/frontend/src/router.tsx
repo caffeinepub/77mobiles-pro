@@ -22,7 +22,10 @@ import SellCategoryScreen from "./pages/SellCategoryScreen";
 import SellChoiceScreen from "./pages/SellChoiceScreen";
 import SendOfferScreen from "./pages/SendOfferScreen";
 import USBDiagnostic from "./pages/USBDiagnostic";
-import { isPhoneApproved } from "./utils/portalSettings";
+import {
+  isPhoneApproved,
+  isPhoneApprovedForRole,
+} from "./utils/portalSettings";
 
 /** Check all approval signals — mirrors the logic in PendingVerificationPage */
 function resolveUserPhone(): string {
@@ -46,24 +49,42 @@ function isUserVerified(): boolean {
   // Direct verified flag
   if (localStorage.getItem("77m_is_verified") === "true") return true;
 
-  // Per-phone approval
   const phone = resolveUserPhone();
-  if (phone && isPhoneApproved(phone)) {
-    // Sync the flag so subsequent checks are instant
+  const role =
+    localStorage.getItem("77m_userRole") ||
+    localStorage.getItem("77m_role") ||
+    "";
+
+  // Role-specific phone approval (composite key: phone_role)
+  if (phone && role && isPhoneApprovedForRole(phone, role)) {
     localStorage.setItem("77m_is_verified", "true");
     localStorage.setItem("77m_verification_status", "verified");
     return true;
   }
 
-  // KYC submission status
+  // Plain phone approval (backward compat)
+  if (phone && isPhoneApproved(phone)) {
+    localStorage.setItem("77m_is_verified", "true");
+    localStorage.setItem("77m_verification_status", "verified");
+    return true;
+  }
+
+  // KYC submission status (check role-specific collection first)
   try {
-    const subs: { phone?: string; status?: string }[] = JSON.parse(
+    const roleKey =
+      role === "seller"
+        ? "77m_kyc_submissions_sellers"
+        : "77m_kyc_submissions_buyers";
+    const roleSubs: { phone?: string; status?: string }[] = JSON.parse(
+      localStorage.getItem(roleKey) || "[]",
+    );
+    const legacySubs: { phone?: string; status?: string }[] = JSON.parse(
       localStorage.getItem("77m_kyc_submissions") || "[]",
     );
-    const myPhone = phone;
-    const myEntry = myPhone
-      ? subs.find(
-          (k) => k.phone?.replace(/^\+91/, "").replace(/^0+/, "") === myPhone,
+    const allSubs = [...roleSubs, ...legacySubs];
+    const myEntry = phone
+      ? allSubs.find(
+          (k) => k.phone?.replace(/^\+91/, "").replace(/^0+/, "") === phone,
         )
       : null;
     if (

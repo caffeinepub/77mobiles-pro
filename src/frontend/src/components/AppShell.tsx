@@ -149,83 +149,116 @@ export default function AppShell() {
   const isWalletTab = activeTab === "wallet";
 
   return (
+    // Task 2 & 3: Outer wrapper is position:relative, height:100dvh, overflow:hidden
+    // BottomNav lives OUTSIDE the scroll div as a direct sibling
     <div
-      ref={scrollRef}
-      className="scroll-container"
       style={{
+        position: "relative",
         height: "100dvh",
+        overflow: "hidden",
+        // Fallback for older iOS browsers
         minHeight: "-webkit-fill-available",
-        overflowY: "auto",
-        overscrollBehavior: "none",
       }}
     >
-      {/* STICKY HEADER */}
-      {!isWalletTab && (
-        <div className="sticky top-0 z-50">
-          <div
-            style={{
-              backdropFilter: "blur(10px) saturate(180%)",
-              WebkitBackdropFilter: "blur(10px) saturate(180%)",
-              background: "rgba(255,255,255,0.85)",
-              borderBottom: "1px solid rgba(229,231,235,0.8)",
-            }}
-          >
-            {/* Branding bar */}
+      {/* Scrollable content area — paddingBottom clears the fixed nav bar */}
+      <div
+        ref={scrollRef}
+        className="scroll-container"
+        style={{
+          height: "100dvh",
+          overflowY: "auto",
+          // Push last listing above the fixed nav bar (80px + safe-area)
+          paddingBottom: "calc(90px + env(safe-area-inset-bottom, 20px))",
+          overscrollBehavior: "none",
+          WebkitOverflowScrolling: "touch" as any,
+        }}
+      >
+        {/* STICKY HEADER */}
+        {!isWalletTab && (
+          <div className="sticky top-0 z-50">
             <div
-              className="flex items-center justify-between"
               style={{
-                paddingLeft: "20px",
-                paddingRight: "16px",
-                paddingTop: "12px",
-                paddingBottom: "8px",
+                backdropFilter: "blur(10px) saturate(180%)",
+                WebkitBackdropFilter: "blur(10px) saturate(180%)",
+                background: "rgba(255,255,255,0.85)",
+                borderBottom: "1px solid rgba(229,231,235,0.8)",
               }}
             >
-              <div className="flex flex-col gap-0.5">
-                <span
-                  className="font-black leading-none tracking-tight"
-                  style={{ fontSize: "26px", color: "#1D4ED8" }}
-                >
-                  77mobiles.pro
-                </span>
-                <span
-                  className="font-medium"
-                  style={{ fontSize: "12px", color: "#6B7280" }}
-                >
-                  {isSeller ? "Seller Portal" : "Buyer Portal"}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2.5">
-                {!isSeller && !isSubPage && (
-                  <div
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-                    style={{
-                      background: "#EFF6FF",
-                      border: "1px solid #BFDBFE",
-                    }}
+              {/* Branding bar */}
+              <div
+                className="flex items-center justify-between"
+                style={{
+                  paddingLeft: "20px",
+                  paddingRight: "16px",
+                  paddingTop: "12px",
+                  paddingBottom: "8px",
+                }}
+              >
+                <div className="flex flex-col gap-0.5">
+                  <span
+                    className="font-black leading-none tracking-tight"
+                    style={{ fontSize: "26px", color: "#1D4ED8" }}
                   >
-                    <span
-                      className="w-2 h-2 rounded-full inline-block"
-                      style={{
-                        background: "#ef4444",
-                        animation: "pulse 1.5s ease-in-out infinite",
-                      }}
-                    />
-                    <span
-                      className="font-bold"
-                      style={{ fontSize: "11px", color: "#1D4ED8" }}
-                    >
-                      {liveCount > 0 ? liveCount : 6} Live
-                    </span>
-                  </div>
-                )}
+                    77mobiles.pro
+                  </span>
+                  <span
+                    className="font-medium"
+                    style={{ fontSize: "12px", color: "#6B7280" }}
+                  >
+                    {isSeller ? "Seller Portal" : "Buyer Portal"}
+                  </span>
+                </div>
 
-                {!isSeller && (
+                <div className="flex items-center gap-2.5">
+                  {!isSeller && !isSubPage && (
+                    <div
+                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                      style={{
+                        background: "#EFF6FF",
+                        border: "1px solid #BFDBFE",
+                      }}
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full inline-block"
+                        style={{
+                          background: "#ef4444",
+                          animation: "pulse 1.5s ease-in-out infinite",
+                        }}
+                      />
+                      <span
+                        className="font-bold"
+                        style={{ fontSize: "11px", color: "#1D4ED8" }}
+                      >
+                        {liveCount > 0 ? liveCount : 6} Live
+                      </span>
+                    </div>
+                  )}
+
+                  {!isSeller && (
+                    <button
+                      type="button"
+                      data-ocid="header.wallet.button"
+                      onClick={() => setActiveTab("wallet")}
+                      className="flex items-center justify-center rounded-full relative"
+                      style={{
+                        width: "38px",
+                        height: "38px",
+                        border: "1.5px solid #E2E8F0",
+                        background: "#F8FAFC",
+                      }}
+                    >
+                      <Wallet
+                        className="w-5 h-5"
+                        style={{ color: "#1D4ED8" }}
+                        strokeWidth={1.5}
+                      />
+                    </button>
+                  )}
                   <button
                     type="button"
-                    data-ocid="header.wallet.button"
-                    onClick={() => setActiveTab("wallet")}
-                    className="flex items-center justify-center rounded-full relative"
+                    data-ocid="header.profile.button"
+                    onClick={() => setActiveTab("profile")}
+                    className="flex items-center justify-center rounded-full"
                     style={{
                       width: "38px",
                       height: "38px",
@@ -233,200 +266,186 @@ export default function AppShell() {
                       background: "#F8FAFC",
                     }}
                   >
-                    <Wallet
+                    <User
                       className="w-5 h-5"
-                      style={{ color: "#1D4ED8" }}
+                      style={{ color: "#1E293B" }}
                       strokeWidth={1.5}
                     />
                   </button>
-                )}
-                <button
-                  type="button"
-                  data-ocid="header.profile.button"
-                  onClick={() => setActiveTab("profile")}
-                  className="flex items-center justify-center rounded-full"
-                  style={{
-                    width: "38px",
-                    height: "38px",
-                    border: "1.5px solid #E2E8F0",
-                    background: "#F8FAFC",
-                  }}
-                >
-                  <User
-                    className="w-5 h-5"
-                    style={{ color: "#1E293B" }}
-                    strokeWidth={1.5}
-                  />
-                </button>
+                </div>
               </div>
-            </div>
 
-            {/* Sub-page title OR search bar */}
-            {isSubPage ? (
-              <div
-                style={{
-                  textAlign: "center",
-                  color: "#1E293B",
-                  fontWeight: "bold",
-                  fontSize: "18px",
-                  padding: "8px 0 14px",
-                }}
-              >
-                {SUB_PAGE_TITLES[activeTab] ?? ""}
-              </div>
-            ) : (
-              <div className="px-4 pb-3">
-                {/* Search bar row — clicking opens overlay */}
+              {/* Sub-page title OR search bar */}
+              {isSubPage ? (
                 <div
-                  className="flex items-center gap-2 rounded-2xl px-3 py-2.5 cursor-pointer"
                   style={{
-                    background: "#F8FAFC",
-                    border: "1px solid #E2E8F0",
+                    textAlign: "center",
+                    color: "#1E293B",
+                    fontWeight: "bold",
+                    fontSize: "18px",
+                    padding: "8px 0 14px",
                   }}
-                  onClick={() => setShowSearch(true)}
-                  onKeyDown={(e) => e.key === "Enter" && setShowSearch(true)}
-                  data-ocid="header.search.open_modal_button"
                 >
-                  <Search
-                    className="w-4 h-4 flex-shrink-0"
-                    style={{ color: "#9CA3AF" }}
-                  />
-                  <span
-                    className="flex-1 text-sm"
-                    style={{ color: searchQuery ? "#1E293B" : "#9CA3AF" }}
+                  {SUB_PAGE_TITLES[activeTab] ?? ""}
+                </div>
+              ) : (
+                <div className="px-4 pb-3">
+                  {/* Search bar row — clicking opens overlay */}
+                  <div
+                    className="flex items-center gap-2 rounded-2xl px-3 py-2.5 cursor-pointer"
+                    style={{
+                      background: "#F8FAFC",
+                      border: "1px solid #E2E8F0",
+                    }}
+                    onClick={() => setShowSearch(true)}
+                    onKeyDown={(e) => e.key === "Enter" && setShowSearch(true)}
+                    data-ocid="header.search.open_modal_button"
                   >
-                    {searchQuery || "Search Model, Brand, or IMEI"}
-                  </span>
-                  {searchQuery && (
+                    <Search
+                      className="w-4 h-4 flex-shrink-0"
+                      style={{ color: "#9CA3AF" }}
+                    />
+                    <span
+                      className="flex-1 text-sm"
+                      style={{ color: searchQuery ? "#1E293B" : "#9CA3AF" }}
+                    >
+                      {searchQuery || "Search Model, Brand, or IMEI"}
+                    </span>
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSearchQuery("");
+                        }}
+                        className="flex-shrink-0 p-0.5"
+                        aria-label="Clear search"
+                      >
+                        <X
+                          className="w-3.5 h-3.5"
+                          style={{ color: "#9ca3af" }}
+                        />
+                      </button>
+                    )}
                     <button
                       type="button"
+                      data-ocid="header.camera.button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setSearchQuery("");
+                        setShowScanner(true);
                       }}
-                      className="flex-shrink-0 p-0.5"
-                      aria-label="Clear search"
+                      className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{ background: "#EFF6FF" }}
+                      aria-label="Scan barcode"
                     >
-                      <X className="w-3.5 h-3.5" style={{ color: "#9ca3af" }} />
+                      <ScanBarcode
+                        className="w-4 h-4"
+                        style={{ color: "#1D4ED8" }}
+                        strokeWidth={1.5}
+                      />
                     </button>
-                  )}
-                  <button
-                    type="button"
-                    data-ocid="header.camera.button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowScanner(true);
-                    }}
-                    className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ background: "#EFF6FF" }}
-                    aria-label="Scan barcode"
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Horizontal-scroll category row — buyer only, home only */}
+            {!isSeller && !isSubPage && (
+              <div
+                style={{
+                  overflow: "hidden",
+                  maxHeight: categoriesVisible ? "120px" : "0px",
+                  transition: "max-height 0.3s ease",
+                  opacity: categoriesVisible ? 1 : 0,
+                }}
+              >
+                <div
+                  className="bg-white px-4 pt-2 pb-0"
+                  style={{ borderBottom: "1px solid #f0f0f0" }}
+                >
+                  <div
+                    className="flex gap-4 overflow-x-auto pb-3"
+                    style={{ scrollbarWidth: "none" }}
                   >
-                    <ScanBarcode
-                      className="w-4 h-4"
-                      style={{ color: "#1D4ED8" }}
-                      strokeWidth={1.5}
-                    />
-                  </button>
+                    {CATEGORIES.map((cat) => {
+                      const isActive = activeCategory === cat.id;
+                      return (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          data-ocid={`category.${cat.id}.button`}
+                          onClick={() => setActiveCategory(cat.id)}
+                          className="flex flex-col items-center flex-shrink-0"
+                          style={{ minWidth: "52px" }}
+                        >
+                          <div
+                            className="flex items-center justify-center mb-1.5"
+                            style={{
+                              width: "52px",
+                              height: "65px",
+                              borderRadius: "12px",
+                              background: isActive ? "#1D4ED8" : cat.tint,
+                              padding: "12px",
+                              transition: "all 0.15s ease",
+                            }}
+                          >
+                            <CategoryIcon id={cat.id} active={!isActive} />
+                          </div>
+                          <span
+                            style={{
+                              fontSize: "10px",
+                              fontWeight: isActive ? 700 : 500,
+                              color: isActive ? "#1D4ED8" : "#6B7280",
+                              textAlign: "center",
+                              lineHeight: "1.2",
+                              maxWidth: "56px",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {cat.label}
+                          </span>
+                          <div
+                            style={{
+                              height: "2px",
+                              width: "24px",
+                              borderRadius: "2px",
+                              background: isActive ? "#1D4ED8" : "transparent",
+                              marginTop: "4px",
+                              transition: "background 0.15s ease",
+                            }}
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             )}
+
+            {(isSeller || isSubPage) && !isWalletTab && (
+              <div style={{ height: "1px", background: "#E2E8F0" }} />
+            )}
           </div>
+        )}
 
-          {/* Horizontal-scroll category row — buyer only, home only */}
-          {!isSeller && !isSubPage && (
-            <div
-              style={{
-                overflow: "hidden",
-                maxHeight: categoriesVisible ? "120px" : "0px",
-                transition: "max-height 0.3s ease",
-                opacity: categoriesVisible ? 1 : 0,
-              }}
-            >
-              <div
-                className="bg-white px-4 pt-2 pb-0"
-                style={{ borderBottom: "1px solid #f0f0f0" }}
-              >
-                <div
-                  className="flex gap-4 overflow-x-auto pb-3"
-                  style={{ scrollbarWidth: "none" }}
-                >
-                  {CATEGORIES.map((cat) => {
-                    const isActive = activeCategory === cat.id;
-                    return (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        data-ocid={`category.${cat.id}.button`}
-                        onClick={() => setActiveCategory(cat.id)}
-                        className="flex flex-col items-center flex-shrink-0"
-                        style={{ minWidth: "52px" }}
-                      >
-                        <div
-                          className="flex items-center justify-center mb-1.5"
-                          style={{
-                            width: "52px",
-                            height: "65px",
-                            borderRadius: "12px",
-                            background: isActive ? "#1D4ED8" : cat.tint,
-                            padding: "12px",
-                            transition: "all 0.15s ease",
-                          }}
-                        >
-                          <CategoryIcon id={cat.id} active={!isActive} />
-                        </div>
-                        <span
-                          style={{
-                            fontSize: "10px",
-                            fontWeight: isActive ? 700 : 500,
-                            color: isActive ? "#1D4ED8" : "#6B7280",
-                            textAlign: "center",
-                            lineHeight: "1.2",
-                            maxWidth: "56px",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
-                          {cat.label}
-                        </span>
-                        <div
-                          style={{
-                            height: "2px",
-                            width: "24px",
-                            borderRadius: "2px",
-                            background: isActive ? "#1D4ED8" : "transparent",
-                            marginTop: "4px",
-                            transition: "background 0.15s ease",
-                          }}
-                        />
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
+        <main
+          key={activeTab}
+          className="transition-opacity duration-200"
+          style={{ background: "#F8FAFC" }}
+        >
+          {activeTab === "home" && isSeller && <SellerPortal />}
+          {activeTab === "home" && !isSeller && <BuyerPortal />}
+          {activeTab === "activity" && <ActivityPage />}
+          {activeTab === "alerts" && <AlertsPage />}
+          {activeTab === "watchlist" && <WatchlistPage />}
+          {activeTab === "profile" && <ProfilePage />}
+          {activeTab === "wallet" && <WalletPage />}
+        </main>
+      </div>
 
-          {(isSeller || isSubPage) && !isWalletTab && (
-            <div style={{ height: "1px", background: "#E2E8F0" }} />
-          )}
-        </div>
-      )}
-
-      <main
-        key={activeTab}
-        className="transition-opacity duration-200"
-        style={{ background: "#F8FAFC", paddingBottom: "100px" }}
-      >
-        {activeTab === "home" && isSeller && <SellerPortal />}
-        {activeTab === "home" && !isSeller && <BuyerPortal />}
-        {activeTab === "activity" && <ActivityPage />}
-        {activeTab === "alerts" && <AlertsPage />}
-        {activeTab === "watchlist" && <WatchlistPage />}
-        {activeTab === "profile" && <ProfilePage />}
-        {activeTab === "wallet" && <WalletPage />}
-      </main>
-
+      {/* Task 2 & 3: BottomNav is OUTSIDE the scroll div — direct child of root wrapper */}
       <BottomNav />
 
       {showBackToTop && (

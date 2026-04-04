@@ -194,7 +194,7 @@ export default function AuthPage() {
     try {
       if (actor) await actor.registerUser(profile);
     } catch {}
-    login(profile);
+    // Task 1: Do NOT auto-login after registration — user must wait for admin approval
     saveCredential(
       norm,
       sellerPassword,
@@ -290,7 +290,7 @@ export default function AuthPage() {
     try {
       if (actor) await actor.registerUser(profile);
     } catch {}
-    login(profile);
+    // Task 1: Do NOT auto-login after registration — user must wait for admin approval
     saveCredential(
       norm,
       buyerPassword,
@@ -363,7 +363,7 @@ export default function AuthPage() {
           : UserRole.businessBuyer;
       const norm = loginMobile.replace(/^\+91/, "").replace(/^0+/, "");
       const profile = {
-        userId: crypto.randomUUID(),
+        userId: `${norm}_${result.role}`,
         userRole: roleEnum,
         businessName: result.business || "My Business",
         verificationId: "AUTH",

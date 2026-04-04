@@ -12,13 +12,16 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import AuctionTimer from "../components/AuctionTimer";
 import CountdownTimer from "../components/CountdownTimer";
+import LiveCountdown from "../components/LiveCountdown";
 import PortalCarousel from "../components/PortalCarousel";
 import type { CarouselSlide } from "../components/PortalCarousel";
 import RecentSalesSlider from "../components/RecentSalesSlider";
 import { useApp } from "../contexts/AppContext";
 import { SELLER_LISTINGS, getDeviceImage } from "../data/demoListings";
 import { BidStore } from "../stores/BidStore";
+import { ListingsStore } from "../stores/ListingsStore";
 import { formatINR } from "../utils/format";
+import { getBannersForRole } from "../utils/portalSettings";
 
 const SELLER_CAROUSEL_SLIDES: CarouselSlide[] = [
   {
@@ -93,6 +96,50 @@ function conditionColor(c: string) {
 }
 
 export default function SellerPortal() {
+  // Task 4: Dynamic banners from Admin portal controls
+  const [adminBannerSlides, setAdminBannerSlides] = useState<CarouselSlide[]>(
+    () => {
+      try {
+        const banners = getBannersForRole("seller");
+        return banners.map((b) => ({
+          id: b.id,
+          bgColor: "#EFF6FF",
+          theme: "light" as const,
+          accentColor: "#1D4ED8",
+          title: b.title,
+          subtitle: "From 77mobiles.pro",
+          ctaText: b.link ? "View Now" : "Explore",
+          image: b.imageUrl || undefined,
+        }));
+      } catch {
+        return [];
+      }
+    },
+  );
+
+  useEffect(() => {
+    const updateBanners = () => {
+      try {
+        const banners = getBannersForRole("seller");
+        const slides: CarouselSlide[] = banners.map((b) => ({
+          id: b.id,
+          bgColor: "#EFF6FF",
+          theme: "light" as const,
+          accentColor: "#1D4ED8",
+          title: b.title,
+          subtitle: "From 77mobiles.pro",
+          ctaText: b.link ? "View Now" : "Explore",
+          image: b.imageUrl || undefined,
+        }));
+        setAdminBannerSlides(slides);
+      } catch {}
+    };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "77m_banners") updateBanners();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
   const navigate = useNavigate();
   const { searchQuery, sharedListings, setActiveTab, marketLeads } = useApp();
 
@@ -128,6 +175,17 @@ export default function SellerPortal() {
     return unsub;
   }, []);
 
+  // Task 1: Subscribe to ListingsStore for seller's own listings
+  const [_storeListings, setStoreListings] = useState(() =>
+    ListingsStore.getAll(),
+  );
+  useEffect(() => {
+    const unsub = ListingsStore.subscribe((all) => {
+      setStoreListings([...all]);
+    });
+    return unsub;
+  }, []);
+
   // Merge static + shared listings
   const baseListings = [...sharedListings, ...SELLER_LISTINGS];
 
@@ -147,11 +205,36 @@ export default function SellerPortal() {
     });
   };
 
+  // Task 3: Read analytics filter from localStorage (set by ProfilePage analytics cards)
+  const [activeFilter, setActiveFilter] = useState<"all" | "live" | "sold">(
+    () => {
+      const stored = localStorage.getItem("77m_home_filter");
+      if (stored === "live") return "live";
+      if (stored === "sold") return "sold";
+      return "all";
+    },
+  );
+
+  // Clear the filter flag after reading it once
+  useEffect(() => {
+    const stored = localStorage.getItem("77m_home_filter");
+    if (stored) {
+      setActiveFilter(
+        stored === "live" ? "live" : stored === "sold" ? "sold" : "all",
+      );
+      localStorage.removeItem("77m_home_filter");
+    }
+  }, []);
+
   const allListings = hideDemoListings
     ? baseListings.filter((l) => !(l as any).isDemo)
     : baseListings;
 
   const filtered = allListings.filter((l) => {
+    // Task 3: Apply filter from analytics card navigation
+    if (activeFilter === "live" && l.status !== "Active" && l.status !== "live")
+      return false;
+    if (activeFilter === "sold" && l.status !== "Sold") return false;
     const q = searchQuery.toLowerCase();
     return (
       q === "" ||
@@ -192,7 +275,10 @@ export default function SellerPortal() {
     <div className="bg-[#F8FAFC] min-h-screen pb-safe-nav">
       {/* Auto-sliding carousel */}
       <div className="px-3 pt-3 pb-3">
-        <PortalCarousel slides={SELLER_CAROUSEL_SLIDES} intervalMs={5000} />
+        <PortalCarousel
+          slides={[...adminBannerSlides, ...SELLER_CAROUSEL_SLIDES]}
+          intervalMs={5000}
+        />
       </div>
       <RecentSalesSlider />
 
@@ -371,6 +457,32 @@ export default function SellerPortal() {
           >
             Activity
           </button>
+        </div>
+
+        {/* Task 3: Filter chips — highlighted when navigated from Analytics cards */}
+        <div className="flex gap-2 mb-2">
+          {(
+            [
+              { id: "all", label: "All" },
+              { id: "live", label: "Live" },
+              { id: "sold", label: "Sold" },
+            ] as const
+          ).map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              data-ocid={`seller.filter.${f.id}.chip`}
+              onClick={() => setActiveFilter(f.id)}
+              className="px-3 py-1 rounded-full text-[11px] font-bold transition-all"
+              style={{
+                background: activeFilter === f.id ? "#1D4ED8" : "white",
+                color: activeFilter === f.id ? "white" : "#6B7280",
+                border: activeFilter === f.id ? "none" : "1px solid #e5e7eb",
+              }}
+            >
+              {f.label}
+            </button>
+          ))}
         </div>
 
         {/* My Listings */}
@@ -578,13 +690,35 @@ export default function SellerPortal() {
                           {priceInfo.label}
                         </span>
                       </div>
-                      {isActive && listing.endsAt && (
-                        <div className="mt-0.5">
-                          <CountdownTimer
-                            expiryTimestamp={Number(listing.endsAt) / 1_000_000}
-                          />
-                        </div>
-                      )}
+                      {(() => {
+                        const endsAtMs = listing.endsAt
+                          ? Number(listing.endsAt) / 1_000_000
+                          : 0;
+                        const isExpired = endsAtMs > 0 && endsAtMs < Date.now();
+                        if (isExpired) {
+                          return (
+                            <button
+                              type="button"
+                              className="w-full mt-1 py-1 rounded-lg text-[9px] font-bold text-white"
+                              style={{ background: "#1D4ED8" }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                ListingsStore.extendAs7DayAuction(
+                                  listing.listingId,
+                                );
+                                toast.success("7-Day Auction started!");
+                              }}
+                            >
+                              🔄 Start 7-Day Auction
+                            </button>
+                          );
+                        }
+                        return endsAtMs > 0 ? (
+                          <div className="mt-0.5">
+                            <LiveCountdown expiryTimestamp={endsAtMs} />
+                          </div>
+                        ) : null;
+                      })()}
                     </div>
                   </div>
                 );
@@ -696,15 +830,36 @@ export default function SellerPortal() {
                             {priceInfo.label}
                           </span>
                         </div>
-                        {isActive && listing.endsAt && (
-                          <div className="mt-1">
-                            <CountdownTimer
-                              expiryTimestamp={
-                                Number(listing.endsAt) / 1_000_000
-                              }
-                            />
-                          </div>
-                        )}
+                        {(() => {
+                          const endsAtMs = listing.endsAt
+                            ? Number(listing.endsAt) / 1_000_000
+                            : 0;
+                          const isExpired =
+                            endsAtMs > 0 && endsAtMs < Date.now();
+                          if (isExpired) {
+                            return (
+                              <button
+                                type="button"
+                                className="mt-1 px-2 py-1 rounded-lg text-[9px] font-bold text-white"
+                                style={{ background: "#1D4ED8" }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  ListingsStore.extendAs7DayAuction(
+                                    listing.listingId,
+                                  );
+                                  toast.success("7-Day Auction started!");
+                                }}
+                              >
+                                🔄 Start 7-Day Auction
+                              </button>
+                            );
+                          }
+                          return endsAtMs > 0 ? (
+                            <div className="mt-1">
+                              <LiveCountdown expiryTimestamp={endsAtMs} />
+                            </div>
+                          ) : null;
+                        })()}
                       </div>
                     </div>
                   </div>

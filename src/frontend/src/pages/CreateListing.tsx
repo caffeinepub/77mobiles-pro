@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useApp } from "../contexts/AppContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useActor } from "../hooks/useActor";
+import { getPortalSettings } from "../utils/portalSettings";
 import {
   type PhoneSearchResult,
   extractColorOptions,
@@ -23,7 +24,7 @@ import {
   searchPhones,
 } from "../utils/rapidApi";
 
-const BRANDS = [
+const STATIC_BRANDS = [
   "Apple",
   "Samsung",
   "OnePlus",
@@ -41,6 +42,24 @@ const BRANDS = [
   "Redmi",
   "Other / Not Listed",
 ];
+
+// Task 4: Load brands from Admin Catalog Manager (merges with static list)
+function loadCatalogBrands(): string[] {
+  try {
+    const stored = JSON.parse(
+      localStorage.getItem("77m_brands") || "[]",
+    ) as Array<{ name: string }>;
+    const catalogNames = stored.map((b) => b.name);
+    // Merge: catalog brands first, then static brands that aren't duplicated
+    const merged = [
+      ...catalogNames,
+      ...STATIC_BRANDS.filter((s) => !catalogNames.includes(s)),
+    ];
+    return merged;
+  } catch {
+    return STATIC_BRANDS;
+  }
+}
 
 const MODELS: Record<string, string[]> = {
   Apple: [
@@ -487,6 +506,20 @@ export default function CreateListing() {
   const [brandSearch, setBrandSearch] = useState("");
   const [modelSearch, setModelSearch] = useState("");
 
+  // Task 4: Dynamic brands from Admin Catalog Manager with real-time listener
+  const [dynamicBrands, setDynamicBrands] = useState<string[]>(() =>
+    loadCatalogBrands(),
+  );
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "77m_brands" || e.key === "77m_models") {
+        setDynamicBrands(loadCatalogBrands());
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
   // IMEI verification states
   const [imeiStatus, setImeiStatus] = useState<ImeiStatus>("idle");
   const [imeiError, setImeiError] = useState("");
@@ -499,8 +532,12 @@ export default function CreateListing() {
     color_name: string;
   }>({ model_name: "", storage_gb: "", color_name: "" });
 
+  // Task 4: Use admin-configured max photos and auto-expire days
+  const _portalSettings = getPortalSettings();
+  const maxPhotos = _portalSettings.seller.maxPhotos || 6;
+  const autoExpireDays = _portalSettings.seller.autoExpireDays || 14;
   const [uploadedPhotos, setUploadedPhotos] = useState<(string | null)[]>(
-    Array(5).fill(null),
+    Array(maxPhotos).fill(null),
   );
   const [photoMenu, setPhotoMenu] = useState<number | null>(null);
 
@@ -719,7 +756,8 @@ export default function CreateListing() {
     const durationNs =
       auctionType === "Live20min"
         ? BigInt(20 * 60 * 1_000_000_000)
-        : BigInt(7 * 24 * 60 * 60 * 1_000_000_000);
+        : // Use admin-configured auto-expire days for 7-day auctions
+          BigInt(autoExpireDays * 24 * 60 * 60 * 1_000_000_000);
     const basePriceVal = Math.round(Number(basePrice) * 100);
     const nowTs = BigInt(Date.now()) * BigInt(1_000_000);
     const newListing = {
@@ -1107,7 +1145,7 @@ export default function CreateListing() {
             >
               <div className="flex items-center justify-between mb-3">
                 <p className="text-sm font-bold" style={{ color: "#002F34" }}>
-                  Device Photos (up to 5)
+                  Device Photos (up to {maxPhotos})
                 </p>
                 <span className="text-[10px] text-gray-400">
                   Tap empty box to add
@@ -1349,38 +1387,40 @@ export default function CreateListing() {
               />
             </div>
             <div className="space-y-2">
-              {BRANDS.filter((b) =>
-                b.toLowerCase().includes(brandSearch.toLowerCase()),
-              ).map((b) => (
-                <button
-                  type="button"
-                  key={b}
-                  data-ocid={`create.brand.${b.toLowerCase()}.button`}
-                  onClick={() => {
-                    setBrand(b);
-                    setModelSearch("");
-                    setStep(2);
-                  }}
-                  className="w-full bg-white rounded-xl px-4 py-3.5 flex items-center justify-between text-left"
-                  style={{
-                    border:
-                      brand === b ? "2px solid #1D4ED8" : "1px solid #e5e7eb",
-                  }}
-                >
-                  <span
-                    className="font-bold text-sm"
-                    style={{ color: "#002F34" }}
+              {dynamicBrands
+                .filter((b) =>
+                  b.toLowerCase().includes(brandSearch.toLowerCase()),
+                )
+                .map((b) => (
+                  <button
+                    type="button"
+                    key={b}
+                    data-ocid={`create.brand.${b.toLowerCase()}.button`}
+                    onClick={() => {
+                      setBrand(b);
+                      setModelSearch("");
+                      setStep(2);
+                    }}
+                    className="w-full bg-white rounded-xl px-4 py-3.5 flex items-center justify-between text-left"
+                    style={{
+                      border:
+                        brand === b ? "2px solid #1D4ED8" : "1px solid #e5e7eb",
+                    }}
                   >
-                    {b}
-                  </span>
-                  {brand === b && (
-                    <CheckCircle2
-                      className="w-4 h-4"
-                      style={{ color: "#1D4ED8" }}
-                    />
-                  )}
-                </button>
-              ))}
+                    <span
+                      className="font-bold text-sm"
+                      style={{ color: "#002F34" }}
+                    >
+                      {b}
+                    </span>
+                    {brand === b && (
+                      <CheckCircle2
+                        className="w-4 h-4"
+                        style={{ color: "#1D4ED8" }}
+                      />
+                    )}
+                  </button>
+                ))}
             </div>
           </div>
         )}

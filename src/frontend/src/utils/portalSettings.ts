@@ -45,6 +45,37 @@ export function readPortalSettings(): PortalSettings {
   }
 }
 
+/**
+ * Returns portal settings in a structured buyer/seller object.
+ * Used by the app portals to read admin-configured values.
+ */
+export function getPortalSettings(): {
+  buyer: {
+    minBidIncrement: number;
+    auctionDurationDays: number;
+    maxListings: number;
+  };
+  seller: {
+    listingFee: number;
+    maxPhotos: number;
+    autoExpireDays: number;
+  };
+} {
+  const s = readPortalSettings();
+  return {
+    buyer: {
+      minBidIncrement: s.buyerMinBidIncrement,
+      auctionDurationDays: Math.round(s.buyerAuctionDuration / (60 * 24)) || 7,
+      maxListings: s.buyerMaxListings,
+    },
+    seller: {
+      listingFee: s.sellerListingFee,
+      maxPhotos: s.sellerMaxPhotos,
+      autoExpireDays: s.sellerAutoExpireDays,
+    },
+  };
+}
+
 export function writePortalSettings(settings: Partial<PortalSettings>): void {
   try {
     const current = readPortalSettings();
@@ -70,33 +101,64 @@ export function getApprovedPhones(): string[] {
   }
 }
 
-export function approveUserByPhone(phone: string): void {
+/**
+ * Approve a user by phone number, optionally scoped to a role.
+ * Stores both a composite key (phone_role) and the plain phone for backward compat.
+ */
+export function approveUserByPhone(phone: string, role?: string): void {
   try {
     const norm = phone.replace(/^\+91/, "").replace(/^0+/, "");
     const phones = getApprovedPhones();
+
+    // Always store plain phone (backward compat)
     if (!phones.includes(norm)) {
       phones.unshift(norm);
-      localStorage.setItem(APPROVED_PHONES_KEY, JSON.stringify(phones));
+    }
 
-      // 1. Dispatch StorageEvent so same-window listeners react immediately
-      window.dispatchEvent(
-        new StorageEvent("storage", {
-          key: APPROVED_PHONES_KEY,
-          newValue: JSON.stringify(phones),
-        }),
-      );
-
-      // 2. BroadcastChannel for instant same-origin cross-context signalling
-      try {
-        const ch = new BroadcastChannel("77m_kyc_channel");
-        ch.postMessage({ type: "KYC_APPROVED", phone: norm });
-        // Close after a tick so the message is delivered
-        setTimeout(() => ch.close(), 100);
-      } catch {
-        // BroadcastChannel not available — StorageEvent + polling covers it
+    // Also store composite key if role provided
+    if (role) {
+      const compositeKey = `${norm}_${role.toLowerCase()}`;
+      if (!phones.includes(compositeKey)) {
+        phones.unshift(compositeKey);
       }
     }
+
+    localStorage.setItem(APPROVED_PHONES_KEY, JSON.stringify(phones));
+
+    // 1. Dispatch StorageEvent so same-window listeners react immediately
+    window.dispatchEvent(
+      new StorageEvent("storage", {
+        key: APPROVED_PHONES_KEY,
+        newValue: JSON.stringify(phones),
+      }),
+    );
+
+    // 2. BroadcastChannel for instant same-origin cross-context signalling
+    try {
+      const ch = new BroadcastChannel("77m_kyc_channel");
+      ch.postMessage({ type: "KYC_APPROVED", phone: norm, role });
+      // Close after a tick so the message is delivered
+      setTimeout(() => ch.close(), 100);
+    } catch {
+      // BroadcastChannel not available — StorageEvent + polling covers it
+    }
   } catch {}
+}
+
+/**
+ * Check if a phone is approved, optionally for a specific role.
+ * Checks composite key (phone_role) first, then plain phone (backward compat).
+ */
+export function isPhoneApprovedForRole(phone: string, role: string): boolean {
+  try {
+    const norm = phone.replace(/^\+91/, "").replace(/^0+/, "");
+    const phones = getApprovedPhones();
+    const compositeKey = `${norm}_${role.toLowerCase()}`;
+    // Check composite key first (role-specific), then plain phone (backward compat)
+    return phones.includes(compositeKey) || phones.includes(norm);
+  } catch {
+    return false;
+  }
 }
 
 export function isPhoneApproved(phone: string): boolean {
@@ -131,4 +193,20 @@ export function writeBanners(banners: BannerItem[]): void {
       }),
     );
   } catch {}
+}
+
+/**
+ * Get banners filtered for the current user's role.
+ * Only shows banners where status is ON and target matches the user's role.
+ */
+export function getBannersForRole(userRole: "buyer" | "seller"): BannerItem[] {
+  try {
+    const all = readBanners();
+    return all.filter(
+      (b) =>
+        b.active === true && (b.target === "both" || b.target === userRole),
+    );
+  } catch {
+    return [];
+  }
 }

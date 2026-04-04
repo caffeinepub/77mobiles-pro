@@ -6,6 +6,7 @@ import {
   useState,
 } from "react";
 import { type AlertNotification, BidStore } from "../stores/BidStore";
+import { ListingsStore } from "../stores/ListingsStore";
 
 export type AppMode = "seller" | "buyer";
 export type AppTab =
@@ -181,8 +182,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const withTs = listing.createdAt
       ? listing
       : { ...listing, createdAt: BigInt(Date.now()) * BigInt(1_000_000) };
+    // Task 1: Save to global ListingsStore with status='live' and visibility='public'
+    ListingsStore.add({ ...withTs, status: "live", visibility: "public" });
     setSharedListings((prev) => [withTs, ...prev]);
   };
+
+  // Task 1: Subscribe to ListingsStore for cross-tab sync
+  useEffect(() => {
+    const unsub = ListingsStore.subscribe((all) => {
+      setSharedListings([...all]);
+    });
+    return unsub;
+  }, []);
 
   const addMarketLead = (lead: MarketLead) => {
     setMarketLeads((prev) => {

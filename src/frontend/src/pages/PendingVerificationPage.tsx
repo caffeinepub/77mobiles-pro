@@ -3,7 +3,10 @@ import { Clock, LogOut, Mail, Phone, Shield } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "../contexts/AuthContext";
-import { isPhoneApproved } from "../utils/portalSettings";
+import {
+  isPhoneApproved,
+  isPhoneApprovedForRole,
+} from "../utils/portalSettings";
 
 /** Resolve the current user's phone from session or most-recent pending KYC submission. */
 function resolveUserPhone(): string {
@@ -23,25 +26,39 @@ function resolveUserPhone(): string {
   return "";
 }
 
-/** Unified approval check — checks all approval signals */
+/** Unified approval check — checks all approval signals including role-specific keys */
 function checkApproval(): boolean {
   const phone = resolveUserPhone();
+  const role =
+    localStorage.getItem("77m_userRole") ||
+    localStorage.getItem("77m_role") ||
+    "";
 
-  // 1. Per-user phone approval (primary) — set by Admin via approveUserByPhone()
+  // 1. Role-specific phone approval (primary) — composite key phone_role
+  if (phone && role && isPhoneApprovedForRole(phone, role)) return true;
+
+  // 2. Plain phone approval (backward compat)
   if (phone && isPhoneApproved(phone)) return true;
 
-  // 2. Direct isVerified flag — may be set by admin or login flow
+  // 3. Direct isVerified flag — may be set by admin or login flow
   if (localStorage.getItem("77m_is_verified") === "true") return true;
 
-  // 3. KYC submission status changed to approved/verified
+  // 4. KYC submission status changed to approved/verified (check role-specific collection first)
   try {
-    const subs: { phone?: string; status?: string }[] = JSON.parse(
+    const roleKey =
+      role === "seller"
+        ? "77m_kyc_submissions_sellers"
+        : "77m_kyc_submissions_buyers";
+    const roleSubs: { phone?: string; status?: string }[] = JSON.parse(
+      localStorage.getItem(roleKey) || "[]",
+    );
+    const legacySubs: { phone?: string; status?: string }[] = JSON.parse(
       localStorage.getItem("77m_kyc_submissions") || "[]",
     );
-    const myPhone = phone;
-    const myEntry = myPhone
-      ? subs.find(
-          (k) => k.phone?.replace(/^\+91/, "").replace(/^0+/, "") === myPhone,
+    const allSubs = [...roleSubs, ...legacySubs];
+    const myEntry = phone
+      ? allSubs.find(
+          (k) => k.phone?.replace(/^\+91/, "").replace(/^0+/, "") === phone,
         )
       : null;
     if (
@@ -61,7 +78,7 @@ export default function PendingVerificationPage() {
   const [isApproved, setIsApproved] = useState(false);
   const approvedRef = useRef(false);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: navigate is stable
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     // Guard: if already approved on mount, redirect immediately
     if (checkApproval()) {

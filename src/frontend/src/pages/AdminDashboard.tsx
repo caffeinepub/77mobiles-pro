@@ -153,31 +153,17 @@ export default function AdminDashboard() {
     }>
   >([]);
 
-  // Task 11: Real-time pending verifications
-  const [_pendingUsers, setPendingUsers] = useState([
+  // Task 3 fix: No fake pending users — all data comes from localStorage
+  const [_pendingUsers, _setPendingUsers] = useState<
     {
-      id: "PND-001",
-      name: "PhoneHub Surat",
-      mobile: "+91 98765 43210",
-      business: "PhoneHub Electronics",
-      status: "pending" as const,
-    },
-    {
-      id: "PND-002",
-      name: "QuickResell Jaipur",
-      mobile: "+91 87654 32109",
-      business: "QuickResell Pvt Ltd",
-      status: "pending" as const,
-    },
-    {
-      id: "PND-003",
-      name: "MobilePlex Kochi",
-      mobile: "+91 76543 21098",
-      business: "MobilePlex Traders",
-      status: "pending" as const,
-    },
-  ]);
-  const [pendingCount, setPendingCount] = useState(3);
+      id: string;
+      name: string;
+      mobile: string;
+      business: string;
+      status: "pending";
+    }[]
+  >([]);
+  const [pendingCount, setPendingCount] = useState(0);
   // Task 6: Catalog Manager state
   const [catalogTab, setCatalogTab] = useState<"brands" | "models">("brands");
   const [brands, setBrands] = useState<
@@ -265,118 +251,84 @@ export default function AdminDashboard() {
     if (!docModal) setDocZoom(1);
   });
 
-  // Task 8: Admin bell notifications
+  // Task 8: Admin bell notifications (no fake/demo data)
   const [showBellPanel, setShowBellPanel] = useState(false);
-  const [adminNotifs, setAdminNotifs] = useState([
-    {
-      id: "n1",
-      text: "New KYC submission: PhoneHub Surat",
-      time: "2 min ago",
-      read: false,
-    },
-    {
-      id: "n2",
-      text: "High-value bid: ₹1,12,000 on Galaxy Fold 6",
-      time: "5 min ago",
-      read: false,
-    },
-    {
-      id: "n3",
-      text: "Dispute filed by Dealer #178",
-      time: "12 min ago",
-      read: false,
-    },
-    {
-      id: "n4",
-      text: "New listing pending approval: iPhone 17 Pro",
-      time: "18 min ago",
-      read: true,
-    },
-    {
-      id: "n5",
-      text: "Wallet withdrawal request: ₹50,000 from Dealer #217",
-      time: "1 hr ago",
-      read: true,
-    },
-  ]);
+  const [adminNotifs, setAdminNotifs] = useState<
+    { id: string; text: string; time: string; read: boolean }[]
+  >([]);
 
-  // Task 3: Load KYC submissions from localStorage and subscribe to storage events
+  // Task 3 fix: Load KYC from ALL sources and deduplicate by phone+role
   useEffect(() => {
     if (!authenticated) return;
     const loadKyc = () => {
       try {
-        const stored = localStorage.getItem("77m_kyc_submissions");
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          const mapped = parsed.map((k: any) => ({
-            id: k.id,
-            name: k.name || k.business || "Unknown",
-            business: k.business || k.businessName || "Unknown",
-            businessName: k.businessName || k.business || "—",
-            phone: k.phone || k.phone_number || "—",
-            phone_number: k.phone_number || k.phone || "—",
-            location: k.city || k.location || "—",
-            city: k.city || k.location || "—",
-            docType: k.docType || "KYC Document",
-            aadhaar_url: k.aadhaar_url || "",
-            pan_url: k.pan_url || "",
-            createdAt: k.createdAt || Date.now(),
-            status:
-              k.status === "pending"
-                ? "Pending"
-                : k.status === "approved"
-                  ? "Approved"
-                  : "Pending",
-          }));
-          setKycItems((prev) => {
-            const existingIds = new Set(prev.map((x) => x.id));
-            const newItems = mapped.filter((x: any) => !existingIds.has(x.id));
-            if (newItems.length > 0) return [...newItems, ...prev];
-            return prev;
-          });
-        }
+        const legacy: any[] = JSON.parse(
+          localStorage.getItem("77m_kyc_submissions") || "[]",
+        );
+        const sellers: any[] = JSON.parse(
+          localStorage.getItem("77m_kyc_submissions_sellers") || "[]",
+        );
+        const buyers: any[] = JSON.parse(
+          localStorage.getItem("77m_kyc_submissions_buyers") || "[]",
+        );
+
+        // Merge and deduplicate by phone+role composite key
+        const seen = new Set<string>();
+        const all = [...legacy, ...sellers, ...buyers].filter((entry) => {
+          const key = `${entry.phone}_${entry.role || "seller"}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+
+        const mapped = all.map((k: any) => ({
+          id: k.id,
+          name: k.name || k.business || "Unknown",
+          business: k.business || k.businessName || "Unknown",
+          businessName: k.businessName || k.business || "—",
+          phone: k.phone || k.phone_number || "—",
+          phone_number: k.phone_number || k.phone || "—",
+          location: k.city || k.location || "—",
+          city: k.city || k.location || "—",
+          docType: k.docType || "KYC Document",
+          aadhaar_url: k.aadhaar_url || "",
+          pan_url: k.pan_url || "",
+          createdAt: k.createdAt || Date.now(),
+          role: k.role || "seller",
+          dealerId: k.dealerId || k.dealer_id || null,
+          status:
+            k.status === "pending"
+              ? "Pending"
+              : k.status === "approved" || k.status === "Approved"
+                ? "Approved"
+                : "Pending",
+        }));
+
+        // Replace entire kycItems with fresh merged data
+        setKycItems(
+          mapped.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)),
+        );
       } catch {}
     };
     loadKyc();
     const onStorage = (e: StorageEvent) => {
-      if (e.key === "77m_kyc_submissions") loadKyc();
+      if (
+        e.key === "77m_kyc_submissions" ||
+        e.key === "77m_kyc_submissions_sellers" ||
+        e.key === "77m_kyc_submissions_buyers"
+      )
+        loadKyc();
     };
     window.addEventListener("storage", onStorage);
-    // Task 2: Poll every 5s for new buyer/seller registrations
-    const pollInterval = setInterval(loadKyc, 5000);
+    // Poll every 3s for real-time new registrations
+    const pollInterval = setInterval(loadKyc, 3000);
     return () => {
       window.removeEventListener("storage", onStorage);
       clearInterval(pollInterval);
     };
   }, [authenticated]);
 
-  // Task 11: Real-time new user listener simulation (like Firebase onSnapshot)
-  useEffect(() => {
-    if (!authenticated) return;
-    const names = ["TechStore Nagpur", "BidPhone Vizag", "SmartResell Indore"];
-    const interval = setInterval(() => {
-      if (Math.random() < 0.3) {
-        const name = names[Math.floor(Math.random() * names.length)];
-        const newUser = {
-          id: `PND-${Date.now()}`,
-          name,
-          mobile: `+91 9${Math.floor(Math.random() * 9)}${Math.floor(
-            Math.random() * 100000000,
-          )
-            .toString()
-            .padStart(8, "0")}`,
-          business: `${name} Ltd`,
-          status: "pending" as const,
-        };
-        setPendingUsers((prev) => [newUser, ...prev]);
-        setPendingCount((prev) => prev + 1);
-        toast.success(`New registration: ${newUser.name}`, {
-          description: "Pending verification",
-        });
-      }
-    }, 15000);
-    return () => clearInterval(interval);
-  }, [authenticated]);
+  // Task 3 fix: Fake simulation removed — real data comes from loadKyc polling above
 
   // Task 13D: Subscribe to BidStore for real-time live bid feed
   useEffect(() => {
@@ -1223,12 +1175,9 @@ export default function AdminDashboard() {
                 createdAt: k.createdAt || 0,
               }));
 
-              // Tab-filtered lists
+              // Task 2 fix: Strict role filtering — sellers ONLY show role==='seller', buyers ONLY role==='buyer'
               const sellerItems = allKyc.filter(
-                (u) =>
-                  u.role === "seller" ||
-                  u.role === "Seller" ||
-                  u.role === "Dealer",
+                (u) => u.role?.toLowerCase() === "seller",
               );
               const buyerItems = allKyc.filter(
                 (u) => u.role?.toLowerCase() === "buyer",
@@ -1446,7 +1395,7 @@ export default function AdminDashboard() {
                             <p className="text-xs" style={{ color: "#9CA3AF" }}>
                               {user.phone} ·{" "}
                               {user.role?.toLowerCase() === "buyer"
-                                ? "Dealer"
+                                ? "Buyer"
                                 : "Seller"}
                             </p>
                           </div>
@@ -1520,31 +1469,38 @@ export default function AdminDashboard() {
                                   setPendingCount((prev) =>
                                     Math.max(0, prev - 1),
                                   );
+                                  // Task fix: Pass role so composite key is stored
                                   approveUserByPhone(
                                     (user.phone as string) || "",
+                                    user.role?.toLowerCase(),
                                   );
                                   try {
-                                    const kycSubs = JSON.parse(
-                                      localStorage.getItem(
-                                        "77m_kyc_submissions",
-                                      ) || "[]",
-                                    );
-                                    const updated = kycSubs.map((k: any) =>
-                                      k.id === user.id
-                                        ? { ...k, status: "approved" }
-                                        : k,
-                                    );
-                                    localStorage.setItem(
+                                    // Update all 3 KYC collections for consistency
+                                    for (const kycKey of [
                                       "77m_kyc_submissions",
-                                      JSON.stringify(updated),
-                                    );
+                                      "77m_kyc_submissions_sellers",
+                                      "77m_kyc_submissions_buyers",
+                                    ]) {
+                                      const kycSubs = JSON.parse(
+                                        localStorage.getItem(kycKey) || "[]",
+                                      );
+                                      const updated = kycSubs.map((k: any) =>
+                                        k.id === user.id
+                                          ? { ...k, status: "approved" }
+                                          : k,
+                                      );
+                                      localStorage.setItem(
+                                        kycKey,
+                                        JSON.stringify(updated),
+                                      );
+                                    }
                                     const auditLog = JSON.parse(
                                       localStorage.getItem("77m_audit_log") ||
                                         "[]",
                                     );
                                     auditLog.unshift({
                                       time: new Date().toLocaleString("en-IN"),
-                                      entry: `Admin approved KYC for ${user.name} (${user.businessName})`,
+                                      entry: `Admin approved KYC for ${user.name} (${user.businessName}) — role: ${user.role}`,
                                     });
                                     localStorage.setItem(
                                       "77m_audit_log",
@@ -3267,6 +3223,13 @@ export default function AdminDashboard() {
                         "77m_brands",
                         JSON.stringify(updated),
                       );
+                      // Task 4: Real-time sync to Add Listing forms
+                      window.dispatchEvent(
+                        new StorageEvent("storage", {
+                          key: "77m_brands",
+                          newValue: JSON.stringify(updated),
+                        }),
+                      );
                       toast.success(`Brand ${newBrandName} saved!`);
                       setNewBrandName("");
                       setNewBrandLogo("");
@@ -3380,6 +3343,13 @@ export default function AdminDashboard() {
                       localStorage.setItem(
                         "77m_models",
                         JSON.stringify(updated),
+                      );
+                      // Task 4: Real-time sync to Add Listing forms
+                      window.dispatchEvent(
+                        new StorageEvent("storage", {
+                          key: "77m_models",
+                          newValue: JSON.stringify(updated),
+                        }),
                       );
                       toast.success(
                         `Model ${newModelName} is now visible to all users.`,

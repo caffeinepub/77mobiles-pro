@@ -19,6 +19,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import CountdownTimer from "../components/CountdownTimer";
+import LiveCountdown from "../components/LiveCountdown";
 import PortalCarousel from "../components/PortalCarousel";
 import type { CarouselSlide } from "../components/PortalCarousel";
 import RecentSalesSlider from "../components/RecentSalesSlider";
@@ -29,7 +30,10 @@ import {
   getDeviceImage,
 } from "../data/demoListings";
 import { BidStore } from "../stores/BidStore";
+import { ListingsStore } from "../stores/ListingsStore";
 import { formatINR } from "../utils/format";
+import { readPortalSettings } from "../utils/portalSettings";
+import { getBannersForRole } from "../utils/portalSettings";
 
 type CategoryTab = "live" | "ending";
 type FilterPill = "all" | "live" | "7day";
@@ -708,12 +712,56 @@ export default function BuyerPortal() {
   };
   const [loading, setLoading] = useState(true);
   const [listView, setListView] = useState<"list" | "grid">("list");
+  // Task 4: Dynamic banners from Admin portal controls
+  const [adminBannerSlides, setAdminBannerSlides] = useState<CarouselSlide[]>(
+    () => {
+      try {
+        const banners = getBannersForRole("buyer");
+        return banners.map((b) => ({
+          id: b.id,
+          bgColor: "#EFF6FF",
+          theme: "light" as const,
+          accentColor: "#1D4ED8",
+          title: b.title,
+          subtitle: "From 77mobiles.pro",
+          ctaText: b.link ? "View Now" : "Explore",
+          image: b.imageUrl || undefined,
+        }));
+      } catch {
+        return [];
+      }
+    },
+  );
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 1500);
     return () => clearTimeout(t);
   }, []);
 
   const [heartAnim, setHeartAnim] = useState<string | null>(null);
+  // Task 4: Listen for banner updates from Admin portal
+  useEffect(() => {
+    const updateBanners = () => {
+      try {
+        const banners = getBannersForRole("buyer");
+        const slides: CarouselSlide[] = banners.map((b) => ({
+          id: b.id,
+          bgColor: "#EFF6FF",
+          theme: "light" as const,
+          accentColor: "#1D4ED8",
+          title: b.title,
+          subtitle: "From 77mobiles.pro",
+          ctaText: b.link ? "View Now" : "Explore",
+          image: b.imageUrl || undefined,
+        }));
+        setAdminBannerSlides(slides);
+      } catch {}
+    };
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "77m_banners") updateBanners();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
   // Task 11: Real-time bid count state
   // Task 4: Real-time bid map { amount, count } from BidStore
   const [bidMap, setBidMap] = useState<
@@ -786,7 +834,16 @@ export default function BuyerPortal() {
     navigate({ to: `/listing/${listingId}` });
   };
 
-  /* Map SELLER_LISTINGS + sharedListings into display format */
+  // Task 1: Real-time onSnapshot via ListingsStore - live listings only
+  const [liveStoreListings, setLiveStoreListings] = useState(() =>
+    ListingsStore.getLiveListings(),
+  );
+  useEffect(() => {
+    const unsub = ListingsStore.subscribeLive(setLiveStoreListings);
+    return unsub;
+  }, []);
+
+  // Task 1: Merge ListingsStore live listings + demo SELLER_LISTINGS as fallback
   const sellerBentoItems = SELLER_LISTINGS.map((l) => ({
     id: l.listingId,
     listingId: l.listingId,
@@ -798,7 +855,6 @@ export default function BuyerPortal() {
     originalPrice: Number(l.basePrice) / 100,
     bids: bidMap.get(l.listingId)?.count ?? 0,
     timer: l.auctionType === "Live20min" ? "20:00" : "7d",
-    // Use real endsAt if available, otherwise default to 20 minutes from now
     endsAt:
       l.endsAt && Number(l.endsAt) > 0
         ? l.endsAt
@@ -806,33 +862,44 @@ export default function BuyerPortal() {
     isLive: l.auctionType === "Live20min",
     warrantyMonths: Number(l.warranty ?? 0n),
     imageUrl: l.imageUrl ?? "",
+    status: l.status,
   }));
 
-  const sharedBentoItems = sharedListings.map((l: any) => ({
-    id: l.listingId ?? `shared-${l.model}`,
-    listingId: l.listingId ?? `shared-${l.model}`,
+  // Task 1: Map ListingsStore live listings (buyer query: status===live, ordered by createdAt DESC)
+  const storeBentoItems = liveStoreListings.map((l: any) => ({
+    id: l.listingId ?? `store-${l.model}`,
+    listingId: l.listingId ?? `store-${l.model}`,
     model: l.model ?? "New Device",
     brand: l.brand ?? "",
     emoji: "📱",
     condition: l.condition ?? "Good",
     price: Number(l.basePrice) / 100,
     originalPrice: Number(l.basePrice) / 100,
-    bids: 0,
-    timer: "20:00",
+    bids: bidMap.get(l.listingId)?.count ?? 0,
+    timer: l.auctionType === "Live20min" ? "20:00" : "7d",
+    endsAt:
+      l.endsAt && Number(l.endsAt) > 0
+        ? l.endsAt
+        : BigInt(Date.now() + 20 * 60 * 1000) * 1_000_000n,
     isLive: l.auctionType === "Live20min",
-    warrantyMonths: 0,
+    warrantyMonths: Number(l.warranty ?? 0n),
     imageUrl: l.imageUrl ?? "",
+    status: l.status ?? "live",
+    createdAt: l.createdAt,
   }));
 
-  /* Filtered bento items — filter by filterPill and search, dismiss swipes */
-  // Task 8: Combine and sort by createdAt DESC (newest first)
-  const allBentoItems = [...sharedBentoItems, ...sellerBentoItems];
+  /* Filtered bento items — Task 1: db.collection("listings").where("status","==","live").orderBy("createdAt","desc") */
+  // Deduplicate: ListingsStore takes priority over demo SELLER_LISTINGS
+  const storeIds = new Set(storeBentoItems.map((i) => i.id));
+  const demoOnlyItems = sellerBentoItems.filter((i) => !storeIds.has(i.id));
+  const allBentoItems = [...storeBentoItems, ...demoOnlyItems];
+  // Task 1: Live query — only 'live' status, newest first (mirrors Firestore query)
   const filteredBento = allBentoItems
     .filter((item) => {
       if (dismissedCards.has(item.id)) return false;
-      // Task 8: Only show Active/Live listings (not Sold, Draft, etc.)
+      // Task 1: Strict status filter — only live/Active items appear in buyer portal
       const status = (item as any).status;
-      if (status && status !== "Active" && status !== "Live") return false;
+      if (status && status !== "Active" && status !== "live") return false;
       const q = searchQuery.toLowerCase();
       if (
         q &&
@@ -845,7 +912,7 @@ export default function BuyerPortal() {
       return true;
     })
     .sort((a, b) => {
-      // Task 8: Sort by createdAt DESC (newest first)
+      // Task 1: orderBy createdAt DESC (newest first)
       const ca = Number((a as any).createdAt ?? 0);
       const cb = Number((b as any).createdAt ?? 0);
       return cb - ca;
@@ -880,7 +947,7 @@ export default function BuyerPortal() {
       {/* Auto-sliding Carousel */}
       <div id="listing-grid" className="px-3 pt-3">
         <PortalCarousel
-          slides={BUYER_CAROUSEL_SLIDES}
+          slides={[...adminBannerSlides, ...BUYER_CAROUSEL_SLIDES]}
           onCtaClick={handleCarouselCta}
         />
       </div>
@@ -1165,9 +1232,13 @@ export default function BuyerPortal() {
                                 <p className="text-[8px] text-gray-400">
                                   {hasBid
                                     ? `${bidCount} bid${bidCount !== 1 ? "s" : ""}`
-                                    : "No bids"}{" "}
-                                  · {item.timer}
+                                    : "No bids"}
                                 </p>
+                                <LiveCountdown
+                                  expiryTimestamp={
+                                    Number(item.endsAt) / 1_000_000
+                                  }
+                                />
                               </>
                             );
                           })()}

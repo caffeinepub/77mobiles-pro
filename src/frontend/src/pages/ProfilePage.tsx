@@ -58,6 +58,61 @@ export default function ProfilePage() {
   const { mode, sharedListings, setActiveTab } = useApp();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Task 6: Dynamically fetch dealer ID and KYC data from localStorage
+  const getKycEntryForCurrentUser = () => {
+    const phone = user?.mobileNumber;
+    const role =
+      localStorage.getItem("77m_userRole") ||
+      localStorage.getItem("77m_role") ||
+      (mode === "seller" ? "seller" : "buyer");
+    if (!phone) return null;
+    const normalizePhone = (p: string) => p?.replace(/\D/g, "").slice(-10);
+    const normalizedPhone = normalizePhone(phone);
+    const roleKey =
+      role === "seller" || mode === "seller" ? "sellers" : "buyers";
+    const roleSpecificKey = `77m_kyc_submissions_${roleKey}`;
+    let entries: any[] = [];
+    try {
+      entries = JSON.parse(localStorage.getItem(roleSpecificKey) || "[]");
+    } catch {}
+    // Fallback to legacy key
+    if (!entries.length) {
+      try {
+        entries = JSON.parse(
+          localStorage.getItem("77m_kyc_submissions") || "[]",
+        );
+      } catch {}
+    }
+    return (
+      entries.find((e: any) => normalizePhone(e.phone) === normalizedPhone) ||
+      null
+    );
+  };
+
+  const kycEntry = user ? getKycEntryForCurrentUser() : null;
+  const rawDealerId = kycEntry?.dealerId || kycEntry?.dealer_id || null;
+  // Strip leading # if present (we'll add it in JSX)
+  const dealerNumber = rawDealerId
+    ? String(rawDealerId).replace(/^#/, "")
+    : null;
+  const dealerDisplay = dealerNumber
+    ? `#${dealerNumber}`
+    : "Pending Verification";
+  const isDealerVerified = !!dealerNumber;
+  const kycBusinessName =
+    user?.businessName || kycEntry?.businessName || kycEntry?.business || "—";
+  const kycGst =
+    user?.verificationId &&
+    user.verificationId !== "AUTH" &&
+    user.verificationId !== "GST"
+      ? user.verificationId
+      : kycEntry?.gstNumber || kycEntry?.verificationId || "Not provided";
+  const kycPan =
+    kycEntry?.panNumber ||
+    kycEntry?.pan_number ||
+    kycEntry?.verificationId ||
+    "Not provided";
   const [view, setView] = useState<
     "profile" | "account" | "help" | "analytics"
   >("profile");
@@ -164,7 +219,9 @@ export default function ProfilePage() {
             </div>
             <div>
               <p className="font-black text-base text-gray-900">
-                Verified Dealer #402
+                {isDealerVerified
+                  ? `Verified Dealer ${dealerDisplay}`
+                  : dealerDisplay}
               </p>
               <div className="flex items-center gap-1">
                 <Shield className="w-3 h-3" style={{ color: "#1D4ED8" }} />
@@ -182,16 +239,22 @@ export default function ProfilePage() {
               {
                 icon: Building2,
                 label: "Business Name",
-                value: "TechMart India Pvt. Ltd.",
+                value: kycBusinessName,
               },
               {
                 icon: Phone,
                 label: "Mobile",
                 value: `+91 •••••${user?.mobileNumber?.slice(-5) || "‥90000"}`,
               },
-              { icon: Mail, label: "Email", value: "dealer402@77mobiles.pro" },
-              { icon: FileText, label: "GST Number", value: "22AAAAA0000A1Z5" },
-              { icon: CreditCard, label: "PAN", value: "AAAAA0000A" },
+              {
+                icon: Mail,
+                label: "Email",
+                value: user?.mobileNumber
+                  ? `dealer${user.mobileNumber.slice(-4)}@77mobiles.pro`
+                  : "—",
+              },
+              { icon: FileText, label: "GST Number", value: kycGst },
+              { icon: CreditCard, label: "PAN", value: kycPan },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="flex items-center gap-3">
                 <div
@@ -516,21 +579,30 @@ export default function ProfilePage() {
                 value: String(allListings.length),
                 icon: "📦",
                 color: "#1D4ED8",
-                navigateTo: () => setActiveTab("home"),
+                navigateTo: () => {
+                  localStorage.setItem("77m_home_filter", "all_listings");
+                  setActiveTab("home");
+                },
               },
               {
                 label: "Active Auctions",
                 value: String(activeListings),
                 icon: "🔥",
                 color: "#F97316",
-                navigateTo: () => setActiveTab("home"),
+                navigateTo: () => {
+                  localStorage.setItem("77m_home_filter", "live");
+                  setActiveTab("home");
+                },
               },
               {
                 label: "Sold Items",
                 value: String(soldListings.length),
                 icon: "✅",
                 color: "#22C55E",
-                navigateTo: () => setActiveTab("home"),
+                navigateTo: () => {
+                  localStorage.setItem("77m_home_filter", "sold");
+                  setActiveTab("home");
+                },
               },
               {
                 label: "Total Revenue",
@@ -767,7 +839,9 @@ export default function ProfilePage() {
           <User className="w-10 h-10" style={{ color: "#007AFF" }} />
         </div>
         <h2 className="font-black text-lg text-gray-900">
-          Verified Dealer #402
+          {isDealerVerified
+            ? `Verified Dealer ${dealerDisplay}`
+            : dealerDisplay}
         </h2>
         <p className="text-sm text-gray-500 mt-0.5">B2B Dealer</p>
         <div className="flex items-center justify-center gap-1.5 mt-2">

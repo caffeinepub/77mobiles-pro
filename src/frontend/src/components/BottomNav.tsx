@@ -54,19 +54,33 @@ export default function BottomNav() {
   return (
     <nav
       style={{
+        // Task 2 & 3: Fixed to bottom of viewport, outside scroll container
         position: "fixed",
         bottom: 0,
         left: 0,
         right: 0,
+        // Task 5: Glassmorphism — semi-transparent so blur shows through
+        backgroundColor: "rgba(255, 255, 255, 0.7)",
+        // Task 5: Blur backdrop — -webkit- prefix required for iOS Safari PWA
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
+        // Task 5: Soft shadow for depth — replaces solid border-top
+        boxShadow:
+          "0 -10px 15px -3px rgba(0, 0, 0, 0.05), 0 -4px 6px -2px rgba(0, 0, 0, 0.02)",
+        // Task 2: Height 80px + safe area inset
         height: "80px",
         paddingBottom: "env(safe-area-inset-bottom, 20px)",
-        backgroundColor: "#FFFFFF",
-        borderTop: "1px solid #E5E5E5",
-        zIndex: 999999,
+        // box-sizing: content-box so height is just the icon area, padding is extra
         boxSizing: "content-box",
+        zIndex: 999999,
         width: "100%",
       }}
     >
+      {/*
+       * Task 5: isolation:isolate creates a new stacking context.
+       * This ensures the blur affects only what's BEHIND the nav bar,
+       * NOT the icons or labels inside it.
+       */}
       <div
         style={{
           display: "flex",
@@ -74,6 +88,8 @@ export default function BottomNav() {
           justifyContent: "space-around",
           height: "80px",
           width: "100%",
+          isolation: "isolate",
+          position: "relative",
         }}
       >
         {leftTabs.map(({ id, label, Icon }) => {
