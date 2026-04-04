@@ -56,385 +56,6 @@ const NAV_ITEMS: {
   { id: "auditlog", label: "Audit Log", Icon: ClipboardList },
 ];
 
-const MOCK_BIDS = [
-  {
-    dealer: "#217",
-    action: "bid ₹72,000",
-    item: "iPhone 15 Pro",
-    time: "2 min ago",
-  },
-  {
-    dealer: "#441",
-    action: "bid ₹38,500",
-    item: "Samsung S24 Ultra",
-    time: "3 min ago",
-  },
-  {
-    dealer: "#089",
-    action: "bid ₹55,200",
-    item: "MacBook Pro M3",
-    time: "4 min ago",
-  },
-  {
-    dealer: "#312",
-    action: "bid ₹14,800",
-    item: "iPad Pro 12.9",
-    time: "5 min ago",
-  },
-  {
-    dealer: "#178",
-    action: "bid ₹92,000",
-    item: "iPhone 17 Pro Max",
-    time: "7 min ago",
-  },
-  {
-    dealer: "#503",
-    action: "bid ₹28,000",
-    item: "OnePlus 12 Pro",
-    time: "9 min ago",
-  },
-  {
-    dealer: "#067",
-    action: "bid ₹19,500",
-    item: "Pixel 9 Pro",
-    time: "11 min ago",
-  },
-  {
-    dealer: "#299",
-    action: "bid ₹44,100",
-    item: "Apple Watch Ultra 2",
-    time: "13 min ago",
-  },
-];
-
-const MOCK_USERS = [
-  {
-    id: "USR-001",
-    name: "TechMart Delhi",
-    role: "Dealer",
-    balance: "₹1,24,000",
-    status: "Active",
-  },
-  {
-    id: "USR-002",
-    name: "MobilePro Mumbai",
-    role: "Seller",
-    balance: "₹68,500",
-    status: "Active",
-  },
-  {
-    id: "USR-003",
-    name: "QuickSell Pune",
-    role: "Buyer",
-    balance: "₹32,200",
-    status: "Active",
-  },
-  {
-    id: "USR-004",
-    name: "RefurbKing Chennai",
-    role: "Dealer",
-    balance: "₹0",
-    status: "Banned",
-  },
-  {
-    id: "USR-005",
-    name: "GadgetHub Hyderabad",
-    role: "Seller",
-    balance: "₹91,000",
-    status: "Active",
-  },
-  {
-    id: "USR-006",
-    name: "BulkBid Bengaluru",
-    role: "Buyer",
-    balance: "₹5,500",
-    status: "Active",
-  },
-  {
-    id: "USR-007",
-    name: "PhoneFleet Kolkata",
-    role: "Dealer",
-    balance: "₹2,10,000",
-    status: "Active",
-  },
-  {
-    id: "USR-008",
-    name: "SwapDeal Ahmedabad",
-    role: "Seller",
-    balance: "₹0",
-    status: "Banned",
-  },
-];
-
-const MOCK_KYC = [
-  {
-    id: "KYC-001",
-    name: "Arham Shaikh",
-    business: "TechMart Delhi",
-    businessName: "TechMart Delhi",
-    phone: "+91 98765 43210",
-    phone_number: "9876543210",
-    location: "Delhi",
-    city: "Delhi",
-    docType: "GST Certificate",
-    status: "Pending",
-    aadhaar_url: "",
-    pan_url: "",
-    createdAt: Date.now() - 3600000,
-  },
-  {
-    id: "KYC-002",
-    name: "Rajesh Kumar",
-    business: "MobileWorld Surat",
-    businessName: "MobileWorld Surat",
-    phone: "+91 87654 32109",
-    phone_number: "8765432109",
-    location: "Surat",
-    city: "Surat",
-    docType: "PAN Card",
-    status: "Pending",
-    aadhaar_url: "",
-    pan_url: "",
-    createdAt: Date.now() - 7200000,
-  },
-  {
-    id: "KYC-003",
-    name: "Priya Gupta",
-    business: "GadgetPro Jaipur",
-    businessName: "GadgetPro Jaipur",
-    phone: "+91 76543 21098",
-    phone_number: "7654321098",
-    location: "Jaipur",
-    city: "Jaipur",
-    docType: "Business License",
-    status: "Approved",
-    aadhaar_url: "",
-    pan_url: "",
-    createdAt: Date.now() - 86400000,
-  },
-  {
-    id: "KYC-004",
-    name: "Mohammed Ibrahim",
-    business: "ScreenFix Lucknow",
-    businessName: "ScreenFix Lucknow",
-    phone: "+91 65432 10987",
-    phone_number: "6543210987",
-    location: "Lucknow",
-    city: "Lucknow",
-    docType: "GST Certificate",
-    status: "Pending",
-    aadhaar_url: "",
-    pan_url: "",
-    createdAt: Date.now() - 1800000,
-  },
-];
-
-const MOCK_LISTINGS = [
-  {
-    id: "L-2847",
-    model: "iPhone 15 Pro 256GB",
-    condition: "Like New",
-    price: "₹72,000",
-    seller: "#217",
-  },
-  {
-    id: "L-2848",
-    model: "Samsung S24 Ultra",
-    condition: "Excellent",
-    price: "₹58,000",
-    seller: "#441",
-  },
-  {
-    id: "L-2849",
-    model: "MacBook Pro M3 Max",
-    condition: "Good",
-    price: "₹1,45,000",
-    seller: "#089",
-  },
-  {
-    id: "L-2850",
-    model: "iPad Pro 12.9 M2",
-    condition: "Like New",
-    price: "₹68,000",
-    seller: "#312",
-  },
-];
-
-const MOCK_AUCTIONS = [
-  {
-    id: "A-5011",
-    model: "iPhone 17 Pro Max",
-    currentBid: "₹92,000",
-    timeLeft: 1800,
-  },
-  {
-    id: "A-5012",
-    model: "OnePlus 12 Pro",
-    currentBid: "₹28,500",
-    timeLeft: 3600,
-  },
-  {
-    id: "A-5013",
-    model: "Google Pixel 9 Pro",
-    currentBid: "₹44,000",
-    timeLeft: 900,
-  },
-  {
-    id: "A-5014",
-    model: "Samsung Galaxy Fold 6",
-    currentBid: "₹1,12,000",
-    timeLeft: 5400,
-  },
-];
-
-const MOCK_TRANSACTIONS = [
-  {
-    id: "TXN-8821",
-    type: "Top-up",
-    amount: "₹50,000",
-    dealer: "#217",
-    date: "01 Apr 2026",
-    status: "Completed",
-  },
-  {
-    id: "TXN-8820",
-    type: "Withdrawal",
-    amount: "₹28,500",
-    dealer: "#441",
-    date: "31 Mar 2026",
-    status: "Completed",
-  },
-  {
-    id: "TXN-8819",
-    type: "Top-up",
-    amount: "₹1,00,000",
-    dealer: "#089",
-    date: "30 Mar 2026",
-    status: "Completed",
-  },
-  {
-    id: "TXN-8818",
-    type: "Withdrawal",
-    amount: "₹15,200",
-    dealer: "#312",
-    date: "30 Mar 2026",
-    status: "Pending",
-  },
-  {
-    id: "TXN-8817",
-    type: "Top-up",
-    amount: "₹75,000",
-    dealer: "#178",
-    date: "29 Mar 2026",
-    status: "Completed",
-  },
-  {
-    id: "TXN-8816",
-    type: "Withdrawal",
-    amount: "₹44,800",
-    dealer: "#503",
-    date: "28 Mar 2026",
-    status: "Failed",
-  },
-];
-
-const MOCK_ESCROW = [
-  {
-    id: "ESC-201",
-    model: "iPhone 15 Pro",
-    buyer: "#312",
-    amount: "₹72,000",
-    since: "2 hrs ago",
-  },
-  {
-    id: "ESC-202",
-    model: "MacBook Pro M3",
-    buyer: "#089",
-    amount: "₹1,45,000",
-    since: "4 hrs ago",
-  },
-  {
-    id: "ESC-203",
-    model: "Samsung S24 Ultra",
-    buyer: "#178",
-    amount: "₹58,000",
-    since: "1 day ago",
-  },
-];
-
-const MOCK_DISPUTES = [
-  {
-    id: "DIS-041",
-    buyer: "#312",
-    claim: "Device condition does not match 'Mint' description",
-    device: "iPhone 15 Pro 256GB",
-    amount: "₹72,000",
-  },
-  {
-    id: "DIS-042",
-    buyer: "#089",
-    claim: "IMEI mismatch on received unit",
-    device: "MacBook Pro M3 Max",
-    amount: "₹1,45,000",
-  },
-];
-
-const MOCK_HEATMAP = [
-  { model: "iPhone 15 Pro", stars: 312, demand: 95 },
-  { model: "Samsung S24 Ultra", stars: 278, demand: 87 },
-  { model: "iPhone 17 Pro Max", stars: 254, demand: 82 },
-  { model: "MacBook Pro M3", stars: 198, demand: 67 },
-  { model: "iPad Pro M2", stars: 176, demand: 59 },
-  { model: "Google Pixel 9 Pro", stars: 143, demand: 48 },
-  { model: "OnePlus 12 Pro", stars: 128, demand: 43 },
-  { model: "Apple Watch Ultra 2", stars: 97, demand: 34 },
-];
-
-const MOCK_BENCHMARKS = [
-  { model: "iPhone 15 Pro 256GB", avgPrice: "₹71,500", trend: "+₹2,200" },
-  { model: "Samsung S24 Ultra", avgPrice: "₹57,800", trend: "+₹1,100" },
-  { model: "MacBook Pro M3 Max", avgPrice: "₹1,44,200", trend: "-₹3,000" },
-  { model: "iPad Pro 12.9 M2", avgPrice: "₹66,500", trend: "+₹800" },
-  { model: "Google Pixel 9 Pro", avgPrice: "₹43,900", trend: "+₹500" },
-];
-
-const MOCK_AUDIT = [
-  {
-    time: "01 Apr 2026, 14:32",
-    entry: "Admin approved listing #L-2847 (iPhone 15 Pro 256GB)",
-  },
-  { time: "01 Apr 2026, 13:58", entry: "Admin froze wallet for Dealer #391" },
-  {
-    time: "01 Apr 2026, 13:21",
-    entry: "Admin approved KYC for MobileWorld Surat",
-  },
-  {
-    time: "01 Apr 2026, 12:44",
-    entry: "Admin rejected listing #L-2845 — reason: Blurry Photos",
-  },
-  {
-    time: "01 Apr 2026, 11:30",
-    entry: "Admin extended auction A-5011 by 1 hour",
-  },
-  {
-    time: "31 Mar 2026, 18:02",
-    entry: "Admin approved withdrawal TXN-8820 for Dealer #441",
-  },
-  {
-    time: "31 Mar 2026, 16:45",
-    entry: "Admin resolved dispute DIS-039 — Refund issued to Buyer #178",
-  },
-  { time: "31 Mar 2026, 15:10", entry: "Admin reset password for Dealer #503" },
-  {
-    time: "31 Mar 2026, 14:22",
-    entry: "Admin approved listing #L-2843 (Samsung S24 Ultra)",
-  },
-  {
-    time: "31 Mar 2026, 13:00",
-    entry: "Admin disabled new registrations for maintenance",
-  },
-];
-
 interface BannerSlide {
   id: string;
   imageUrl: string;
@@ -463,11 +84,13 @@ export default function AdminDashboard() {
   const [kycFilter, setKycFilter] = useState<
     "All" | "Pending" | "Verified" | "Rejected"
   >("All");
-  const [kycItems, setKycItems] = useState(MOCK_KYC);
+  const [userTab, setUserTab] = useState<"seller" | "buyer">("seller");
+  const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [kycItems, setKycItems] = useState<any[]>([]);
   const [listingTab, setListingTab] = useState<"queue" | "auctions">("queue");
-  const [auctionTimers, setAuctionTimers] = useState(
-    MOCK_AUCTIONS.map((a) => a.timeLeft),
-  );
+  const [auctionTimers, setAuctionTimers] = useState<number[]>([]);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [isDemoMode, setIsDemoMode] = useState(
     () => localStorage.getItem("77m_demo_mode") === "true",
@@ -667,9 +290,10 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (!authenticated) return;
     const interval = setInterval(() => {
-      feedIdxRef.current = (feedIdxRef.current + 1) % MOCK_BIDS.length;
       if (feedRef.current) {
         const items = feedRef.current.querySelectorAll(".bid-item");
+        if (items.length === 0) return;
+        feedIdxRef.current = (feedIdxRef.current + 1) % items.length;
         const target = items[feedIdxRef.current] as HTMLElement;
         if (target) {
           target.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -798,12 +422,6 @@ export default function AdminDashboard() {
   }
 
   // --- MAIN ADMIN PANEL ---
-  const _filteredUsers = MOCK_USERS.filter(
-    (u) =>
-      u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
-      u.id.toLowerCase().includes(userSearch.toLowerCase()),
-  );
-
   return (
     <div
       className="min-h-screen flex"
@@ -1033,50 +651,104 @@ export default function AdminDashboard() {
           {activeSection === "dashboard" && (
             <div className="space-y-5">
               {/* Stat Cards */}
-              <div className="grid grid-cols-2 gap-3">
-                <StatCard
-                  icon={
-                    <DollarSign
-                      className="w-5 h-5"
-                      style={{ color: "#22C55E" }}
+              {(() => {
+                // Dynamic stat derivation from localStorage
+                let pendingVerifCount = 0;
+                let activeAuctionCount = 0;
+                let userGrowthCount = 0;
+                let totalRevenue = 0;
+                try {
+                  const kycSubs = JSON.parse(
+                    localStorage.getItem("77m_kyc_submissions") || "[]",
+                  );
+                  pendingVerifCount = kycSubs.filter(
+                    (k: any) =>
+                      k.status === "pending" || k.status === "Pending",
+                  ).length;
+                  userGrowthCount = kycSubs.length;
+                } catch {}
+                try {
+                  const listings = JSON.parse(
+                    localStorage.getItem("77m_listings") || "[]",
+                  );
+                  activeAuctionCount = listings.filter(
+                    (l: any) => l.status === "active" || l.status === "live",
+                  ).length;
+                } catch {}
+                try {
+                  const txns = JSON.parse(
+                    localStorage.getItem("77m_wallet_transactions") || "[]",
+                  );
+                  totalRevenue = txns
+                    .filter(
+                      (t: any) =>
+                        t.type === "sale" ||
+                        t.type === "top-up" ||
+                        t.type === "credit",
+                    )
+                    .reduce(
+                      (sum: number, t: any) => sum + (Number(t.amount) || 0),
+                      0,
+                    );
+                } catch {}
+                const fmtRevenue =
+                  totalRevenue > 0
+                    ? `₹${totalRevenue.toLocaleString("en-IN")}`
+                    : "₹0";
+                return (
+                  <div className="grid grid-cols-2 gap-3">
+                    <StatCard
+                      icon={
+                        <DollarSign
+                          className="w-5 h-5"
+                          style={{ color: "#22C55E" }}
+                        />
+                      }
+                      label="Total Revenue"
+                      value={fmtRevenue}
+                      sub="Escrow + Fees"
+                      accentColor="#22C55E"
                     />
-                  }
-                  label="Total Revenue"
-                  value="₹42,85,000"
-                  sub="Escrow + Fees"
-                  accentColor="#22C55E"
-                />
-                <StatCard
-                  icon={
-                    <Zap className="w-5 h-5" style={{ color: "#1D4ED8" }} />
-                  }
-                  label="Active Auctions"
-                  value="128"
-                  sub="Live right now"
-                  accentColor="#3B82F6"
-                />
-                <StatCard
-                  icon={
-                    <Users className="w-5 h-5" style={{ color: "#A855F7" }} />
-                  }
-                  label="User Growth"
-                  value="1,636"
-                  sub="1,247 Dealers · 389 Individual"
-                  accentColor="#A855F7"
-                />
-                <StatCard
-                  icon={
-                    <AlertTriangle
-                      className="w-5 h-5"
-                      style={{ color: "#F59E0B" }}
+                    <StatCard
+                      icon={
+                        <Zap className="w-5 h-5" style={{ color: "#1D4ED8" }} />
+                      }
+                      label="Active Auctions"
+                      value={
+                        activeAuctionCount > 0
+                          ? activeAuctionCount.toString()
+                          : "0"
+                      }
+                      sub="Live right now"
+                      accentColor="#3B82F6"
                     />
-                  }
-                  label="Pending Verifications"
-                  value="23"
-                  sub="Awaiting review"
-                  accentColor="#F59E0B"
-                />
-              </div>
+                    <StatCard
+                      icon={
+                        <Users
+                          className="w-5 h-5"
+                          style={{ color: "#A855F7" }}
+                        />
+                      }
+                      label="User Growth"
+                      value={userGrowthCount.toString()}
+                      sub="Registered dealers"
+                      accentColor="#A855F7"
+                    />
+                    <StatCard
+                      icon={
+                        <AlertTriangle
+                          className="w-5 h-5"
+                          style={{ color: "#F59E0B" }}
+                        />
+                      }
+                      label="Pending Verifications"
+                      value={pendingVerifCount.toString()}
+                      sub="Awaiting review"
+                      accentColor="#F59E0B"
+                    />
+                  </div>
+                );
+              })()}
 
               {/* Live Bid Feed */}
               <div
@@ -1098,53 +770,78 @@ export default function AdminDashboard() {
                     Real-time
                   </span>
                 </div>
-                <div
-                  ref={feedRef}
-                  className="space-y-2.5 overflow-y-auto"
-                  style={{ maxHeight: "280px" }}
-                >
-                  {MOCK_BIDS.map((bid) => (
+                {(() => {
+                  let liveBids: Array<{
+                    dealer: string;
+                    action: string;
+                    item: string;
+                    time: string;
+                  }> = [];
+                  try {
+                    const stored = localStorage.getItem("77m_bids");
+                    if (stored) liveBids = JSON.parse(stored);
+                  } catch {}
+                  return (
                     <div
-                      key={bid.dealer + bid.time}
-                      className="bid-item flex items-center justify-between py-2 border-b"
-                      style={{ borderColor: "#E2E8F0" }}
+                      ref={feedRef}
+                      className="space-y-2.5 overflow-y-auto"
+                      style={{ maxHeight: "280px" }}
                     >
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="text-xs font-bold px-2 py-0.5 rounded-full"
-                          style={{
-                            background: "rgba(29,78,216,0.08)",
-                            color: "#1D4ED8",
-                          }}
+                      {liveBids.length === 0 ? (
+                        <p
+                          className="text-xs text-center text-gray-400 py-8"
+                          data-ocid="admin.bids.empty_state"
                         >
-                          Dealer {bid.dealer}
-                        </span>
-                        <span className="text-xs" style={{ color: "#9CA3AF" }}>
-                          {bid.action} on{" "}
-                          <span className="text-[#1E293B] font-medium">
-                            {bid.item}
-                          </span>
-                        </span>
-                      </div>
-                      <span
-                        className="text-xs flex-shrink-0"
-                        style={{ color: "#9CA3AF" }}
-                      >
-                        {bid.time}
-                      </span>
+                          No recent bids yet
+                        </p>
+                      ) : (
+                        liveBids.map((bid, idx) => (
+                          <div
+                            key={`${bid.dealer}-${idx}`}
+                            className="bid-item flex items-center justify-between py-2 border-b"
+                            style={{ borderColor: "#E2E8F0" }}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="text-xs font-bold px-2 py-0.5 rounded-full"
+                                style={{
+                                  background: "rgba(29,78,216,0.08)",
+                                  color: "#1D4ED8",
+                                }}
+                              >
+                                Dealer {bid.dealer}
+                              </span>
+                              <span
+                                className="text-xs"
+                                style={{ color: "#9CA3AF" }}
+                              >
+                                {bid.action} on{" "}
+                                <span className="text-[#1E293B] font-medium">
+                                  {bid.item}
+                                </span>
+                              </span>
+                            </div>
+                            <span
+                              className="text-xs flex-shrink-0"
+                              style={{ color: "#9CA3AF" }}
+                            >
+                              {bid.time}
+                            </span>
+                          </div>
+                        ))
+                      )}
                     </div>
-                  ))}
-                </div>
+                  );
+                })()}
               </div>
             </div>
           )}
 
-          {/* ===== USERS ===== (Unified User Management - Tasks 3 & 4) */}
+          {/* ===== USERS ===== (Two-Tab: Seller Verification / Buyer Verification) */}
           {activeSection === "users" &&
             (() => {
-              // Build unified user list: MOCK_USERS base + KYC entries from localStorage
-              // Merge kycItems into an enriched user table with name, phone, status
-              const localKyc: Array<{
+              // Build unified user list from kycItems (localStorage-loaded)
+              const allKyc: Array<{
                 id: string;
                 name: string;
                 phone: string;
@@ -1157,6 +854,7 @@ export default function AdminDashboard() {
                 aadhaar_url?: string;
                 pan_url?: string;
                 joinedAt: string;
+                createdAt: number;
               }> = kycItems.map((k: any) => ({
                 id: k.id,
                 name: k.name || k.business || "Unknown",
@@ -1164,7 +862,7 @@ export default function AdminDashboard() {
                 businessName:
                   k.businessName || k.business_name || k.business || "—",
                 location: k.city || k.location || "—",
-                role: k.role || "Seller",
+                role: k.role || "seller",
                 balance: k.balance || "₹0",
                 kycStatus:
                   k.status === "Approved" ||
@@ -1183,14 +881,40 @@ export default function AdminDashboard() {
                       month: "short",
                     })
                   : "Recent",
+                createdAt: k.createdAt || 0,
               }));
 
-              // Sort: Pending first, then Verified, then Rejected
-              const sortOrder = { Pending: 0, Verified: 1, Rejected: 2 };
-              const sorted = [...localKyc].sort(
-                (a, b) => sortOrder[a.kycStatus] - sortOrder[b.kycStatus],
+              // Tab-filtered lists
+              const sellerItems = allKyc.filter(
+                (u) =>
+                  u.role === "seller" ||
+                  u.role === "Seller" ||
+                  !u.role ||
+                  u.role === "Dealer",
+              );
+              const buyerItems = allKyc.filter(
+                (u) => u.role === "buyer" || u.role === "Buyer",
               );
 
+              const sellerPending = sellerItems.filter(
+                (u) => u.kycStatus === "Pending",
+              ).length;
+              const buyerPending = buyerItems.filter(
+                (u) => u.kycStatus === "Pending",
+              ).length;
+
+              const tabItems = userTab === "seller" ? sellerItems : buyerItems;
+
+              // Sort: Pending first (newest first within Pending), then Verified, then Rejected
+              const sorted = [...tabItems].sort((a, b) => {
+                const order = { Pending: 0, Verified: 1, Rejected: 2 };
+                if (order[a.kycStatus] !== order[b.kycStatus])
+                  return order[a.kycStatus] - order[b.kycStatus];
+                if (a.kycStatus === "Pending") return b.createdAt - a.createdAt;
+                return 0;
+              });
+
+              // Apply search + filter dropdown
               const filtered = sorted.filter((u) => {
                 const q = userSearch.toLowerCase();
                 const matchSearch =
@@ -1215,6 +939,69 @@ export default function AdminDashboard() {
 
               return (
                 <div className="space-y-4">
+                  {/* Two-tab navigation */}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      data-ocid="admin.users.seller.tab"
+                      onClick={() => {
+                        setUserTab("seller");
+                        setKycFilter("All");
+                      }}
+                      className="flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all"
+                      style={{
+                        background:
+                          userTab === "seller" ? "#1D4ED8" : "#F1F5F9",
+                        color: userTab === "seller" ? "white" : "#64748B",
+                      }}
+                    >
+                      Seller Verification
+                      {sellerPending > 0 && (
+                        <span
+                          className="ml-1.5 text-[10px] font-black px-1.5 py-0.5 rounded-full"
+                          style={{
+                            background:
+                              userTab === "seller"
+                                ? "rgba(255,255,255,0.25)"
+                                : "#F97316",
+                            color: userTab === "seller" ? "white" : "white",
+                          }}
+                        >
+                          {sellerPending} Pending
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      data-ocid="admin.users.buyer.tab"
+                      onClick={() => {
+                        setUserTab("buyer");
+                        setKycFilter("All");
+                      }}
+                      className="flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all"
+                      style={{
+                        background: userTab === "buyer" ? "#1D4ED8" : "#F1F5F9",
+                        color: userTab === "buyer" ? "white" : "#64748B",
+                      }}
+                    >
+                      Buyer Verification
+                      {buyerPending > 0 && (
+                        <span
+                          className="ml-1.5 text-[10px] font-black px-1.5 py-0.5 rounded-full"
+                          style={{
+                            background:
+                              userTab === "buyer"
+                                ? "rgba(255,255,255,0.25)"
+                                : "#F97316",
+                            color: "white",
+                          }}
+                        >
+                          {buyerPending} Pending
+                        </span>
+                      )}
+                    </button>
+                  </div>
+
                   {/* Header + filter */}
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-2">
@@ -1222,7 +1009,9 @@ export default function AdminDashboard() {
                         className="font-bold text-sm"
                         style={{ color: "#1E293B" }}
                       >
-                        User Management
+                        {userTab === "seller"
+                          ? "Dealer Accounts"
+                          : "Business Buyer Accounts"}
                       </span>
                       <span
                         className="text-xs font-black px-2 py-0.5 rounded-full"
@@ -1231,7 +1020,6 @@ export default function AdminDashboard() {
                         {pendingCount2} Pending
                       </span>
                     </div>
-                    {/* Filter dropdown */}
                     <select
                       data-ocid="admin.users.filter.select"
                       value={kycFilter}
@@ -1251,7 +1039,7 @@ export default function AdminDashboard() {
                         border: "1px solid #E2E8F0",
                       }}
                     >
-                      <option value="All">All Users ({sorted.length})</option>
+                      <option value="All">All ({sorted.length})</option>
                       <option value="Pending">
                         Only Pending ({pendingCount2})
                       </option>
@@ -1284,21 +1072,26 @@ export default function AdminDashboard() {
                     />
                   </div>
 
-                  {/* Unified user table */}
+                  {/* User cards */}
                   <div className="space-y-2">
                     {filtered.length === 0 && (
                       <p
                         className="text-xs text-center text-gray-400 py-6"
                         data-ocid="admin.users.empty_state"
                       >
-                        No {kycFilter.toLowerCase()} users found
+                        No{" "}
+                        {kycFilter === "All"
+                          ? ""
+                          : `${kycFilter.toLowerCase()} `}
+                        {userTab} users found
                       </p>
                     )}
                     {filtered.map((user, i) => (
-                      <div
+                      <button
                         key={user.id}
+                        type="button"
                         data-ocid={`admin.users.item.${i + 1}`}
-                        className="rounded-xl p-4"
+                        className="w-full text-left rounded-xl p-4 transition-all hover:shadow-sm"
                         style={{
                           background: "#FFFFFF",
                           border:
@@ -1306,6 +1099,7 @@ export default function AdminDashboard() {
                               ? "1px solid #FED7AA"
                               : "1px solid #E2E8F0",
                         }}
+                        onClick={() => setSelectedUser(user)}
                       >
                         {/* Top row: name + status badge */}
                         <div className="flex items-start justify-between mb-2">
@@ -1314,10 +1108,10 @@ export default function AdminDashboard() {
                               {user.name}
                             </p>
                             <p className="text-xs" style={{ color: "#9CA3AF" }}>
-                              {user.phone} · {user.role}
+                              {user.phone} ·{" "}
+                              {userTab === "seller" ? "Dealer" : "Buyer"}
                             </p>
                           </div>
-                          {/* Color-coded status badge */}
                           <span
                             className="text-xs px-2 py-0.5 rounded-full font-bold flex-shrink-0 ml-2"
                             style={{
@@ -1339,7 +1133,7 @@ export default function AdminDashboard() {
                           </span>
                         </div>
 
-                        {/* Details: Business + Location */}
+                        {/* Details row */}
                         <div className="flex gap-3 mb-2 flex-wrap">
                           {user.businessName !== "—" && (
                             <span className="text-[10px] text-gray-500">
@@ -1359,22 +1153,9 @@ export default function AdminDashboard() {
                           </span>
                         </div>
 
-                        {/* Action row */}
+                        {/* Quick action buttons */}
                         <div className="flex gap-2 flex-wrap">
-                          {/* View Document button (Task 4) */}
-                          <button
-                            type="button"
-                            data-ocid="admin.users.view_doc.button"
-                            onClick={() => {
-                              const url = user.aadhaar_url || user.pan_url;
-                              if (url?.startsWith("http")) {
-                                setDocModal({ url, name: user.name });
-                              } else {
-                                toast.info(
-                                  "No document uploaded yet for this user",
-                                );
-                              }
-                            }}
+                          <span
                             className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-lg"
                             style={{
                               background: "#F8FAFC",
@@ -1382,31 +1163,15 @@ export default function AdminDashboard() {
                               border: "1px solid #E2E8F0",
                             }}
                           >
-                            <Eye className="w-3 h-3" /> View Doc
-                          </button>
-                          <ActionBtn
-                            label="Freeze"
-                            color="#EF4444"
-                            onClick={() =>
-                              toast.error(`Wallet frozen for ${user.name}`)
-                            }
-                            ocid="admin.users.freeze.button"
-                          />
-                          <ActionBtn
-                            label="Message"
-                            color="#94A3B8"
-                            onClick={() =>
-                              toast.success(`Message sent to ${user.name}`)
-                            }
-                            ocid="admin.users.message.button"
-                          />
-                          {/* Approve/Reject — only for Pending */}
+                            <Eye className="w-3 h-3" /> View Details
+                          </span>
                           {user.kycStatus === "Pending" && (
                             <>
                               <button
                                 type="button"
                                 data-ocid="admin.users.approve.button"
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setKycItems((prev) =>
                                     prev.map((k) =>
                                       k.id === user.id
@@ -1440,6 +1205,18 @@ export default function AdminDashboard() {
                                       "77m_kyc_submissions",
                                       JSON.stringify(updated),
                                     );
+                                    const auditLog = JSON.parse(
+                                      localStorage.getItem("77m_audit_log") ||
+                                        "[]",
+                                    );
+                                    auditLog.unshift({
+                                      time: new Date().toLocaleString("en-IN"),
+                                      entry: `Admin approved KYC for ${user.name} (${user.businessName})`,
+                                    });
+                                    localStorage.setItem(
+                                      "77m_audit_log",
+                                      JSON.stringify(auditLog.slice(0, 100)),
+                                    );
                                   } catch {}
                                   toast.success(
                                     "Approved — user can now access the portal",
@@ -1456,15 +1233,10 @@ export default function AdminDashboard() {
                               <button
                                 type="button"
                                 data-ocid="admin.users.reject.button"
-                                onClick={() => {
-                                  setKycItems((prev) =>
-                                    prev.map((k) =>
-                                      k.id === user.id
-                                        ? { ...k, status: "Rejected" }
-                                        : k,
-                                    ),
-                                  );
-                                  toast.error(`Rejected: ${user.name}`);
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setRejectTarget(user.id);
+                                  setRejectReason("");
                                 }}
                                 className="text-xs font-bold px-2.5 py-1 rounded-lg"
                                 style={{
@@ -1478,7 +1250,7 @@ export default function AdminDashboard() {
                             </>
                           )}
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -1520,157 +1292,202 @@ export default function AdminDashboard() {
 
               {listingTab === "queue" ? (
                 <div className="space-y-3">
-                  {MOCK_LISTINGS.map((listing, i) => (
-                    <div
-                      key={listing.id}
-                      className="rounded-xl p-4"
-                      style={{
-                        background: "#FFFFFF",
-                        border: "1px solid #E2E8F0",
-                      }}
-                      data-ocid={`admin.listings.item.${i + 1}`}
-                    >
-                      <div className="flex items-start gap-3 mb-3">
-                        <div
-                          className="w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center"
-                          style={{ background: "#F8FAFC" }}
+                  {(() => {
+                    let queueListings: any[] = [];
+                    try {
+                      const stored = localStorage.getItem("77m_listings");
+                      if (stored)
+                        queueListings = JSON.parse(stored).filter(
+                          (l: any) =>
+                            l.status === "pending" ||
+                            l.status === "pending_approval",
+                        );
+                    } catch {}
+                    if (queueListings.length === 0) {
+                      return (
+                        <p
+                          className="text-xs text-center text-gray-400 py-6"
+                          data-ocid="admin.listings.empty_state"
                         >
-                          <Package
-                            className="w-6 h-6"
-                            style={{ color: "#9CA3AF" }}
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-sm text-[#1E293B]">
-                            {listing.model}
-                          </p>
-                          <p className="text-xs" style={{ color: "#9CA3AF" }}>
-                            {listing.id} · Seller {listing.seller}
-                          </p>
-                          <p
-                            className="text-xs mt-0.5"
-                            style={{ color: "#9CA3AF" }}
+                          No listings awaiting approval
+                        </p>
+                      );
+                    }
+                    return queueListings.map((listing: any, i: number) => (
+                      <div
+                        key={listing.id}
+                        className="rounded-xl p-4"
+                        style={{
+                          background: "#FFFFFF",
+                          border: "1px solid #E2E8F0",
+                        }}
+                        data-ocid={`admin.listings.item.${i + 1}`}
+                      >
+                        <div className="flex items-start gap-3 mb-3">
+                          <div
+                            className="w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center"
+                            style={{ background: "#F8FAFC" }}
                           >
-                            Condition: {listing.condition} · Base:{" "}
-                            {listing.price}
-                          </p>
+                            <Package
+                              className="w-6 h-6"
+                              style={{ color: "#9CA3AF" }}
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm text-[#1E293B]">
+                              {listing.model}
+                            </p>
+                            <p className="text-xs" style={{ color: "#9CA3AF" }}>
+                              {listing.id} · Seller {listing.seller}
+                            </p>
+                            <p
+                              className="text-xs mt-0.5"
+                              style={{ color: "#9CA3AF" }}
+                            >
+                              Condition: {listing.condition} · Base:{" "}
+                              {listing.price}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            data-ocid="admin.listings.approve.button"
+                            onClick={() =>
+                              toast.success(`Listing ${listing.id} approved!`)
+                            }
+                            className="flex-1 py-2 rounded-xl text-sm font-semibold text-[#1E293B] flex items-center justify-center gap-1"
+                            style={{ background: "#22C55E" }}
+                          >
+                            <CheckCircle className="w-3.5 h-3.5" /> Approve
+                          </button>
+                          <select
+                            data-ocid="admin.listings.reject.select"
+                            className="flex-1 py-2 px-2 rounded-xl text-sm font-semibold text-center"
+                            style={{
+                              background: "rgba(239,68,68,0.1)",
+                              color: "#EF4444",
+                              border: "1px solid rgba(239,68,68,0.3)",
+                            }}
+                            defaultValue=""
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                toast.error(`Rejected: ${e.target.value}`);
+                                e.target.value = "";
+                              }
+                            }}
+                          >
+                            <option value="">Reject ▾</option>
+                            <option>Blurry Photos</option>
+                            <option>Invalid IMEI</option>
+                            <option>Wrong Category</option>
+                            <option>Incomplete Info</option>
+                          </select>
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          data-ocid="admin.listings.approve.button"
-                          onClick={() =>
-                            toast.success(`Listing ${listing.id} approved!`)
-                          }
-                          className="flex-1 py-2 rounded-xl text-sm font-semibold text-[#1E293B] flex items-center justify-center gap-1"
-                          style={{ background: "#22C55E" }}
-                        >
-                          <CheckCircle className="w-3.5 h-3.5" /> Approve
-                        </button>
-                        <select
-                          data-ocid="admin.listings.reject.select"
-                          className="flex-1 py-2 px-2 rounded-xl text-sm font-semibold text-center"
-                          style={{
-                            background: "rgba(239,68,68,0.1)",
-                            color: "#EF4444",
-                            border: "1px solid rgba(239,68,68,0.3)",
-                          }}
-                          defaultValue=""
-                          onChange={(e) => {
-                            if (e.target.value) {
-                              toast.error(`Rejected: ${e.target.value}`);
-                              e.target.value = "";
-                            }
-                          }}
-                        >
-                          <option value="">Reject ▾</option>
-                          <option>Blurry Photos</option>
-                          <option>Invalid IMEI</option>
-                          <option>Wrong Category</option>
-                          <option>Incomplete Info</option>
-                        </select>
-                      </div>
-                    </div>
-                  ))}
+                    ));
+                  })()}
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {MOCK_AUCTIONS.map((auction, i) => (
-                    <div
-                      key={auction.id}
-                      className="rounded-xl p-4"
-                      style={{
-                        background: "#FFFFFF",
-                        border: "1px solid #E2E8F0",
-                      }}
-                      data-ocid={`admin.auctions.item.${i + 1}`}
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <p className="font-semibold text-sm text-[#1E293B]">
-                            {auction.model}
-                          </p>
-                          <p className="text-xs" style={{ color: "#9CA3AF" }}>
-                            {auction.id} · Current Bid:{" "}
-                            <span className="text-[#1E293B] font-semibold">
-                              {auction.currentBid}
-                            </span>
-                          </p>
-                        </div>
-                        <div
-                          className="px-2.5 py-1 rounded-xl text-xs font-mono font-bold"
-                          style={{
-                            background:
-                              auctionTimers[i] < 1800
-                                ? "rgba(239,68,68,0.15)"
-                                : "rgba(59,130,246,0.15)",
-                            color:
-                              auctionTimers[i] < 1800 ? "#EF4444" : "#3B82F6",
-                          }}
+                  {(() => {
+                    let activeAuctions: any[] = [];
+                    try {
+                      const stored = localStorage.getItem("77m_listings");
+                      if (stored)
+                        activeAuctions = JSON.parse(stored).filter(
+                          (l: any) =>
+                            l.status === "live" || l.status === "active",
+                        );
+                    } catch {}
+                    if (activeAuctions.length === 0) {
+                      return (
+                        <p
+                          className="text-xs text-center text-gray-400 py-6"
+                          data-ocid="admin.auctions.empty_state"
                         >
-                          {formatTime(auctionTimers[i])}
+                          No active auctions
+                        </p>
+                      );
+                    }
+                    return activeAuctions.map((auction: any, i: number) => (
+                      <div
+                        key={auction.id}
+                        className="rounded-xl p-4"
+                        style={{
+                          background: "#FFFFFF",
+                          border: "1px solid #E2E8F0",
+                        }}
+                        data-ocid={`admin.auctions.item.${i + 1}`}
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <p className="font-semibold text-sm text-[#1E293B]">
+                              {auction.model}
+                            </p>
+                            <p className="text-xs" style={{ color: "#9CA3AF" }}>
+                              {auction.id} · Current Bid:{" "}
+                              <span className="text-[#1E293B] font-semibold">
+                                {auction.currentBid}
+                              </span>
+                            </p>
+                          </div>
+                          <div
+                            className="px-2.5 py-1 rounded-xl text-xs font-mono font-bold"
+                            style={{
+                              background:
+                                auctionTimers[i] < 1800
+                                  ? "rgba(239,68,68,0.15)"
+                                  : "rgba(59,130,246,0.15)",
+                              color:
+                                auctionTimers[i] < 1800 ? "#EF4444" : "#3B82F6",
+                            }}
+                          >
+                            {formatTime(auctionTimers[i] ?? 3600)}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            data-ocid="admin.auctions.end.button"
+                            onClick={() =>
+                              toast.error(`Auction ${auction.id} ended early`)
+                            }
+                            className="flex-1 py-2 rounded-xl text-sm font-semibold"
+                            style={{
+                              background: "rgba(239,68,68,0.1)",
+                              color: "#EF4444",
+                              border: "1px solid rgba(239,68,68,0.3)",
+                            }}
+                          >
+                            End Early
+                          </button>
+                          <button
+                            type="button"
+                            data-ocid="admin.auctions.extend.button"
+                            onClick={() => {
+                              setAuctionTimers((prev) =>
+                                prev.map((t, idx) =>
+                                  idx === i ? t + 3600 : t,
+                                ),
+                              );
+                              toast.success(
+                                `Auction ${auction.id} extended by 1 hour`,
+                              );
+                            }}
+                            className="flex-1 py-2 rounded-xl text-sm font-semibold"
+                            style={{
+                              background: "rgba(29,78,216,0.08)",
+                              color: "#1D4ED8",
+                              border: "1px solid rgba(29,78,216,0.2)",
+                            }}
+                          >
+                            Extend +1hr
+                          </button>
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          data-ocid="admin.auctions.end.button"
-                          onClick={() =>
-                            toast.error(`Auction ${auction.id} ended early`)
-                          }
-                          className="flex-1 py-2 rounded-xl text-sm font-semibold"
-                          style={{
-                            background: "rgba(239,68,68,0.1)",
-                            color: "#EF4444",
-                            border: "1px solid rgba(239,68,68,0.3)",
-                          }}
-                        >
-                          End Early
-                        </button>
-                        <button
-                          type="button"
-                          data-ocid="admin.auctions.extend.button"
-                          onClick={() => {
-                            setAuctionTimers((prev) =>
-                              prev.map((t, idx) => (idx === i ? t + 3600 : t)),
-                            );
-                            toast.success(
-                              `Auction ${auction.id} extended by 1 hour`,
-                            );
-                          }}
-                          className="flex-1 py-2 rounded-xl text-sm font-semibold"
-                          style={{
-                            background: "rgba(29,78,216,0.08)",
-                            color: "#1D4ED8",
-                            border: "1px solid rgba(29,78,216,0.2)",
-                          }}
-                        >
-                          Extend +1hr
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    ));
+                  })()}
                 </div>
               )}
             </div>
@@ -1682,145 +1499,199 @@ export default function AdminDashboard() {
               {/* Transaction Log */}
               <SectionBlock title="Transaction Log">
                 <div className="space-y-2">
-                  {MOCK_TRANSACTIONS.map((txn, i) => (
-                    <div
-                      key={txn.id}
-                      className="flex items-center justify-between py-2.5 border-b"
-                      style={{ borderColor: "#E2E8F0" }}
-                      data-ocid={`admin.transactions.item.${i + 1}`}
-                    >
-                      <div className="flex items-center gap-2">
+                  {(() => {
+                    let transactions: any[] = [];
+                    try {
+                      transactions = JSON.parse(
+                        localStorage.getItem("77m_wallet_transactions") || "[]",
+                      );
+                    } catch {}
+                    if (transactions.length === 0)
+                      return (
+                        <p
+                          className="text-xs text-center text-gray-400 py-4"
+                          data-ocid="admin.transactions.empty_state"
+                        >
+                          No transactions yet
+                        </p>
+                      );
+                    return transactions.map((txn: any, i: number) => (
+                      <div
+                        key={txn.id}
+                        className="flex items-center justify-between py-2.5 border-b"
+                        style={{ borderColor: "#E2E8F0" }}
+                        data-ocid={`admin.transactions.item.${i + 1}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                            style={{
+                              background:
+                                txn.type === "Top-up"
+                                  ? "rgba(34,197,94,0.1)"
+                                  : "rgba(239,68,68,0.1)",
+                              color:
+                                txn.type === "Top-up" ? "#22C55E" : "#EF4444",
+                            }}
+                          >
+                            {txn.type}
+                          </span>
+                          <div>
+                            <p className="text-sm font-semibold text-[#1E293B]">
+                              {txn.amount}
+                            </p>
+                            <p className="text-xs" style={{ color: "#9CA3AF" }}>
+                              Dealer {txn.dealer} · {txn.date}
+                            </p>
+                          </div>
+                        </div>
                         <span
                           className="text-xs px-2 py-0.5 rounded-full font-semibold"
                           style={{
                             background:
-                              txn.type === "Top-up"
+                              txn.status === "Completed"
                                 ? "rgba(34,197,94,0.1)"
-                                : "rgba(239,68,68,0.1)",
+                                : txn.status === "Pending"
+                                  ? "rgba(245,158,11,0.1)"
+                                  : "rgba(239,68,68,0.1)",
                             color:
-                              txn.type === "Top-up" ? "#22C55E" : "#EF4444",
+                              txn.status === "Completed"
+                                ? "#22C55E"
+                                : txn.status === "Pending"
+                                  ? "#F59E0B"
+                                  : "#EF4444",
                           }}
                         >
-                          {txn.type}
+                          {txn.status}
                         </span>
-                        <div>
-                          <p className="text-sm font-semibold text-[#1E293B]">
-                            {txn.amount}
-                          </p>
-                          <p className="text-xs" style={{ color: "#9CA3AF" }}>
-                            Dealer {txn.dealer} · {txn.date}
-                          </p>
-                        </div>
                       </div>
-                      <span
-                        className="text-xs px-2 py-0.5 rounded-full font-semibold"
-                        style={{
-                          background:
-                            txn.status === "Completed"
-                              ? "rgba(34,197,94,0.1)"
-                              : txn.status === "Pending"
-                                ? "rgba(245,158,11,0.1)"
-                                : "rgba(239,68,68,0.1)",
-                          color:
-                            txn.status === "Completed"
-                              ? "#22C55E"
-                              : txn.status === "Pending"
-                                ? "#F59E0B"
-                                : "#EF4444",
-                        }}
-                      >
-                        {txn.status}
-                      </span>
-                    </div>
-                  ))}
+                    ));
+                  })()}
                 </div>
               </SectionBlock>
 
               {/* Escrow Monitor */}
               <SectionBlock title="Escrow Monitor">
                 <div className="space-y-2">
-                  {MOCK_ESCROW.map((esc, i) => (
-                    <div
-                      key={esc.id}
-                      className="rounded-xl p-3"
-                      style={{
-                        background: "rgba(59,130,246,0.05)",
-                        border: "1px solid rgba(59,130,246,0.2)",
-                      }}
-                      data-ocid={`admin.escrow.item.${i + 1}`}
-                    >
-                      <div className="flex justify-between">
-                        <div>
-                          <p className="text-sm font-semibold text-[#1E293B]">
-                            {esc.model}
-                          </p>
-                          <p className="text-xs" style={{ color: "#9CA3AF" }}>
-                            Buyer {esc.buyer} · Held {esc.since}
-                          </p>
-                        </div>
-                        <span
-                          className="font-bold text-sm"
-                          style={{ color: "#1D4ED8" }}
+                  {(() => {
+                    let escrowItems: any[] = [];
+                    try {
+                      escrowItems = JSON.parse(
+                        localStorage.getItem("77m_escrow") || "[]",
+                      );
+                    } catch {}
+                    if (escrowItems.length === 0)
+                      return (
+                        <p
+                          className="text-xs text-center text-gray-400 py-4"
+                          data-ocid="admin.escrow.empty_state"
                         >
-                          {esc.amount}
-                        </span>
+                          No active escrow holds
+                        </p>
+                      );
+                    return escrowItems.map((esc: any, i: number) => (
+                      <div
+                        key={esc.id}
+                        className="rounded-xl p-3"
+                        style={{
+                          background: "rgba(59,130,246,0.05)",
+                          border: "1px solid rgba(59,130,246,0.2)",
+                        }}
+                        data-ocid={`admin.escrow.item.${i + 1}`}
+                      >
+                        <div className="flex justify-between">
+                          <div>
+                            <p className="text-sm font-semibold text-[#1E293B]">
+                              {esc.model}
+                            </p>
+                            <p className="text-xs" style={{ color: "#9CA3AF" }}>
+                              Buyer {esc.buyer} · Held {esc.since}
+                            </p>
+                          </div>
+                          <span
+                            className="font-bold text-sm"
+                            style={{ color: "#1D4ED8" }}
+                          >
+                            {esc.amount}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ));
+                  })()}
                 </div>
               </SectionBlock>
 
               {/* Dispute Resolution */}
               <SectionBlock title="Dispute Resolution">
                 <div className="space-y-3">
-                  {MOCK_DISPUTES.map((dis, i) => (
-                    <div
-                      key={dis.id}
-                      className="rounded-xl p-4"
-                      style={{
-                        background: "rgba(239,68,68,0.05)",
-                        border: "1px solid rgba(239,68,68,0.2)",
-                      }}
-                      data-ocid={`admin.disputes.item.${i + 1}`}
-                    >
-                      <p className="text-sm font-semibold text-[#1E293B] mb-1">
-                        {dis.device}
-                      </p>
-                      <p className="text-xs mb-1" style={{ color: "#9CA3AF" }}>
-                        Buyer {dis.buyer} claims: &quot;{dis.claim}&quot;
-                      </p>
-                      <p
-                        className="text-xs mb-3 font-semibold"
-                        style={{ color: "#1D4ED8" }}
+                  {(() => {
+                    let disputes: any[] = [];
+                    try {
+                      disputes = JSON.parse(
+                        localStorage.getItem("77m_disputes") || "[]",
+                      );
+                    } catch {}
+                    if (disputes.length === 0)
+                      return (
+                        <p
+                          className="text-xs text-center text-gray-400 py-4"
+                          data-ocid="admin.disputes.empty_state"
+                        >
+                          No active disputes
+                        </p>
+                      );
+                    return disputes.map((dis: any, i: number) => (
+                      <div
+                        key={dis.id}
+                        className="rounded-xl p-4"
+                        style={{
+                          background: "rgba(239,68,68,0.05)",
+                          border: "1px solid rgba(239,68,68,0.2)",
+                        }}
+                        data-ocid={`admin.disputes.item.${i + 1}`}
                       >
-                        Amount in Escrow: {dis.amount}
-                      </p>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          data-ocid="admin.disputes.refund.button"
-                          onClick={() =>
-                            toast.success("Refund issued to buyer")
-                          }
-                          className="flex-1 py-2 rounded-xl text-sm font-semibold text-white"
-                          style={{ background: "#22C55E" }}
+                        <p className="text-sm font-semibold text-[#1E293B] mb-1">
+                          {dis.device}
+                        </p>
+                        <p
+                          className="text-xs mb-1"
+                          style={{ color: "#9CA3AF" }}
                         >
-                          Refund Buyer
-                        </button>
-                        <button
-                          type="button"
-                          data-ocid="admin.disputes.release.button"
-                          onClick={() =>
-                            toast.success("Funds released to seller")
-                          }
-                          className="flex-1 py-2 rounded-xl text-sm font-semibold text-white"
-                          style={{ background: "#1D4ED8" }}
+                          Buyer {dis.buyer} claims: &quot;{dis.claim}&quot;
+                        </p>
+                        <p
+                          className="text-xs mb-3 font-semibold"
+                          style={{ color: "#1D4ED8" }}
                         >
-                          Release to Seller
-                        </button>
+                          Amount in Escrow: {dis.amount}
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            data-ocid="admin.disputes.refund.button"
+                            onClick={() =>
+                              toast.success("Refund issued to buyer")
+                            }
+                            className="flex-1 py-2 rounded-xl text-sm font-semibold text-white"
+                            style={{ background: "#22C55E" }}
+                          >
+                            Refund Buyer
+                          </button>
+                          <button
+                            type="button"
+                            data-ocid="admin.disputes.release.button"
+                            onClick={() =>
+                              toast.success("Funds released to seller")
+                            }
+                            className="flex-1 py-2 rounded-xl text-sm font-semibold text-white"
+                            style={{ background: "#1D4ED8" }}
+                          >
+                            Release to Seller
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ));
+                  })()}
                 </div>
               </SectionBlock>
             </div>
@@ -1831,131 +1702,213 @@ export default function AdminDashboard() {
             <div className="space-y-5">
               <SectionBlock title="Demand Heatmap">
                 <div className="space-y-3">
-                  {MOCK_HEATMAP.map((item, i) => (
-                    <div
-                      key={item.model}
-                      className="space-y-1"
-                      data-ocid={`admin.heatmap.item.${i + 1}`}
-                    >
-                      <div className="flex justify-between text-xs">
-                        <span className="text-[#1E293B] font-medium">
-                          {item.model}
-                        </span>
-                        <span style={{ color: "#9CA3AF" }}>
-                          {item.stars} stars
-                        </span>
-                      </div>
+                  {(() => {
+                    let heatmapItems: Array<{
+                      model: string;
+                      stars: number;
+                      demand: number;
+                    }> = [];
+                    try {
+                      const listings = JSON.parse(
+                        localStorage.getItem("77m_listings") || "[]",
+                      );
+                      const modelMap: Record<string, number> = {};
+                      for (const l of listings) {
+                        const key = l.model || l.title || "Unknown";
+                        modelMap[key] =
+                          (modelMap[key] || 0) +
+                          (l.watchlistCount || l.stars || 1);
+                      }
+                      const maxStars = Math.max(...Object.values(modelMap), 1);
+                      heatmapItems = Object.entries(modelMap)
+                        .map(([model, stars]) => ({
+                          model,
+                          stars,
+                          demand: Math.round((stars / maxStars) * 100),
+                        }))
+                        .sort((a, b) => b.stars - a.stars)
+                        .slice(0, 8);
+                    } catch {}
+                    if (heatmapItems.length === 0)
+                      return (
+                        <p
+                          className="text-xs text-center text-gray-400 py-4"
+                          data-ocid="admin.heatmap.empty_state"
+                        >
+                          No data yet
+                        </p>
+                      );
+                    return heatmapItems.map((item, i) => (
                       <div
-                        className="w-full h-2 rounded-full overflow-hidden"
-                        style={{ background: "#E2E8F0" }}
+                        key={item.model}
+                        className="space-y-1"
+                        data-ocid={`admin.heatmap.item.${i + 1}`}
                       >
+                        <div className="flex justify-between text-xs">
+                          <span className="text-[#1E293B] font-medium">
+                            {item.model}
+                          </span>
+                          <span style={{ color: "#9CA3AF" }}>
+                            {item.stars} stars
+                          </span>
+                        </div>
                         <div
-                          className="h-full rounded-full"
-                          style={{
-                            width: `${item.demand}%`,
-                            background:
-                              item.demand > 75
-                                ? "#22C55E"
-                                : item.demand > 50
-                                  ? "#3B82F6"
-                                  : "#F59E0B",
-                          }}
-                        />
+                          className="w-full h-2 rounded-full overflow-hidden"
+                          style={{ background: "#E2E8F0" }}
+                        >
+                          <div
+                            className="h-full rounded-full"
+                            style={{
+                              width: `${item.demand}%`,
+                              background:
+                                item.demand > 75
+                                  ? "#22C55E"
+                                  : item.demand > 50
+                                    ? "#3B82F6"
+                                    : "#F59E0B",
+                            }}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ));
+                  })()}
                 </div>
               </SectionBlock>
 
               <SectionBlock title="Price Benchmarking">
                 <div className="space-y-2">
-                  {MOCK_BENCHMARKS.map((bench, i) => (
-                    <div
-                      key={bench.model}
-                      className="rounded-xl p-3"
-                      style={{
-                        background: "#F8FAFC",
-                        border: "1px solid #E2E8F0",
-                      }}
-                      data-ocid={`admin.benchmarks.item.${i + 1}`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm text-[#1E293B] font-medium">
-                          {bench.model}
+                  {(() => {
+                    let benchmarkItems: Array<{
+                      model: string;
+                      avgPrice: string;
+                      trend: string;
+                    }> = [];
+                    try {
+                      const listings = JSON.parse(
+                        localStorage.getItem("77m_listings") || "[]",
+                      );
+                      const soldListings = listings.filter(
+                        (l: any) => l.status === "sold",
+                      );
+                      const modelPrices: Record<string, number[]> = {};
+                      for (const l of soldListings) {
+                        const key = l.model || l.title || "Unknown";
+                        const price = Number(
+                          l.current_high_bid || l.basePrice || l.price || 0,
+                        );
+                        if (!modelPrices[key]) modelPrices[key] = [];
+                        modelPrices[key].push(price);
+                      }
+                      benchmarkItems = Object.entries(modelPrices)
+                        .map(([model, prices]) => {
+                          const avg = Math.round(
+                            prices.reduce((a, b) => a + b, 0) / prices.length,
+                          );
+                          return {
+                            model,
+                            avgPrice: `₹${avg.toLocaleString("en-IN")}`,
+                            trend: "+₹0",
+                          };
+                        })
+                        .slice(0, 5);
+                    } catch {}
+                    if (benchmarkItems.length === 0)
+                      return (
+                        <p
+                          className="text-xs text-center text-gray-400 py-4"
+                          data-ocid="admin.benchmarks.empty_state"
+                        >
+                          No sold listings yet
                         </p>
-                        <div className="flex items-center gap-2">
-                          <span
-                            className="text-sm font-bold"
-                            style={{ color: "#1D4ED8" }}
-                          >
-                            {bench.avgPrice}
-                          </span>
-                          <span
-                            className="text-xs"
-                            style={{
-                              color: bench.trend.startsWith("+")
-                                ? "#22C55E"
-                                : "#EF4444",
-                            }}
-                          >
-                            <TrendingUp className="inline w-3 h-3 mr-0.5" />
-                            {bench.trend}
-                          </span>
+                      );
+                    return benchmarkItems.map((bench, i) => (
+                      <div
+                        key={bench.model}
+                        className="rounded-xl p-3"
+                        style={{
+                          background: "#F8FAFC",
+                          border: "1px solid #E2E8F0",
+                        }}
+                        data-ocid={`admin.benchmarks.item.${i + 1}`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-sm text-[#1E293B] font-medium">
+                            {bench.model}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="text-sm font-bold"
+                              style={{ color: "#1D4ED8" }}
+                            >
+                              {bench.avgPrice}
+                            </span>
+                            <span
+                              className="text-xs"
+                              style={{
+                                color: bench.trend.startsWith("+")
+                                  ? "#22C55E"
+                                  : "#EF4444",
+                              }}
+                            >
+                              <TrendingUp className="inline w-3 h-3 mr-0.5" />
+                              {bench.trend}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                      {activeBenchmarkIdx === i ? (
-                        <div className="flex gap-2">
-                          <input
-                            data-ocid="admin.benchmarks.price.input"
-                            type="text"
-                            placeholder="Set base price (₹)"
-                            value={benchmarkInputs[i] ?? ""}
-                            onChange={(e) =>
-                              setBenchmarkInputs((prev) => ({
-                                ...prev,
-                                [i]: e.target.value,
-                              }))
-                            }
-                            className="flex-1 px-3 py-1.5 rounded-lg text-sm"
-                            style={{
-                              background: "#FFFFFF",
-                              border: "1px solid #3B82F6",
-                              color: "white",
-                              outline: "none",
-                            }}
-                          />
+                        {activeBenchmarkIdx === i ? (
+                          <div className="flex gap-2">
+                            <input
+                              data-ocid="admin.benchmarks.price.input"
+                              type="text"
+                              placeholder="Set base price (₹)"
+                              value={benchmarkInputs[i] ?? ""}
+                              onChange={(e) =>
+                                setBenchmarkInputs((prev) => ({
+                                  ...prev,
+                                  [i]: e.target.value,
+                                }))
+                              }
+                              className="flex-1 px-3 py-1.5 rounded-lg text-sm"
+                              style={{
+                                background: "#FFFFFF",
+                                border: "1px solid #3B82F6",
+                                color: "white",
+                                outline: "none",
+                              }}
+                            />
+                            <button
+                              type="button"
+                              data-ocid="admin.benchmarks.save.button"
+                              onClick={() => {
+                                toast.success(
+                                  `Base price set for ${bench.model}`,
+                                );
+                                setActiveBenchmarkIdx(null);
+                              }}
+                              className="px-3 py-1.5 rounded-lg text-sm font-semibold text-white"
+                              style={{ background: "#1D4ED8" }}
+                            >
+                              Save
+                            </button>
+                          </div>
+                        ) : (
                           <button
                             type="button"
-                            data-ocid="admin.benchmarks.save.button"
-                            onClick={() => {
-                              toast.success(
-                                `Base price set for ${bench.model}`,
-                              );
-                              setActiveBenchmarkIdx(null);
+                            data-ocid="admin.benchmarks.set.button"
+                            onClick={() => setActiveBenchmarkIdx(i)}
+                            className="text-xs font-semibold px-3 py-1.5 rounded-lg"
+                            style={{
+                              background: "rgba(29,78,216,0.08)",
+                              color: "#1D4ED8",
+                              border: "1px solid rgba(59,130,246,0.2)",
                             }}
-                            className="px-3 py-1.5 rounded-lg text-sm font-semibold text-white"
-                            style={{ background: "#1D4ED8" }}
                           >
-                            Save
+                            Set Base Price
                           </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          data-ocid="admin.benchmarks.set.button"
-                          onClick={() => setActiveBenchmarkIdx(i)}
-                          className="text-xs font-semibold px-3 py-1.5 rounded-lg"
-                          style={{
-                            background: "rgba(29,78,216,0.08)",
-                            color: "#1D4ED8",
-                            border: "1px solid rgba(59,130,246,0.2)",
-                          }}
-                        >
-                          Set Base Price
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                        )}
+                      </div>
+                    ));
+                  })()}
                 </div>
               </SectionBlock>
             </div>
@@ -2833,30 +2786,47 @@ export default function AdminDashboard() {
                 className="rounded-2xl overflow-hidden"
                 style={{ background: "#FFFFFF", border: "1px solid #E2E8F0" }}
               >
-                {MOCK_AUDIT.map((entry, i) => (
-                  <div
-                    key={entry.time}
-                    className="flex items-start gap-3 p-3.5 border-b last:border-0"
-                    style={{ borderColor: "#E2E8F0" }}
-                    data-ocid={`admin.auditlog.item.${i + 1}`}
-                  >
-                    <CheckCircle
-                      className="w-4 h-4 flex-shrink-0 mt-0.5"
-                      style={{ color: "#1D4ED8" }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-[#1E293B] leading-snug">
-                        {entry.entry}
-                      </p>
+                {(() => {
+                  let auditEntries: Array<{ time: string; entry: string }> = [];
+                  try {
+                    auditEntries = JSON.parse(
+                      localStorage.getItem("77m_audit_log") || "[]",
+                    );
+                  } catch {}
+                  if (auditEntries.length === 0)
+                    return (
                       <p
-                        className="text-xs mt-0.5"
-                        style={{ color: "#9CA3AF" }}
+                        className="text-xs text-center text-gray-400 py-6"
+                        data-ocid="admin.auditlog.empty_state"
                       >
-                        {entry.time}
+                        No audit entries yet
                       </p>
+                    );
+                  return auditEntries.map((entry: any, i: number) => (
+                    <div
+                      key={entry.time}
+                      className="flex items-start gap-3 p-3.5 border-b last:border-0"
+                      style={{ borderColor: "#E2E8F0" }}
+                      data-ocid={`admin.auditlog.item.${i + 1}`}
+                    >
+                      <CheckCircle
+                        className="w-4 h-4 flex-shrink-0 mt-0.5"
+                        style={{ color: "#1D4ED8" }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-[#1E293B] leading-snug">
+                          {entry.entry}
+                        </p>
+                        <p
+                          className="text-xs mt-0.5"
+                          style={{ color: "#9CA3AF" }}
+                        >
+                          {entry.time}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ));
+                })()}
               </div>
             </div>
           )}
@@ -2875,6 +2845,379 @@ export default function AdminDashboard() {
           }
         }
       `}</style>
+
+      {/* ===== USER DETAIL MODAL (Task 1D) ===== */}
+      {selectedUser && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/40 flex items-center justify-center p-4"
+          onClick={() => setSelectedUser(null)}
+          onKeyDown={(e) => e.key === "Escape" && setSelectedUser(null)}
+          aria-label="User detail modal"
+          aria-modal="true"
+        >
+          <div
+            className="rounded-2xl bg-white p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            onKeyDown={(e: React.KeyboardEvent) => e.stopPropagation()}
+            data-ocid="admin.users.modal"
+          >
+            {/* Close button */}
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="font-bold text-lg text-[#1E293B]">User Details</h3>
+              <button
+                type="button"
+                data-ocid="admin.users.modal.close_button"
+                onClick={() => setSelectedUser(null)}
+                className="w-8 h-8 rounded-full flex items-center justify-center"
+                style={{ background: "#F1F5F9", color: "#64748B" }}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Profile Section */}
+            <div className="mb-5">
+              <p className="text-[10px] font-bold uppercase text-gray-400 mb-3 tracking-wider">
+                Profile
+              </p>
+              <div className="space-y-2.5">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-500">Full Name</span>
+                  <span className="text-sm font-semibold text-[#1E293B]">
+                    {selectedUser.name}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-500">Phone Number</span>
+                  <span className="text-sm font-semibold text-[#1E293B]">
+                    {selectedUser.phone}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-500">Password</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-400 font-mono">
+                      ••••••••
+                    </span>
+                    <button
+                      type="button"
+                      data-ocid="admin.users.modal.reset_password.button"
+                      onClick={() => {
+                        const link = `https://77mobiles.pro/reset-password?phone=${encodeURIComponent(selectedUser.phone)}`;
+                        navigator.clipboard?.writeText(link).catch(() => {});
+                        toast.success("Reset link copied to clipboard");
+                      }}
+                      className="text-[10px] font-bold px-2 py-1 rounded-lg"
+                      style={{
+                        background: "rgba(29,78,216,0.08)",
+                        color: "#1D4ED8",
+                      }}
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-100 my-4" />
+
+            {/* Business Info Section */}
+            <div className="mb-5">
+              <p className="text-[10px] font-bold uppercase text-gray-400 mb-3 tracking-wider">
+                Business Info
+              </p>
+              <div className="space-y-2.5">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-500">Business Name</span>
+                  <span className="text-sm font-semibold text-[#1E293B]">
+                    {selectedUser.businessName || "—"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-500">City</span>
+                  <span className="text-sm font-semibold text-[#1E293B]">
+                    {selectedUser.location || "—"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-500">Role</span>
+                  <span
+                    className="text-xs font-bold px-2 py-0.5 rounded-full"
+                    style={{
+                      background:
+                        selectedUser.role === "buyer" ||
+                        selectedUser.role === "Buyer"
+                          ? "#ECFDF5"
+                          : "#EFF6FF",
+                      color:
+                        selectedUser.role === "buyer" ||
+                        selectedUser.role === "Buyer"
+                          ? "#065F46"
+                          : "#1D4ED8",
+                    }}
+                  >
+                    {selectedUser.role === "buyer" ||
+                    selectedUser.role === "Buyer"
+                      ? "Business Buyer"
+                      : "Seller / Dealer"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-100 my-4" />
+
+            {/* Documents Section */}
+            <div className="mb-5">
+              <p className="text-[10px] font-bold uppercase text-gray-400 mb-3 tracking-wider">
+                Documents
+              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-500">Document Type</p>
+                  <p className="text-sm font-semibold text-[#1E293B]">
+                    {selectedUser.docType || "KYC Document"}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  data-ocid="admin.users.modal.view_doc.button"
+                  onClick={() => {
+                    const url =
+                      selectedUser.aadhaar_url || selectedUser.pan_url;
+                    if (url?.startsWith("http")) {
+                      window.open(url, "_blank");
+                    } else {
+                      toast.info("No document uploaded yet for this user");
+                    }
+                  }}
+                  className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl"
+                  style={{ background: "#1D4ED8", color: "white" }}
+                >
+                  <Eye className="w-3.5 h-3.5" /> View Doc
+                </button>
+              </div>
+            </div>
+
+            {/* Action buttons — only for Pending */}
+            {selectedUser.kycStatus === "Pending" && (
+              <>
+                <div className="border-t border-gray-100 my-4" />
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    data-ocid="admin.users.modal.approve.button"
+                    onClick={() => {
+                      setKycItems((prev) =>
+                        prev.map((k) =>
+                          k.id === selectedUser.id
+                            ? { ...k, status: "Approved" }
+                            : k,
+                        ),
+                      );
+                      setPendingCount((prev) => Math.max(0, prev - 1));
+                      localStorage.setItem(
+                        "77m_verification_status",
+                        "verified",
+                      );
+                      localStorage.setItem("77m_is_verified", "true");
+                      try {
+                        const kycSubs = JSON.parse(
+                          localStorage.getItem("77m_kyc_submissions") || "[]",
+                        );
+                        localStorage.setItem(
+                          "77m_kyc_submissions",
+                          JSON.stringify(
+                            kycSubs.map((k: any) =>
+                              k.id === selectedUser.id
+                                ? { ...k, status: "approved" }
+                                : k,
+                            ),
+                          ),
+                        );
+                        const auditLog = JSON.parse(
+                          localStorage.getItem("77m_audit_log") || "[]",
+                        );
+                        auditLog.unshift({
+                          time: new Date().toLocaleString("en-IN"),
+                          entry: `Admin approved KYC for ${selectedUser.name} (${selectedUser.businessName})`,
+                        });
+                        localStorage.setItem(
+                          "77m_audit_log",
+                          JSON.stringify(auditLog.slice(0, 100)),
+                        );
+                      } catch {}
+                      toast.success(
+                        "Approved — user can now access the portal",
+                      );
+                      setSelectedUser(null);
+                    }}
+                    className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white"
+                    style={{ background: "#16A34A" }}
+                  >
+                    ✓ Approve
+                  </button>
+                  <button
+                    type="button"
+                    data-ocid="admin.users.modal.reject.button"
+                    onClick={() => {
+                      setRejectTarget(selectedUser.id);
+                      setRejectReason("");
+                      setSelectedUser(null);
+                    }}
+                    className="flex-1 py-2.5 rounded-xl font-bold text-sm"
+                    style={{
+                      background: "rgba(239,68,68,0.1)",
+                      color: "#EF4444",
+                      border: "1px solid rgba(239,68,68,0.3)",
+                    }}
+                  >
+                    ✕ Reject
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ===== REJECT REASON MODAL (Task 1E) ===== */}
+      {rejectTarget && (
+        <div
+          className="fixed inset-0 z-[110] bg-black/40 flex items-center justify-center p-4"
+          onClick={() => setRejectTarget(null)}
+          onKeyDown={(e) => e.key === "Escape" && setRejectTarget(null)}
+          aria-label="Reject reason dialog"
+          aria-modal="true"
+          data-ocid="admin.users.reject.dialog"
+        >
+          <div
+            className="rounded-2xl bg-white p-6 w-full max-w-sm"
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            onKeyDown={(e: React.KeyboardEvent) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-lg text-[#1E293B]">
+                Reject Verification
+              </h3>
+              <button
+                type="button"
+                data-ocid="admin.users.reject.close_button"
+                onClick={() => setRejectTarget(null)}
+                className="w-8 h-8 rounded-full flex items-center justify-center"
+                style={{ background: "#F1F5F9", color: "#64748B" }}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mb-4">
+              Select a reason or write a custom message:
+            </p>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {[
+                "Invalid GST Document",
+                "Invalid PAN Card",
+                "Blurry Photo",
+                "Mismatched Business Name",
+                "Incomplete Info",
+              ].map((reason) => (
+                <button
+                  key={reason}
+                  type="button"
+                  onClick={() => setRejectReason(reason)}
+                  className="text-xs px-3 py-1.5 rounded-full font-medium transition-all"
+                  style={{
+                    background: rejectReason === reason ? "#1D4ED8" : "#F1F5F9",
+                    color: rejectReason === reason ? "white" : "#64748B",
+                    border:
+                      rejectReason === reason
+                        ? "1px solid #1D4ED8"
+                        : "1px solid #E2E8F0",
+                  }}
+                >
+                  {reason}
+                </button>
+              ))}
+            </div>
+            <input
+              data-ocid="admin.users.reject.input"
+              type="text"
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="Or type a custom reason…"
+              className="w-full px-3 py-2.5 rounded-xl text-sm outline-none mb-4"
+              style={{
+                background: "#F8FAFC",
+                border: "1px solid #E2E8F0",
+                color: "#1E293B",
+              }}
+            />
+            <div className="flex gap-3">
+              <button
+                type="button"
+                data-ocid="admin.users.reject.cancel_button"
+                onClick={() => setRejectTarget(null)}
+                className="flex-1 py-2.5 rounded-xl font-semibold text-sm"
+                style={{ background: "#F1F5F9", color: "#64748B" }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                data-ocid="admin.users.reject.confirm_button"
+                onClick={() => {
+                  if (!rejectReason.trim()) {
+                    toast.error("Please select or enter a rejection reason");
+                    return;
+                  }
+                  setKycItems((prev) =>
+                    prev.map((k) =>
+                      k.id === rejectTarget ? { ...k, status: "Rejected" } : k,
+                    ),
+                  );
+                  try {
+                    const kycSubs = JSON.parse(
+                      localStorage.getItem("77m_kyc_submissions") || "[]",
+                    );
+                    localStorage.setItem(
+                      "77m_kyc_submissions",
+                      JSON.stringify(
+                        kycSubs.map((k: any) =>
+                          k.id === rejectTarget
+                            ? { ...k, status: "rejected", rejectReason }
+                            : k,
+                        ),
+                      ),
+                    );
+                    const auditLog = JSON.parse(
+                      localStorage.getItem("77m_audit_log") || "[]",
+                    );
+                    const user = kycItems.find(
+                      (k: any) => k.id === rejectTarget,
+                    );
+                    auditLog.unshift({
+                      time: new Date().toLocaleString("en-IN"),
+                      entry: `Admin rejected KYC for ${user?.name || rejectTarget} — reason: ${rejectReason}`,
+                    });
+                    localStorage.setItem(
+                      "77m_audit_log",
+                      JSON.stringify(auditLog.slice(0, 100)),
+                    );
+                  } catch {}
+                  toast.error(`User rejected — reason: ${rejectReason}`);
+                  setRejectTarget(null);
+                  setRejectReason("");
+                }}
+                className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white"
+                style={{ background: "#EF4444" }}
+              >
+                Confirm Rejection
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Task 7: KYC Document Lightbox */}
       {docModal && (
@@ -2967,34 +3310,6 @@ function SectionBlock({
       <h3 className="font-bold text-[#1E293B] text-sm mb-3">{title}</h3>
       {children}
     </div>
-  );
-}
-
-function ActionBtn({
-  label,
-  color,
-  onClick,
-  ocid,
-}: {
-  label: string;
-  color: string;
-  onClick: () => void;
-  ocid: string;
-}) {
-  return (
-    <button
-      type="button"
-      data-ocid={ocid}
-      onClick={onClick}
-      className="flex-1 py-1.5 rounded-xl text-xs font-semibold"
-      style={{
-        background: `${color}15`,
-        color,
-        border: `1px solid ${color}40`,
-      }}
-    >
-      {label}
-    </button>
   );
 }
 
