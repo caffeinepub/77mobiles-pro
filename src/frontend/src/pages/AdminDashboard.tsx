@@ -88,6 +88,8 @@ export default function AdminDashboard() {
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [resetPwTarget, setResetPwTarget] = useState<string | null>(null);
+  const [resetPwValue, setResetPwValue] = useState("");
   const [kycItems, setKycItems] = useState<any[]>([]);
   const [listingTab, setListingTab] = useState<"queue" | "auctions">("queue");
   const [auctionTimers, setAuctionTimers] = useState<number[]>([]);
@@ -177,6 +179,12 @@ export default function AdminDashboard() {
     url: string;
     name: string;
   } | null>(null);
+  const [docZoom, setDocZoom] = useState(1);
+
+  // Reset zoom when doc modal changes - runs when docModal opens/closes
+  useEffect(() => {
+    if (!docModal) setDocZoom(1);
+  });
 
   // Task 8: Admin bell notifications
   const [showBellPanel, setShowBellPanel] = useState(false);
@@ -2895,27 +2903,124 @@ export default function AdminDashboard() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-gray-500">Password</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-400 font-mono">
-                      ••••••••
-                    </span>
-                    <button
-                      type="button"
-                      data-ocid="admin.users.modal.reset_password.button"
-                      onClick={() => {
-                        const link = `https://77mobiles.pro/reset-password?phone=${encodeURIComponent(selectedUser.phone)}`;
-                        navigator.clipboard?.writeText(link).catch(() => {});
-                        toast.success("Reset link copied to clipboard");
-                      }}
-                      className="text-[10px] font-bold px-2 py-1 rounded-lg"
-                      style={{
-                        background: "rgba(29,78,216,0.08)",
-                        color: "#1D4ED8",
-                      }}
-                    >
-                      Reset
-                    </button>
-                  </div>
+                  {resetPwTarget === selectedUser.id ? (
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="password"
+                        value={resetPwValue}
+                        onChange={(e) => setResetPwValue(e.target.value)}
+                        placeholder="Enter New Password"
+                        minLength={6}
+                        data-ocid="admin.users.modal.reset_password.input"
+                        className="text-xs border border-gray-300 rounded-lg px-2 py-1 w-36 focus:outline-none focus:border-[#1D4ED8]"
+                        style={{ fontFamily: "inherit" }}
+                      />
+                      <button
+                        type="button"
+                        data-ocid="admin.users.modal.reset_password.save_button"
+                        onClick={() => {
+                          if (resetPwValue.length < 6) {
+                            toast.error(
+                              "Password must be at least 6 characters",
+                            );
+                            return;
+                          }
+                          // Update 77m_kyc_submissions
+                          try {
+                            const kycSubs = JSON.parse(
+                              localStorage.getItem("77m_kyc_submissions") ||
+                                "[]",
+                            );
+                            localStorage.setItem(
+                              "77m_kyc_submissions",
+                              JSON.stringify(
+                                kycSubs.map((k: any) =>
+                                  k.id === selectedUser.id
+                                    ? { ...k, password: resetPwValue }
+                                    : k,
+                                ),
+                              ),
+                            );
+                          } catch {}
+                          // Update 77m_registered_users if present
+                          try {
+                            const regUsers = JSON.parse(
+                              localStorage.getItem("77m_registered_users") ||
+                                "[]",
+                            );
+                            if (regUsers.length > 0) {
+                              localStorage.setItem(
+                                "77m_registered_users",
+                                JSON.stringify(
+                                  regUsers.map((u: any) =>
+                                    u.id === selectedUser.id
+                                      ? { ...u, password: resetPwValue }
+                                      : u,
+                                  ),
+                                ),
+                              );
+                            }
+                          } catch {}
+                          // Audit log
+                          try {
+                            const auditLog = JSON.parse(
+                              localStorage.getItem("77m_audit_log") || "[]",
+                            );
+                            auditLog.unshift({
+                              time: new Date().toLocaleString("en-IN"),
+                              entry: `Admin reset password for ${selectedUser.name}`,
+                            });
+                            localStorage.setItem(
+                              "77m_audit_log",
+                              JSON.stringify(auditLog.slice(0, 100)),
+                            );
+                          } catch {}
+                          toast.success(
+                            `Password for ${selectedUser.name} updated successfully.`,
+                          );
+                          setResetPwTarget(null);
+                          setResetPwValue("");
+                        }}
+                        className="text-[10px] font-bold px-2 py-1 rounded-lg text-white"
+                        style={{ background: "#1D4ED8" }}
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        data-ocid="admin.users.modal.reset_password.cancel_button"
+                        onClick={() => {
+                          setResetPwTarget(null);
+                          setResetPwValue("");
+                        }}
+                        className="text-[10px] font-bold px-2 py-1 rounded-lg"
+                        style={{ background: "#F1F5F9", color: "#64748B" }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-400 font-mono">
+                        ••••••••
+                      </span>
+                      <button
+                        type="button"
+                        data-ocid="admin.users.modal.reset_password.button"
+                        onClick={() => {
+                          setResetPwTarget(selectedUser.id);
+                          setResetPwValue("");
+                        }}
+                        className="text-[10px] font-bold px-2 py-1 rounded-lg"
+                        style={{
+                          background: "rgba(29,78,216,0.08)",
+                          color: "#1D4ED8",
+                        }}
+                      >
+                        Reset
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -2980,23 +3085,57 @@ export default function AdminDashboard() {
                     {selectedUser.docType || "KYC Document"}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  data-ocid="admin.users.modal.view_doc.button"
-                  onClick={() => {
-                    const url =
-                      selectedUser.aadhaar_url || selectedUser.pan_url;
-                    if (url?.startsWith("http")) {
-                      window.open(url, "_blank");
-                    } else {
-                      toast.info("No document uploaded yet for this user");
-                    }
-                  }}
-                  className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl"
-                  style={{ background: "#1D4ED8", color: "white" }}
-                >
-                  <Eye className="w-3.5 h-3.5" /> View Doc
-                </button>
+                {(() => {
+                  const docUrl =
+                    selectedUser.aadhaar_url ||
+                    selectedUser.pan_url ||
+                    selectedUser.kyc_document_url ||
+                    selectedUser.doc_url ||
+                    null;
+                  const isValidUrl =
+                    docUrl &&
+                    (docUrl.startsWith("http") || docUrl.startsWith("data:"));
+                  const isGsPath = docUrl?.startsWith("gs://");
+                  if (isValidUrl) {
+                    return (
+                      <button
+                        type="button"
+                        data-ocid="admin.users.modal.view_doc.button"
+                        onClick={() =>
+                          setDocModal({ url: docUrl, name: selectedUser.name })
+                        }
+                        className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl"
+                        style={{ background: "#1D4ED8", color: "white" }}
+                      >
+                        <Eye className="w-3.5 h-3.5" /> View Doc
+                      </button>
+                    );
+                  }
+                  if (isGsPath) {
+                    return (
+                      <button
+                        type="button"
+                        data-ocid="admin.users.modal.view_doc.button"
+                        disabled
+                        className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl cursor-not-allowed opacity-60"
+                        style={{ background: "#E2E8F0", color: "#94A3B8" }}
+                      >
+                        <Eye className="w-3.5 h-3.5" /> Processing...
+                      </button>
+                    );
+                  }
+                  return (
+                    <button
+                      type="button"
+                      data-ocid="admin.users.modal.view_doc.button"
+                      disabled
+                      className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-2 rounded-xl cursor-not-allowed opacity-60"
+                      style={{ background: "#E2E8F0", color: "#94A3B8" }}
+                    >
+                      No Document Uploaded
+                    </button>
+                  );
+                })()}
               </div>
             </div>
 
@@ -3219,11 +3358,11 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Task 7: KYC Document Lightbox */}
+      {/* Task 7: KYC Document Lightbox with Zoom */}
       {docModal && (
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center"
-          style={{ background: "rgba(0,0,0,0.85)" }}
+          style={{ background: "rgba(0,0,0,0.90)" }}
           onClick={() => setDocModal(null)}
           onKeyDown={(e) => {
             if (e.key === "Escape") setDocModal(null);
@@ -3231,25 +3370,71 @@ export default function AdminDashboard() {
           aria-label="Document preview"
         >
           <div
-            className="relative max-w-[90vw] max-h-[90vh] rounded-2xl overflow-hidden bg-white p-2"
+            className="relative max-w-[92vw] max-h-[92vh] rounded-2xl bg-white p-3 flex flex-col"
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
             onKeyDown={(e: React.KeyboardEvent) => e.stopPropagation()}
           >
-            <button
-              type="button"
-              onClick={() => setDocModal(null)}
-              className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center z-10"
+            {/* Toolbar */}
+            <div className="flex items-center justify-between mb-2 px-1">
+              <p className="text-xs font-semibold text-gray-500">
+                KYC Document — {docModal.name}
+              </p>
+              <div className="flex items-center gap-2">
+                {docZoom > 1 && (
+                  <span className="text-[10px] font-bold text-[#1D4ED8] bg-blue-50 px-1.5 py-0.5 rounded-md">
+                    {docZoom.toFixed(1)}x
+                  </span>
+                )}
+                <button
+                  type="button"
+                  title="Download"
+                  onClick={() => window.open(docModal.url, "_blank")}
+                  className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+                  data-ocid="admin.users.modal.view_doc.button"
+                >
+                  <Download className="w-3.5 h-3.5 text-gray-600" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDocModal(null)}
+                  className="w-7 h-7 rounded-full bg-black/60 flex items-center justify-center hover:bg-black/80 transition-colors"
+                >
+                  <X className="w-4 h-4 text-white" />
+                </button>
+              </div>
+            </div>
+            {/* Image container */}
+            <div
+              className="overflow-auto rounded-xl"
+              style={{
+                maxWidth: "85vw",
+                maxHeight: "80vh",
+                cursor: docZoom > 1 ? "grab" : "zoom-in",
+              }}
+              onWheel={(e) => {
+                e.preventDefault();
+                setDocZoom((z) =>
+                  Math.min(3, Math.max(1, z + (e.deltaY < 0 ? 0.2 : -0.2))),
+                );
+              }}
             >
-              <X className="w-4 h-4 text-white" />
-            </button>
-            <p className="text-xs font-semibold text-gray-500 mb-2 px-2">
-              KYC Document — {docModal.name}
+              <img
+                src={docModal.url}
+                alt="KYC Document"
+                onDoubleClick={() => setDocZoom((z) => (z > 1 ? 1 : 2))}
+                style={{
+                  transform: `scale(${docZoom})`,
+                  transformOrigin: "top left",
+                  transition: "transform 0.15s ease",
+                  display: "block",
+                  maxWidth: docZoom === 1 ? "100%" : "none",
+                  borderRadius: "12px",
+                }}
+              />
+            </div>
+            <p className="text-[10px] text-gray-400 text-center mt-1.5">
+              Scroll or pinch to zoom · Double-click to toggle zoom
             </p>
-            <img
-              src={docModal.url}
-              alt="KYC Document"
-              className="max-w-[85vw] max-h-[80vh] rounded-xl object-contain"
-            />
           </div>
         </div>
       )}
