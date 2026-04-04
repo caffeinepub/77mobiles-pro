@@ -41,7 +41,9 @@ function saveCredential(
   const creds = getCredentials();
   // Simple hash simulation — in production use Firebase Auth signInWithEmailAndPassword
   const passwordHash = btoa(`${phone}:${password}:77mobiles`);
-  creds[phone] = { passwordHash, role, status: "pending", business };
+  // Use composite key: phone_role for strict identity separation
+  const compositeKey = `${phone}_${role}`;
+  creds[compositeKey] = { passwordHash, role, status: "pending", business };
   localStorage.setItem(CREDS_KEY, JSON.stringify(creds));
 }
 
@@ -51,20 +53,50 @@ function verifyCredential(
 ): { role: string; status: string; business: string } | null {
   const creds = getCredentials();
   const norm = phone.replace(/^\+91/, "").replace(/^0+/, "");
-  const entry = creds[norm] || creds[`+91${norm}`] || creds[phone];
+  // Try composite keys first (role-separated accounts), then legacy keys
+  const entryBuyer = creds[`${norm}_buyer`];
+  const entrySeller = creds[`${norm}_seller`];
+  // Find which composite entry matches the password
+  let entry: {
+    passwordHash: string;
+    role: string;
+    status: string;
+    business: string;
+  } | null = null;
+  for (const candidate of [
+    entryBuyer,
+    entrySeller,
+    creds[norm],
+    creds[`+91${norm}`],
+    creds[phone],
+  ]) {
+    if (!candidate) continue;
+    const expected = btoa(`${norm}:${password}:77mobiles`);
+    const expected2 = btoa(`+91${norm}:${password}:77mobiles`);
+    if (
+      candidate.passwordHash === expected ||
+      candidate.passwordHash === expected2
+    ) {
+      entry = candidate;
+      break;
+    }
+  }
   if (!entry) return null;
-  const expected = btoa(`${norm}:${password}:77mobiles`);
-  const expected2 = btoa(`+91${norm}:${password}:77mobiles`);
-  if (entry.passwordHash !== expected && entry.passwordHash !== expected2)
-    return null;
-  // Primary check: per-user phone approval from admin
+  const entryRole = entry.role as string;
+  // Primary check: per-user phone+role approval from admin
   if (isPhoneApproved(norm)) return { ...entry, status: "verified" };
-  // Secondary check: KYC submission status
-  const kycSubs: any[] = JSON.parse(
+  // Secondary check: role-specific KYC submission status
+  const kycKey =
+    entryRole === "seller"
+      ? "77m_kyc_submissions_sellers"
+      : "77m_kyc_submissions_buyers";
+  const kycSubs: any[] = JSON.parse(localStorage.getItem(kycKey) || "[]");
+  const legacySubs: any[] = JSON.parse(
     localStorage.getItem("77m_kyc_submissions") || "[]",
   );
-  const kycEntry = kycSubs.find(
-    (k: any) => k.phone === norm || k.phone === `+91${norm}`,
+  const kycEntry = [...kycSubs, ...legacySubs].find(
+    (k: any) =>
+      (k.phone === norm || k.phone === `+91${norm}`) && k.role === entryRole,
   );
   if (kycEntry?.status === "approved") return { ...entry, status: "verified" };
   return entry;
@@ -76,6 +108,11 @@ export default function AuthPage() {
   const { login } = useAuth();
   const [mode, setMode] = useState<"register" | "login">("register");
   const [loading, setLoading] = useState(false);
+  // Task 8: Detect standalone PWA mode for iOS compatibility
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const _isStandalone =
+    (window.navigator as any).standalone === true ||
+    window.matchMedia("(display-mode: standalone)").matches;
   const [showPassword, setShowPassword] = useState(false);
   const [showRegPassword, setShowRegPassword] = useState(false);
 
@@ -102,7 +139,8 @@ export default function AuthPage() {
       "77m_mode",
       role === UserRole.sellerDealer ? "seller" : "buyer",
     );
-    navigate({ to: "/app" });
+    // Task 8: Use window.location.replace for PWA to avoid routing hang
+    window.location.replace("/app");
   };
 
   const handleRegisterSeller = async () => {
@@ -120,8 +158,32 @@ export default function AuthPage() {
     }
     setLoading(true);
     const norm = sellerMobile.replace(/^\+91/, "").replace(/^0+/, "");
+    // Task 9: Check for duplicate registration
+    const _existingKycSellerAll = JSON.parse(
+      localStorage.getItem("77m_kyc_submissions_sellers") || "[]",
+    );
+    const _legacyKycSeller = JSON.parse(
+      localStorage.getItem("77m_kyc_submissions") || "[]",
+    ).filter((u: any) => u.role === "seller");
+    const _existingKycSeller = [..._existingKycSellerAll, ..._legacyKycSeller];
+    const _dupSeller = _existingKycSeller.find(
+      (u: any) =>
+        u.phone === norm || u.phone === `+91${norm}` || u.phone_number === norm,
+    );
+    if (_dupSeller) {
+      toast.error("Account already exists. Please login instead.");
+      setLoading(false);
+      return;
+    }
+    // Task 9: Generate unique Dealer ID (role-specific counter)
+    const _dealerCounter = Number(
+      localStorage.getItem("77m_dealer_counter_seller") || "400",
+    );
+    const _newDealerNum = _dealerCounter + 1;
+    localStorage.setItem("77m_dealer_counter_seller", String(_newDealerNum));
+    const _dealerId = `#${_newDealerNum}`;
     const profile = {
-      userId: crypto.randomUUID(),
+      userId: `${norm}_seller`,
       userRole: UserRole.sellerDealer,
       businessName: sellerBusiness || "My Business",
       verificationId: sellerPan.toUpperCase(),
@@ -141,30 +203,39 @@ export default function AuthPage() {
     );
     localStorage.setItem("77m_verification_status", "pending");
     localStorage.setItem("77m_is_verified", "false");
+    // Store in both legacy key (for admin panel) and role-specific key
     const kycKey = "77m_kyc_submissions";
+    const kycKeyRole = "77m_kyc_submissions_sellers";
+    const newEntry = {
+      id: crypto.randomUUID(),
+      business: sellerBusiness || "My Business",
+      phone: norm,
+      status: "pending",
+      docType: "PAN Card",
+      name: sellerBusiness || `Dealer ${norm.slice(-4)}`,
+      businessName: sellerBusiness || "My Business",
+      location: "India",
+      city: "India",
+      aadhaar_url: "",
+      pan_url: "",
+      role: "seller",
+      dealerId: _dealerId,
+      createdAt: Date.now(),
+    };
     const existing = JSON.parse(localStorage.getItem(kycKey) || "[]");
+    localStorage.setItem(kycKey, JSON.stringify([newEntry, ...existing]));
+    const existingRole = JSON.parse(localStorage.getItem(kycKeyRole) || "[]");
     localStorage.setItem(
-      kycKey,
-      JSON.stringify([
-        {
-          id: crypto.randomUUID(),
-          business: sellerBusiness || "My Business",
-          phone: norm,
-          status: "pending",
-          docType: "PAN Card",
-          name: sellerBusiness || `Dealer ${norm.slice(-4)}`,
-          businessName: sellerBusiness || "My Business",
-          location: "India",
-          city: "India",
-          aadhaar_url: "",
-          pan_url: "",
-          role: "seller",
-          createdAt: Date.now(),
-        },
-        ...existing,
-      ]),
+      kycKeyRole,
+      JSON.stringify([newEntry, ...existingRole]),
     );
     setLoading(false);
+    // Task 9: Clear form state
+    setSellerPan("");
+    setSellerAadhaar("");
+    setSellerMobile("");
+    setSellerBusiness("");
+    setSellerPassword("");
     toast.success("Registration submitted — pending verification");
     navigate({ to: "/pending-verification" });
   };
@@ -184,8 +255,31 @@ export default function AuthPage() {
     }
     setLoading(true);
     const norm = buyerMobile.replace(/^\+91/, "").replace(/^0+/, "");
+    // Task 9: Check for duplicate registration
+    const _existingKycBuyerAll = JSON.parse(
+      localStorage.getItem("77m_kyc_submissions_buyers") || "[]",
+    );
+    const _legacyKycBuyer = JSON.parse(
+      localStorage.getItem("77m_kyc_submissions") || "[]",
+    ).filter((u: any) => u.role === "buyer");
+    const _existingKycBuyer = [..._existingKycBuyerAll, ..._legacyKycBuyer];
+    const _dupBuyer = _existingKycBuyer.find(
+      (u: any) => u.phone === norm || u.phone_number === norm,
+    );
+    if (_dupBuyer) {
+      toast.error("Account already exists. Please login instead.");
+      setLoading(false);
+      return;
+    }
+    // Task 9: Generate unique Dealer ID (role-specific counter)
+    const _buyerCounter = Number(
+      localStorage.getItem("77m_dealer_counter_buyer") || "400",
+    );
+    const _newBuyerNum = _buyerCounter + 1;
+    localStorage.setItem("77m_dealer_counter_buyer", String(_newBuyerNum));
+    const _buyerDealerId = `#${_newBuyerNum}`;
     const profile = {
-      userId: crypto.randomUUID(),
+      userId: `${norm}_buyer`,
       userRole: UserRole.businessBuyer,
       businessName: buyerBusiness || "My Business",
       verificationId: buyerGst.toUpperCase(),
@@ -205,30 +299,44 @@ export default function AuthPage() {
     );
     localStorage.setItem("77m_verification_status", "pending");
     localStorage.setItem("77m_is_verified", "false");
-    const kycKey = "77m_kyc_submissions";
-    const existing = JSON.parse(localStorage.getItem(kycKey) || "[]");
+    // Store in both legacy key (for admin panel) and role-specific key
+    const kycKeyBuyer = "77m_kyc_submissions";
+    const kycKeyRoleBuyer = "77m_kyc_submissions_buyers";
+    const newBuyerEntry = {
+      id: crypto.randomUUID(),
+      business: buyerBusiness || "My Business",
+      phone: norm,
+      status: "pending",
+      docType: "GST Certificate",
+      name: buyerBusiness || `Dealer ${norm.slice(-4)}`,
+      businessName: buyerBusiness || "My Business",
+      location: "India",
+      city: "India",
+      aadhaar_url: "",
+      pan_url: "",
+      role: "buyer",
+      dealerId: _buyerDealerId,
+      createdAt: Date.now(),
+    };
+    const existing = JSON.parse(localStorage.getItem(kycKeyBuyer) || "[]");
     localStorage.setItem(
-      kycKey,
-      JSON.stringify([
-        {
-          id: crypto.randomUUID(),
-          business: buyerBusiness || "My Business",
-          phone: norm,
-          status: "pending",
-          docType: "GST Certificate",
-          name: buyerBusiness || `Dealer ${norm.slice(-4)}`,
-          businessName: buyerBusiness || "My Business",
-          location: "India",
-          city: "India",
-          aadhaar_url: "",
-          pan_url: "",
-          role: "buyer",
-          createdAt: Date.now(),
-        },
-        ...existing,
-      ]),
+      kycKeyBuyer,
+      JSON.stringify([newBuyerEntry, ...existing]),
+    );
+    const existingRoleBuyer = JSON.parse(
+      localStorage.getItem(kycKeyRoleBuyer) || "[]",
+    );
+    localStorage.setItem(
+      kycKeyRoleBuyer,
+      JSON.stringify([newBuyerEntry, ...existingRoleBuyer]),
     );
     setLoading(false);
+    // Task 9: Clear form state
+    setBuyerGst("");
+    setBuyerAadhaar("");
+    setBuyerMobile("");
+    setBuyerBusiness("");
+    setBuyerPassword("");
     toast.success("Registration submitted — pending verification");
     navigate({ to: "/pending-verification" });
   };

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import CountdownTimer from "../components/CountdownTimer";
 import PortalCarousel from "../components/PortalCarousel";
 import type { CarouselSlide } from "../components/PortalCarousel";
 import RecentSalesSlider from "../components/RecentSalesSlider";
@@ -665,44 +666,6 @@ function CategoryListingView({
   );
 }
 
-function LiveCountdown({ endsAt }: { endsAt: bigint }) {
-  const [secs, setSecs] = useState(0);
-  const ref = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    const endMs = Number(endsAt) / 1_000_000;
-    const update = () => {
-      const ms = endMs - Date.now();
-      setSecs(Math.max(0, Math.floor(ms / 1000)));
-    };
-    update();
-    ref.current = setInterval(update, 1000);
-    return () => {
-      if (ref.current) clearInterval(ref.current);
-    };
-  }, [endsAt]);
-
-  const m = Math.floor(secs / 60);
-  const s = secs % 60;
-  const ended = secs === 0;
-  if (ended) {
-    return (
-      <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-400">
-        Ended
-      </span>
-    );
-  }
-  const display = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-  return (
-    <span
-      className="text-[9px] font-black px-1.5 py-0.5 rounded-md"
-      style={{ background: "#fef2f2", color: "#dc2626" }}
-    >
-      {"\u23F1"} {display}
-    </span>
-  );
-}
-
 const SkeletonCard = ({ className }: { className?: string }) => (
   <div
     className={`rounded-xl overflow-hidden ${className ?? ""}`}
@@ -835,6 +798,11 @@ export default function BuyerPortal() {
     originalPrice: Number(l.basePrice) / 100,
     bids: bidMap.get(l.listingId)?.count ?? 0,
     timer: l.auctionType === "Live20min" ? "20:00" : "7d",
+    // Use real endsAt if available, otherwise default to 20 minutes from now
+    endsAt:
+      l.endsAt && Number(l.endsAt) > 0
+        ? l.endsAt
+        : BigInt(Date.now() + 20 * 60 * 1000) * 1_000_000n,
     isLive: l.auctionType === "Live20min",
     warrantyMonths: Number(l.warranty ?? 0n),
     imageUrl: l.imageUrl ?? "",
@@ -1358,16 +1326,37 @@ export default function BuyerPortal() {
                             </div>
                             {/* Price on right */}
                             <div className="text-right flex-shrink-0">
-                              <p
-                                className="font-black text-[15px]"
-                                style={{ color: "#1D4ED8" }}
-                              >
-                                {"\u20B9"}
-                                {item.price.toLocaleString("en-IN")}
-                              </p>
-                              <p className="text-[10px] text-gray-400">
-                                {bidMap.get(item.id)?.count ?? item.bids} bids
-                              </p>
+                              {(() => {
+                                const listBidData = bidMap.get(item.id);
+                                const listHasBid =
+                                  listBidData && listBidData.amount > 0;
+                                const listDisplayPrice = listHasBid
+                                  ? Math.round(listBidData.amount / 100)
+                                  : item.price;
+                                return (
+                                  <>
+                                    <p
+                                      className="font-black text-[15px]"
+                                      style={{
+                                        color: listHasBid
+                                          ? "#16a34a"
+                                          : "#1D4ED8",
+                                      }}
+                                    >
+                                      {"\u20B9"}
+                                      {listDisplayPrice.toLocaleString("en-IN")}
+                                    </p>
+                                    {listHasBid && (
+                                      <p className="text-[9px] text-green-600 font-semibold">
+                                        Current Bid
+                                      </p>
+                                    )}
+                                    <p className="text-[10px] text-gray-400">
+                                      {listBidData?.count ?? item.bids} bids
+                                    </p>
+                                  </>
+                                );
+                              })()}
                             </div>
                           </div>
 
@@ -1508,7 +1497,9 @@ export default function BuyerPortal() {
                         {formatINR(currentBid)}
                       </p>
                       <div className="flex justify-end">
-                        <LiveCountdown endsAt={listing.endsAt} />
+                        <CountdownTimer
+                          expiryTimestamp={Number(listing.endsAt) / 1_000_000}
+                        />
                       </div>
                     </div>
                   </button>

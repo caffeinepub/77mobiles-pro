@@ -11,6 +11,7 @@ import {
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import AuctionTimer from "../components/AuctionTimer";
+import CountdownTimer from "../components/CountdownTimer";
 import PortalCarousel from "../components/PortalCarousel";
 import type { CarouselSlide } from "../components/PortalCarousel";
 import RecentSalesSlider from "../components/RecentSalesSlider";
@@ -579,10 +580,8 @@ export default function SellerPortal() {
                       </div>
                       {isActive && listing.endsAt && (
                         <div className="mt-0.5">
-                          <AuctionTimer
-                            endsAt={listing.endsAt}
-                            auctionType={listing.auctionType}
-                            status={listing.status}
+                          <CountdownTimer
+                            expiryTimestamp={Number(listing.endsAt) / 1_000_000}
                           />
                         </div>
                       )}
@@ -699,10 +698,10 @@ export default function SellerPortal() {
                         </div>
                         {isActive && listing.endsAt && (
                           <div className="mt-1">
-                            <AuctionTimer
-                              endsAt={listing.endsAt}
-                              auctionType={listing.auctionType}
-                              status={listing.status}
+                            <CountdownTimer
+                              expiryTimestamp={
+                                Number(listing.endsAt) / 1_000_000
+                              }
                             />
                           </div>
                         )}

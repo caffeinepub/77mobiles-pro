@@ -538,7 +538,7 @@ export default function CreateListing() {
 
   const imeiDigits = imei.replace(/\D/g, "");
   // Frictionless: continue as soon as 15 digits are entered, regardless of lookup result
-  const canContinueStep0 = imeiDigits.length === 15;
+  const canContinueStep0 = imeiDigits.length === 15 && imeiStatus === "success";
 
   // Task 1: Debounced API model search
   const handleApiModelSearch = (query: string) => {
@@ -637,7 +637,28 @@ export default function CreateListing() {
     });
   };
 
+  // Task 7: Client-side image filename check for contact info
+  function checkImageForContactInfo(file: File): boolean {
+    const name = file.name.toLowerCase();
+    const blocked = [
+      /call/i,
+      /whatsapp/i,
+      /contact/i,
+      /dm.?me/i,
+      /\+91/,
+      /\d{10}/,
+      /@\w+/,
+    ];
+    return blocked.some((r) => r.test(name));
+  }
+
   const handlePhotoUpload = (idx: number, file: File) => {
+    if (checkImageForContactInfo(file)) {
+      toast.error(
+        "Upload Failed: Images containing phone numbers or social media text are not allowed.",
+      );
+      return;
+    }
     compressImage(file).then((dataUrl) => {
       setUploadedPhotos((prev) => {
         const next = [...prev];
@@ -649,7 +670,18 @@ export default function CreateListing() {
 
   // Task 9: Fill slots starting from first empty one (supports multi-select)
   const handleMultiPhotoSelect = async (files: FileList) => {
-    const slots = Array.from(files).slice(0, 5);
+    const allFiles = Array.from(files).slice(0, 5);
+    // Task 7: Filter out files with blocked names
+    const cleanFiles = allFiles.filter((f) => {
+      if (checkImageForContactInfo(f)) {
+        toast.error(
+          "Upload Failed: Images containing phone numbers or social media text are not allowed.",
+        );
+        return false;
+      }
+      return true;
+    });
+    const slots = cleanFiles;
     const compressed = await Promise.all(slots.map((f) => compressImage(f)));
     setUploadedPhotos((prev) => {
       const next = [...prev];
@@ -1271,6 +1303,10 @@ export default function CreateListing() {
               type="button"
               data-ocid="create.step0.primary_button"
               onClick={() => {
+                if (!canContinueStep0) {
+                  toast.error("Please verify a valid IMEI number to proceed.");
+                  return;
+                }
                 setBrandSearch("");
                 setStep(1);
               }}

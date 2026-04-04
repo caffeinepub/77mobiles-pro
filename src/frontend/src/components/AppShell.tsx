@@ -1,6 +1,7 @@
 import { ArrowUp, ScanBarcode, Search, User, Wallet, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "../contexts/AppContext";
+import { SELLER_LISTINGS } from "../data/demoListings";
 import ActivityPage from "../pages/ActivityPage";
 import AlertsPage from "../pages/AlertsPage";
 import BuyerPortal from "../pages/BuyerPortal";
@@ -70,6 +71,7 @@ export default function AppShell() {
     setActiveTab,
     activeCategory,
     setActiveCategory,
+    sharedListings,
   } = useApp();
   const scrollRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -81,6 +83,7 @@ export default function AppShell() {
   const [showSearch, setShowSearch] = useState(false);
   const prevTabRef = useRef(activeTab);
   const lastScrollY = useRef(0);
+  const [liveCount, setLiveCount] = useState(0);
 
   const isSubPage = activeTab !== "home";
 
@@ -127,6 +130,17 @@ export default function AppShell() {
       scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
     }
   });
+
+  useEffect(() => {
+    const count = [...sharedListings, ...SELLER_LISTINGS].filter(
+      (l) => l.status === "Active",
+    ).length;
+    setLiveCount(
+      count > 0
+        ? count
+        : SELLER_LISTINGS.filter((l) => l.status === "Active").length,
+    );
+  }, [sharedListings]);
 
   const scrollToTop = () =>
     scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
@@ -201,7 +215,7 @@ export default function AppShell() {
                       className="font-bold"
                       style={{ fontSize: "11px", color: "#1D4ED8" }}
                     >
-                      6 Live
+                      {liveCount > 0 ? liveCount : 6} Live
                     </span>
                   </div>
                 )}
@@ -401,8 +415,8 @@ export default function AppShell() {
 
       <main
         key={activeTab}
-        className="pb-32 transition-opacity duration-200"
-        style={{ background: "#F8FAFC" }}
+        className="transition-opacity duration-200"
+        style={{ background: "#F8FAFC", paddingBottom: "100px" }}
       >
         {activeTab === "home" && isSeller && <SellerPortal />}
         {activeTab === "home" && !isSeller && <BuyerPortal />}

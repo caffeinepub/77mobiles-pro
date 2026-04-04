@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useApp } from "../contexts/AppContext";
 import { useAuth } from "../contexts/AuthContext";
+import { SELLER_LISTINGS } from "../data/demoListings";
 import { type AlertNotification, BidStore } from "../stores/BidStore";
 
 const SELLER_ACTIVITY = [
@@ -62,9 +63,11 @@ export default function ActivityPage() {
   const [activeSubTab, setActiveSubTab] = useState<"activity" | "leads">(
     "activity",
   );
-  // Task 3: Real-time highest bid for the pending sale card
+  // Task 1: Real-time highest bid per listing — use the first active listing's ID
   const [pendingSaleBid, setPendingSaleBid] = useState<number>(0);
-  const pendingSaleListingId = "ps-1";
+  // Use first active seller listing ID, fallback to "ps-1"
+  const pendingSaleListingId =
+    SELLER_LISTINGS.find((l) => l.status === "Active")?.listingId ?? "ps-1";
   const navigate = useNavigate();
   // Suppress unused variable warning
   const _user = user;
@@ -86,18 +89,24 @@ export default function ActivityPage() {
       }
     });
     return unsub;
-  }, []);
+  }, [pendingSaleListingId]);
 
   const handleAccept = (id: string, amount: number) => {
     setPendingStates((prev) => ({ ...prev, [id]: "accepted" }));
+    // amount is in paise; if 0 use fallback display
+    const displayAmount = amount > 0 ? amount : pendingSaleBid;
     const price =
-      amount > 0
+      displayAmount > 0
         ? new Intl.NumberFormat("en-IN", {
             style: "currency",
             currency: "INR",
             maximumFractionDigits: 0,
-          }).format(amount / 100)
+          }).format(displayAmount / 100)
         : "₹1,10,000";
+    // Store final price to localStorage linked to this listing
+    if (displayAmount > 0) {
+      localStorage.setItem(`77m_sold_${id}`, String(displayAmount / 100));
+    }
     toast.success(
       `Sale accepted for ${price}! Item marked as Payment Pending.`,
     );

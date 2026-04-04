@@ -14,7 +14,6 @@ import {
   Mail,
   MessageCircle,
   Phone,
-  RefreshCw,
   Settings,
   Shield,
   Star,
@@ -23,7 +22,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { type AppMode, useApp } from "../contexts/AppContext";
+import { useApp } from "../contexts/AppContext";
 import { useAuth } from "../contexts/AuthContext";
 import { SELLER_LISTINGS } from "../data/demoListings";
 import { type Bid, BidStore } from "../stores/BidStore";
@@ -56,7 +55,7 @@ const FAQ_ITEMS = [
 ];
 
 export default function ProfilePage() {
-  const { mode, setMode, sharedListings, setActiveTab } = useApp();
+  const { mode, sharedListings, setActiveTab } = useApp();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [view, setView] = useState<
@@ -67,14 +66,6 @@ export default function ProfilePage() {
   >("7days");
   const [notifEnabled, setNotifEnabled] = useState(true);
   const [notifDenied, setNotifDenied] = useState(false);
-
-  const handleSwitchMode = () => {
-    const newMode: AppMode = mode === "seller" ? "buyer" : "seller";
-    setMode(newMode);
-    toast.success(
-      `Switched to ${newMode === "seller" ? "Seller" : "Buyer"} Mode`,
-    );
-  };
 
   const handleLogout = () => {
     logout();
@@ -796,46 +787,7 @@ export default function ProfilePage() {
               ••••••{user?.mobileNumber?.slice(-4) || "XXXX"}
             </span>
           </div>
-          <div className="flex justify-between items-center mt-1">
-            <span className="text-xs text-gray-500">Current Mode</span>
-            <span
-              className="text-xs font-bold px-2 py-0.5 rounded-full text-white"
-              style={{ background: mode === "seller" ? "#007AFF" : "#16a34a" }}
-            >
-              {mode === "seller" ? "Seller" : "Buyer"}
-            </span>
-          </div>
         </div>
-      </div>
-
-      {/* Switch mode */}
-      <div
-        className="bg-white rounded-2xl p-4 flex items-center justify-between mb-4"
-        style={{
-          border: "1px solid #e5e7eb",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-        }}
-      >
-        <div>
-          <p className="font-bold text-sm text-gray-900">
-            Switch to {mode === "seller" ? "Buyer" : "Seller"} Mode
-          </p>
-          <p className="text-xs text-gray-500 mt-0.5">
-            {mode === "seller"
-              ? "Browse and bid on listings"
-              : "List your devices for auction"}
-          </p>
-        </div>
-        <button
-          type="button"
-          data-ocid="profile.switch_mode.toggle"
-          onClick={handleSwitchMode}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white"
-          style={{ background: "#007AFF" }}
-        >
-          <RefreshCw className="w-4 h-4" />
-          Switch
-        </button>
       </div>
 
       {/* Settings list */}

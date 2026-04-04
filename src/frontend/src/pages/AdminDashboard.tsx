@@ -9,6 +9,7 @@ import {
   DollarSign,
   Download,
   Eye,
+  EyeOff,
   Image,
   LayoutDashboard,
   Menu,
@@ -44,7 +45,8 @@ type AdminSection =
   | "portal-controls"
   | "slider-management"
   | "settings"
-  | "auditlog";
+  | "auditlog"
+  | "catalog";
 
 const CORRECT_PIN = "770777";
 
@@ -62,6 +64,7 @@ const NAV_ITEMS: {
   { id: "slider-management", label: "Slider Management", Icon: Image },
   { id: "settings", label: "Settings", Icon: Settings },
   { id: "auditlog", label: "Audit Log", Icon: ClipboardList },
+  { id: "catalog", label: "Catalog Manager", Icon: Package },
 ];
 
 interface BannerSlide {
@@ -175,6 +178,40 @@ export default function AdminDashboard() {
     },
   ]);
   const [pendingCount, setPendingCount] = useState(3);
+  // Task 6: Catalog Manager state
+  const [catalogTab, setCatalogTab] = useState<"brands" | "models">("brands");
+  const [brands, setBrands] = useState<
+    Array<{ id: string; name: string; logo: string }>
+  >(() => {
+    try {
+      return JSON.parse(localStorage.getItem("77m_brands") || "[]");
+    } catch {
+      return [];
+    }
+  });
+  const [models, setModels] = useState<
+    Array<{
+      id: string;
+      brand: string;
+      name: string;
+      storage: string[];
+      imageUrl: string;
+    }>
+  >(() => {
+    try {
+      return JSON.parse(localStorage.getItem("77m_models") || "[]");
+    } catch {
+      return [];
+    }
+  });
+  const [newBrandName, setNewBrandName] = useState("");
+  const [newBrandLogo, setNewBrandLogo] = useState("");
+  const [newModelBrand, setNewModelBrand] = useState("");
+  const [newModelName, setNewModelName] = useState("");
+  const [newModelStorage, setNewModelStorage] = useState("");
+  const [newModelImage, setNewModelImage] = useState("");
+  // Task 10: Password visibility toggle
+  const [showUserPassword, setShowUserPassword] = useState(false);
 
   // Task 12: Slider Management state — load from persisted storage
   const DEFAULT_BANNERS: BannerSlide[] = [
@@ -386,6 +423,13 @@ export default function AdminDashboard() {
   }, [authenticated]);
 
   // --- LOGIN SCREEN ---
+  // Task 10: Reset password visibility when selected user changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional reset on user selection change
+  useEffect(() => {
+    setShowUserPassword(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedUser?.id]);
+
   if (!authenticated) {
     return (
       <div
@@ -3163,6 +3207,231 @@ export default function AdminDashboard() {
               </div>
             </div>
           )}
+
+          {activeSection === "catalog" && (
+            <div className="p-6 space-y-4">
+              <h2 className="text-xl font-bold text-gray-900">
+                Master Catalog Manager
+              </h2>
+              {/* Tab switcher */}
+              <div className="flex gap-2 bg-gray-100 rounded-xl p-1">
+                <button
+                  type="button"
+                  onClick={() => setCatalogTab("brands")}
+                  className={`flex-1 py-2 rounded-lg text-xs font-bold ${catalogTab === "brands" ? "bg-white text-blue-700 shadow" : "text-gray-500"}`}
+                >
+                  Manage Brands
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCatalogTab("models")}
+                  className={`flex-1 py-2 rounded-lg text-xs font-bold ${catalogTab === "models" ? "bg-white text-blue-700 shadow" : "text-gray-500"}`}
+                >
+                  Manage Models
+                </button>
+              </div>
+
+              {catalogTab === "brands" && (
+                <div className="bg-white rounded-2xl p-4 space-y-3 border border-gray-100">
+                  <h3 className="font-bold text-sm text-gray-700">Add Brand</h3>
+                  <input
+                    value={newBrandName}
+                    onChange={(e) => setNewBrandName(e.target.value)}
+                    placeholder="Brand Name (e.g. Apple)"
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"
+                  />
+                  <input
+                    value={newBrandLogo}
+                    onChange={(e) => setNewBrandLogo(e.target.value)}
+                    placeholder="Logo URL (optional)"
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!newBrandName.trim()) return;
+                      const slug = newBrandName
+                        .toLowerCase()
+                        .replace(/\s+/g, "-");
+                      const newEntry = {
+                        id: slug,
+                        name: newBrandName.trim(),
+                        logo: newBrandLogo.trim(),
+                      };
+                      const updated = [
+                        ...brands.filter((b) => b.id !== slug),
+                        newEntry,
+                      ];
+                      setBrands(updated);
+                      localStorage.setItem(
+                        "77m_brands",
+                        JSON.stringify(updated),
+                      );
+                      toast.success(`Brand ${newBrandName} saved!`);
+                      setNewBrandName("");
+                      setNewBrandLogo("");
+                    }}
+                    className="w-full py-2.5 bg-blue-700 text-white rounded-xl text-sm font-bold"
+                  >
+                    Save Brand
+                  </button>
+                  <div className="space-y-2 mt-2">
+                    {brands.map((b) => (
+                      <div
+                        key={b.id}
+                        className="flex items-center justify-between p-2 bg-gray-50 rounded-xl"
+                      >
+                        <span className="text-sm font-semibold text-gray-800">
+                          {b.name}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = brands.filter((x) => x.id !== b.id);
+                            setBrands(updated);
+                            localStorage.setItem(
+                              "77m_brands",
+                              JSON.stringify(updated),
+                            );
+                          }}
+                          className="text-xs text-red-500 font-bold"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                    {brands.length === 0 && (
+                      <p className="text-xs text-gray-400 text-center py-4">
+                        No brands yet
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {catalogTab === "models" && (
+                <div className="bg-white rounded-2xl p-4 space-y-3 border border-gray-100">
+                  <h3 className="font-bold text-sm text-gray-700">Add Model</h3>
+                  <select
+                    value={newModelBrand}
+                    onChange={(e) => setNewModelBrand(e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white"
+                  >
+                    <option value="">Select Brand</option>
+                    {[
+                      "Apple",
+                      "Samsung",
+                      "OnePlus",
+                      "Xiaomi",
+                      "Realme",
+                      "Vivo",
+                      "Oppo",
+                      ...brands.map((b) => b.name),
+                    ]
+                      .filter((v, i, a) => a.indexOf(v) === i)
+                      .map((b) => (
+                        <option key={b} value={b}>
+                          {b}
+                        </option>
+                      ))}
+                  </select>
+                  <input
+                    value={newModelName}
+                    onChange={(e) => setNewModelName(e.target.value)}
+                    placeholder="Model Name (e.g. iPhone 17 Pro)"
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"
+                  />
+                  <input
+                    value={newModelStorage}
+                    onChange={(e) => setNewModelStorage(e.target.value)}
+                    placeholder="Storage options comma-separated (e.g. 128,256,512)"
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"
+                  />
+                  <input
+                    value={newModelImage}
+                    onChange={(e) => setNewModelImage(e.target.value)}
+                    placeholder="Default Image URL (optional)"
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!newModelName.trim() || !newModelBrand) return;
+                      const slug = `${newModelBrand}-${newModelName}`
+                        .toLowerCase()
+                        .replace(/\s+/g, "-")
+                        .replace(/[^a-z0-9-]/g, "");
+                      const storageArr = newModelStorage
+                        .split(",")
+                        .map((s) => s.trim())
+                        .filter(Boolean);
+                      const newEntry = {
+                        id: slug,
+                        brand: newModelBrand,
+                        name: newModelName.trim(),
+                        storage: storageArr,
+                        imageUrl: newModelImage.trim(),
+                      };
+                      const updated = [
+                        ...models.filter((m) => m.id !== slug),
+                        newEntry,
+                      ];
+                      setModels(updated);
+                      localStorage.setItem(
+                        "77m_models",
+                        JSON.stringify(updated),
+                      );
+                      toast.success(
+                        `Model ${newModelName} is now visible to all users.`,
+                      );
+                      setNewModelName("");
+                      setNewModelStorage("");
+                      setNewModelImage("");
+                    }}
+                    className="w-full py-2.5 bg-blue-700 text-white rounded-xl text-sm font-bold"
+                  >
+                    Save Model
+                  </button>
+                  <div className="space-y-2 mt-2">
+                    {models.map((m) => (
+                      <div
+                        key={m.id}
+                        className="flex items-center justify-between p-2 bg-gray-50 rounded-xl"
+                      >
+                        <div>
+                          <span className="text-sm font-semibold text-gray-800">
+                            {m.brand} {m.name}
+                          </span>
+                          <p className="text-[10px] text-gray-400">
+                            {m.storage.join(", ")} GB
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = models.filter((x) => x.id !== m.id);
+                            setModels(updated);
+                            localStorage.setItem(
+                              "77m_models",
+                              JSON.stringify(updated),
+                            );
+                          }}
+                          className="text-xs text-red-500 font-bold"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                    {models.length === 0 && (
+                      <p className="text-xs text-gray-400 text-center py-4">
+                        No models yet
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </main>
       </div>
 
@@ -3326,9 +3595,25 @@ export default function AdminDashboard() {
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-400 font-mono">
-                        ••••••••
-                      </span>
+                      <input
+                        type={showUserPassword ? "text" : "password"}
+                        value={selectedUser.password || "••••••••"}
+                        readOnly
+                        className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono"
+                        style={{ maxWidth: "120px" }}
+                      />
+                      <button
+                        type="button"
+                        data-ocid="admin.users.modal.view_password.toggle"
+                        onClick={() => setShowUserPassword((v) => !v)}
+                        className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      >
+                        {showUserPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
                       <button
                         type="button"
                         data-ocid="admin.users.modal.reset_password.button"
@@ -3398,18 +3683,12 @@ export default function AdminDashboard() {
 
             <div className="border-t border-gray-100 my-4" />
 
-            {/* Documents Section */}
+            {/* Documents / KYC Doc Section */}
             <div className="mb-5">
-              <p className="text-[10px] font-bold uppercase text-gray-400 mb-3 tracking-wider">
-                Documents
-              </p>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-500">Document Type</p>
-                  <p className="text-sm font-semibold text-[#1E293B]">
-                    {selectedUser.docType || "KYC Document"}
-                  </p>
-                </div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[10px] font-bold uppercase text-gray-400 tracking-wider">
+                  KYC Document
+                </p>
                 {(() => {
                   const docUrl =
                     selectedUser.aadhaar_url ||
@@ -3461,6 +3740,35 @@ export default function AdminDashboard() {
                     </button>
                   );
                 })()}
+              </div>
+              <p className="text-xs text-gray-500 mb-3">
+                {selectedUser.docType || "KYC Document"}
+              </p>
+            </div>
+
+            {/* Submitted Form Details — Task 11 */}
+            <div className="mt-4">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">
+                SUBMITTED FORM DETAILS
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { label: "Business Address", key: "address" },
+                  { label: "State/Province", key: "state" },
+                  { label: "Pin Code", key: "pinCode" },
+                  { label: "Bank Account No.", key: "bankAccount" },
+                  { label: "IFSC Code", key: "ifscCode" },
+                  { label: "Referred By", key: "referredBy" },
+                ].map((field) => (
+                  <div key={field.key} className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-[9px] font-semibold text-gray-400 uppercase">
+                      {field.label}
+                    </p>
+                    <p className="text-xs font-semibold text-gray-800 mt-0.5">
+                      {(selectedUser as any)[field.key] || "Not Provided"}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
 

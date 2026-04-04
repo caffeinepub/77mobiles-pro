@@ -12,7 +12,6 @@ export default function BottomNav() {
     setShowPostLead,
     unreadAlerts,
     setUnreadAlerts,
-    modalOpen,
   } = useApp();
 
   const handlePost = () => {
@@ -52,30 +51,30 @@ export default function BottomNav() {
 
   const isHighPriority = unreadAlerts >= 3;
 
-  // Task 2: hide nav when a modal is open so it doesn't overlap
-  if (modalOpen) return null;
-
   return (
     <nav
-      className="fixed bottom-0 left-0"
       style={{
-        width: "100vw",
-        maxWidth: "100%",
-        // Task 2: z-index slightly lower than modal (9999)
-        zIndex: 9990,
-        backdropFilter: "blur(10px) saturate(180%)",
-        WebkitBackdropFilter: "blur(10px) saturate(180%)",
-        background: "rgba(255,255,255,0.88)",
-        borderTop: "1px solid rgba(229,231,235,0.7)",
-        boxShadow: "0 -2px 12px rgba(0,0,0,0.06)",
-        height: "calc(80px + env(safe-area-inset-bottom, 0px))",
+        position: "fixed",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: "80px",
+        paddingBottom: "env(safe-area-inset-bottom, 20px)",
+        backgroundColor: "#FFFFFF",
+        borderTop: "1px solid #E5E5E5",
+        zIndex: 999999,
         boxSizing: "content-box",
-        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        width: "100%",
       }}
     >
       <div
-        className="flex items-center justify-around px-2"
-        style={{ height: "80px" }}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-around",
+          height: "80px",
+          width: "100%",
+        }}
       >
         {leftTabs.map(({ id, label, Icon }) => {
           const isActive = activeTab === id;
@@ -85,18 +84,28 @@ export default function BottomNav() {
               key={id}
               data-ocid={`nav.${id}.link`}
               onClick={() => handleTabClick(id)}
-              className="flex flex-col items-center justify-center gap-0.5 min-w-[56px] py-1"
+              style={{
+                width: "20%",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "none",
+                border: "none",
+                padding: 0,
+              }}
             >
               <Icon
-                className="w-6 h-6"
+                size={28}
                 strokeWidth={1.5}
-                style={{ color: isActive ? "#1D4ED8" : "#9CA3AF" }}
+                style={{ color: isActive ? "#2563EB" : "#6B7280" }}
               />
               <span
                 className="font-semibold"
                 style={{
-                  fontSize: "12px",
-                  color: isActive ? "#1D4ED8" : "#9CA3AF",
+                  fontSize: "11px",
+                  marginTop: "4px",
+                  color: isActive ? "#2563EB" : "#6B7280",
                 }}
               >
                 {label}
@@ -136,13 +145,23 @@ export default function BottomNav() {
               key={id}
               data-ocid={`nav.${id}.link`}
               onClick={() => handleTabClick(id)}
-              className="flex flex-col items-center justify-center gap-0.5 min-w-[56px] py-1 relative"
+              style={{
+                width: "20%",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "none",
+                border: "none",
+                padding: 0,
+                position: "relative",
+              }}
             >
               <div className="relative">
                 <Icon
-                  className="w-6 h-6"
+                  size={28}
                   strokeWidth={1.5}
-                  style={{ color: isActive ? "#1D4ED8" : "#9CA3AF" }}
+                  style={{ color: isActive ? "#2563EB" : "#6B7280" }}
                 />
                 {isActivityWithBadge && (
                   <>
@@ -162,8 +181,9 @@ export default function BottomNav() {
               <span
                 className="font-semibold"
                 style={{
-                  fontSize: "12px",
-                  color: isActive ? "#1D4ED8" : "#9CA3AF",
+                  fontSize: "11px",
+                  marginTop: "4px",
+                  color: isActive ? "#2563EB" : "#6B7280",
                 }}
               >
                 {label}

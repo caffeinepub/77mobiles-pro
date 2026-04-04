@@ -226,11 +226,13 @@ function ImageCarousel({ images }: { images: string[] }) {
 
 // ─── Seller Bid Panel (Real-time) ──────────────────────────────────────────────────────
 function SellerBidPanel({ listing }: { listing: Listing }) {
+  const { mode, setActiveTab } = useApp();
   const [liveBids, setLiveBids] = useState<import("../stores/BidStore").Bid[]>(
     [],
   );
   const [sellerHighBid, setSellerHighBid] = useState(0);
   const [sellerPulse, setSellerPulse] = useState(false);
+  const [isSold, setIsSold] = useState(false);
 
   useEffect(() => {
     const unsub = BidStore.subscribeBids(listing.listingId, (bids) => {
@@ -325,6 +327,63 @@ function SellerBidPanel({ listing }: { listing: Listing }) {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Task 2: Accept Bid button — only for seller with active bids */}
+      {mode === "seller" && liveBids.length > 0 && (
+        <div className="mt-3">
+          {isSold ? (
+            <div className="flex items-center justify-between">
+              <span
+                data-ocid="listing.sold.badge"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-black"
+                style={{ background: "#DCFCE7", color: "#16A34A" }}
+              >
+                ✓ SOLD
+              </span>
+              <button
+                type="button"
+                data-ocid="listing.view_transaction.button"
+                onClick={() => setActiveTab("wallet")}
+                className="text-sm font-bold underline"
+                style={{ color: "#1D4ED8" }}
+              >
+                View Transaction
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              data-ocid="listing.accept_bid.primary_button"
+              onClick={() => {
+                const highBidAmt = liveBids[0]?.amount ?? sellerHighBid;
+                const formatted = new Intl.NumberFormat("en-IN", {
+                  style: "currency",
+                  currency: "INR",
+                  maximumFractionDigits: 0,
+                }).format(highBidAmt / 100);
+                if (
+                  window.confirm(
+                    `Are you sure you want to accept this bid of ${formatted}? This will end the auction.`,
+                  )
+                ) {
+                  setIsSold(true);
+                  localStorage.setItem(
+                    `77m_sold_${listing.listingId}`,
+                    String(highBidAmt / 100),
+                  );
+                  toast.success(
+                    `Auction accepted! ${formatted} will be transferred to your Pending Balance.`,
+                  );
+                }
+              }}
+              className="w-full py-3 rounded-xl font-black text-white text-sm"
+              style={{ background: "#16A34A" }}
+            >
+              Accept Bid — {formatINR(liveBids[0]?.amount ?? sellerHighBid)}
+            </button>
+          )}
         </div>
       )}
     </div>
