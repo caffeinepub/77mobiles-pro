@@ -15,6 +15,13 @@ import { toast } from "sonner";
 import { useApp } from "../contexts/AppContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useActor } from "../hooks/useActor";
+import {
+  type PhoneSearchResult,
+  extractColorOptions,
+  extractStorageOptions,
+  getPhoneSpecs,
+  searchPhones,
+} from "../utils/rapidApi";
 
 const BRANDS = [
   "Apple",
@@ -496,6 +503,20 @@ export default function CreateListing() {
     Array(5).fill(null),
   );
   const [photoMenu, setPhotoMenu] = useState<number | null>(null);
+
+  // Task 1: RapidAPI state
+  const [apiSearchResults, setApiSearchResults] = useState<PhoneSearchResult[]>(
+    [],
+  );
+  const [apiSearchLoading, setApiSearchLoading] = useState(false);
+  const [_apiSelectedKey, setApiSelectedKey] = useState("");
+  const [stockImageUrl, setStockImageUrl] = useState("");
+  const apiDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Task 9: Battery health state
+  const [batteryHealth, setBatteryHealth] = useState("");
+  const [batteryHealthError, setBatteryHealthError] = useState("");
+
   const verifyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const imeiInputRef = useRef<HTMLInputElement | null>(null);
   // Auto-focus IMEI on step 0, search bar on steps 1-2
@@ -518,6 +539,54 @@ export default function CreateListing() {
   const imeiDigits = imei.replace(/\D/g, "");
   // Frictionless: continue as soon as 15 digits are entered, regardless of lookup result
   const canContinueStep0 = imeiDigits.length === 15;
+
+  // Task 1: Debounced API model search
+  const handleApiModelSearch = (query: string) => {
+    if (apiDebounceRef.current) clearTimeout(apiDebounceRef.current);
+    if (!query.trim()) {
+      setApiSearchResults([]);
+      return;
+    }
+    apiDebounceRef.current = setTimeout(async () => {
+      setApiSearchLoading(true);
+      try {
+        const q = brand ? `${brand} ${query}` : query;
+        const results = await searchPhones(q);
+        setApiSearchResults(results.slice(0, 12));
+      } catch {
+        setApiSearchResults([]);
+      } finally {
+        setApiSearchLoading(false);
+      }
+    }, 500);
+  };
+
+  // Task 1: Handle API result selection
+  const handleApiModelSelect = async (result: PhoneSearchResult) => {
+    setModel(result.phone_name);
+    setApiSelectedKey(result.key);
+    setApiSearchResults([]);
+    setModelSearch(result.phone_name);
+    if (!brand && result.brand) setBrand(result.brand);
+    // Fetch full specs
+    try {
+      const specs = await getPhoneSpecs(result.key);
+      if (specs) {
+        // Extract storage options
+        const storages = extractStorageOptions(specs);
+        if (storages.length > 0) setStorage(storages[0]);
+        // Extract color options
+        const colors = extractColorOptions(specs);
+        if (colors.length > 0) setColor(colors[0]);
+        // Stock image
+        if (specs.image_url) setStockImageUrl(specs.image_url);
+      }
+    } catch {
+      // silently fall back
+    }
+    // Proceed to next step
+    setStep(3);
+  };
 
   const handleImeiChange = (val: string) => {
     setImei(val);
@@ -623,7 +692,7 @@ export default function CreateListing() {
     const nowTs = BigInt(Date.now()) * BigInt(1_000_000);
     const newListing = {
       listingId: crypto.randomUUID(),
-      sellerId: user?.userId ?? "demo-seller",
+      sellerId: user?.userId || user?.mobileNumber || "demo-seller",
       title: autoTitle,
       model: finalModel,
       brand: brand,
@@ -639,7 +708,7 @@ export default function CreateListing() {
       description: "",
       imageUrl: uploadedPhotos[0] ?? "",
       images: uploadedPhotos.filter(Boolean) as string[],
-      batteryHealth: BigInt(100),
+      batteryHealth: BigInt(Number(batteryHealth) || 0),
       warranty: BigInt(0),
       serialNumberHash: imei ? `imei:${imei}` : "",
       usbVerified: false,
@@ -1289,13 +1358,17 @@ export default function CreateListing() {
             >
               Select Model
             </h2>
-            {/* Live search */}
-            <div className="mb-4">
+            {/* Live search — tries RapidAPI first, falls back to static list */}
+            <div className="mb-4 relative">
               <input
                 type="text"
                 placeholder="Search models..."
                 value={modelSearch}
-                onChange={(e) => setModelSearch(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setModelSearch(val);
+                  handleApiModelSearch(val);
+                }}
                 className="w-full px-4 py-3 rounded-xl text-sm font-bold bg-white outline-none search-step-input"
                 style={{
                   color: "#002F34",
@@ -1304,59 +1377,123 @@ export default function CreateListing() {
                     : "1px solid #e5e7eb",
                 }}
               />
-            </div>
-            <div className="space-y-2">
-              {(MODELS[brand] || [])
-                .filter((m) =>
-                  m.toLowerCase().includes(modelSearch.toLowerCase()),
-                )
-                .map((m) => (
-                  <button
-                    type="button"
-                    key={m}
-                    data-ocid={`create.model.${m
-                      .toLowerCase()
-                      .replace(/\s+/g, "_")}.button`}
-                    onClick={() => {
-                      setModel(m);
-                      // Reset storage/color to first available for this model
-                      const specs = MODEL_SPECS[m];
-                      if (specs) {
-                        setStorage(specs.storages[0]);
-                        setColor(specs.colors[0]);
-                      } else {
-                        setStorage("128GB");
-                        setColor("Black");
-                      }
-                      setStep(3);
-                    }}
-                    className="w-full bg-white rounded-xl px-4 py-3.5 flex items-center justify-between text-left"
-                    style={{
-                      border:
-                        model === m ? "2px solid #1D4ED8" : "1px solid #e5e7eb",
-                    }}
-                  >
-                    <span
-                      className="font-bold text-sm"
-                      style={{ color: "#002F34" }}
+              {apiSearchLoading && (
+                <div
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 animate-spin"
+                  style={{ borderColor: "#e5e7eb", borderTopColor: "#1D4ED8" }}
+                />
+              )}
+              {/* API results dropdown */}
+              {apiSearchResults.length > 0 && (
+                <div
+                  className="absolute left-0 right-0 bg-white rounded-xl shadow-lg border border-gray-200 max-h-52 overflow-y-auto mt-1"
+                  style={{ zIndex: 200 }}
+                >
+                  {apiSearchResults.map((r) => (
+                    <button
+                      type="button"
+                      key={r.key}
+                      className="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-blue-50"
+                      onClick={() => {
+                        setApiSearchResults([]);
+                        handleApiModelSelect(r);
+                      }}
                     >
-                      {m}
-                    </span>
-                    {model === m && (
-                      <CheckCircle2
-                        className="w-4 h-4"
-                        style={{ color: "#1D4ED8" }}
-                      />
-                    )}
-                  </button>
-                ))}
+                      <span
+                        className="font-bold text-sm"
+                        style={{ color: "#002F34" }}
+                      >
+                        {r.phone_name}
+                      </span>
+                      <span className="text-[10px] font-medium text-gray-400">
+                        {r.brand}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+            {/* Static fallback list when API has no results */}
+            {apiSearchResults.length === 0 && (
+              <div className="space-y-2">
+                {(MODELS[brand] || [])
+                  .filter((m) =>
+                    m.toLowerCase().includes(modelSearch.toLowerCase()),
+                  )
+                  .map((m) => (
+                    <button
+                      type="button"
+                      key={m}
+                      data-ocid={`create.model.${m
+                        .toLowerCase()
+                        .replace(/\s+/g, "_")}.button`}
+                      onClick={() => {
+                        setModel(m);
+                        // Reset storage/color to first available for this model
+                        const specs = MODEL_SPECS[m];
+                        if (specs) {
+                          setStorage(specs.storages[0]);
+                          setColor(specs.colors[0]);
+                        } else {
+                          setStorage("128GB");
+                          setColor("Black");
+                        }
+                        setStockImageUrl("");
+                        setStep(3);
+                      }}
+                      className="w-full bg-white rounded-xl px-4 py-3.5 flex items-center justify-between text-left"
+                      style={{
+                        border:
+                          model === m
+                            ? "2px solid #1D4ED8"
+                            : "1px solid #e5e7eb",
+                      }}
+                    >
+                      <span
+                        className="font-bold text-sm"
+                        style={{ color: "#002F34" }}
+                      >
+                        {m}
+                      </span>
+                      {model === m && (
+                        <CheckCircle2
+                          className="w-4 h-4"
+                          style={{ color: "#1D4ED8" }}
+                        />
+                      )}
+                    </button>
+                  ))}
+              </div>
+            )}
           </div>
         )}
 
         {/* STEP 3: Storage + Color */}
         {step === 3 && (
           <div className="px-4 pt-5 space-y-6 pb-6">
+            {/* Task 1: Stock image preview from API */}
+            {stockImageUrl && (
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider bg-blue-50 px-2 py-0.5 rounded-full">
+                  Stock Image
+                </span>
+                <img
+                  src={stockImageUrl}
+                  alt={model}
+                  className="rounded-2xl object-contain"
+                  style={{
+                    width: "120px",
+                    height: "120px",
+                    background: "#F4F7FF",
+                    border: "1px solid #e5e7eb",
+                  }}
+                  onError={() => setStockImageUrl("")}
+                />
+                <span className="text-xs font-semibold text-gray-500">
+                  {model}
+                </span>
+              </div>
+            )}
             <div>
               <h2
                 className="font-black text-xl mb-4"
@@ -1616,6 +1753,58 @@ export default function CreateListing() {
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Task 9: Battery Health */}
+            <div
+              className="bg-white rounded-2xl p-4"
+              style={{ border: "1px solid #e5e7eb" }}
+            >
+              <h3
+                className="text-sm font-bold mb-3"
+                style={{ color: "#002F34" }}
+              >
+                Battery Health (%)
+              </h3>
+              <div
+                className="flex items-center rounded-xl px-3 py-3 gap-2"
+                style={{
+                  border: `1px solid ${batteryHealthError ? "#fca5a5" : "#e5e7eb"}`,
+                }}
+              >
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={3}
+                  placeholder="e.g. 92"
+                  value={batteryHealth}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "").slice(0, 3);
+                    setBatteryHealth(val);
+                    setBatteryHealthError("");
+                  }}
+                  onBlur={() => {
+                    if (batteryHealth && Number(batteryHealth) > 100) {
+                      setBatteryHealthError(
+                        "Battery health cannot exceed 100%",
+                      );
+                    }
+                  }}
+                  className="flex-1 text-sm font-bold bg-transparent outline-none placeholder:text-gray-400"
+                  style={{ color: "#002F34" }}
+                  data-ocid="create.battery_health.input"
+                />
+                <span className="text-sm font-bold text-gray-400">%</span>
+              </div>
+              {batteryHealthError && (
+                <p className="text-xs text-red-500 mt-1">
+                  {batteryHealthError}
+                </p>
+              )}
+              <p className="text-[10px] text-gray-400 mt-1">
+                Optional — enter battery health percentage (0–100)
+              </p>
             </div>
 
             {/* Country / Region of Origin */}

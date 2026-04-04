@@ -12,6 +12,7 @@ export default function BottomNav() {
     setShowPostLead,
     unreadAlerts,
     setUnreadAlerts,
+    modalOpen,
   } = useApp();
 
   const handlePost = () => {
@@ -51,11 +52,17 @@ export default function BottomNav() {
 
   const isHighPriority = unreadAlerts >= 3;
 
+  // Task 2: hide nav when a modal is open so it doesn't overlap
+  if (modalOpen) return null;
+
   return (
     <nav
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px]"
+      className="fixed bottom-0 left-0"
       style={{
-        zIndex: 9999,
+        width: "100vw",
+        maxWidth: "100%",
+        // Task 2: z-index slightly lower than modal (9999)
+        zIndex: 9990,
         backdropFilter: "blur(10px) saturate(180%)",
         WebkitBackdropFilter: "blur(10px) saturate(180%)",
         background: "rgba(255,255,255,0.88)",

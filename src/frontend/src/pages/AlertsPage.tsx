@@ -2,6 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Bell, CheckCircle, Package, ShoppingBag, Zap } from "lucide-react";
 import { useEffect } from "react";
 import { useApp } from "../contexts/AppContext";
+import { useAuth } from "../contexts/AuthContext";
 import { BidStore } from "../stores/BidStore";
 
 const SELLER_ALERTS = [
@@ -101,7 +102,11 @@ export default function AlertsPage() {
     unreadAlerts,
     setUnreadAlerts,
   } = useApp();
+  // Task 4: get current user for personalization
+  const { user } = useAuth();
   const navigate = useNavigate();
+  // suppress unused warning
+  const _user = user;
 
   // Task 6: Mark all read on mount
   useEffect(() => {
@@ -111,7 +116,8 @@ export default function AlertsPage() {
 
   // Use context alerts if available, else fall back to static
   const staticAlerts = mode === "seller" ? SELLER_ALERTS : BUYER_ALERTS;
-  const liveAlerts =
+
+  const allLiveAlerts =
     contextAlerts.length > 0
       ? contextAlerts.map((a) => ({
           id: a.id,
@@ -128,9 +134,31 @@ export default function AlertsPage() {
           action: "View Auction",
           route: `/listing/${a.listingId}`,
         }))
-      : staticAlerts;
+      : null;
 
-  const displayCount = unreadAlerts > 0 ? unreadAlerts : liveAlerts.length;
+  // Task 4: Filter live alerts by mode (seller sees bids/sold/leads, buyer sees outbid/success/info)
+  const filteredLiveAlerts = allLiveAlerts
+    ? allLiveAlerts.filter((a) =>
+        mode === "seller"
+          ? a.type === "bid" || a.type === "sold" || a.type === "lead"
+          : a.type === "outbid" || a.type === "success" || a.type === "info",
+      )
+    : null;
+
+  const liveAlerts = filteredLiveAlerts ?? staticAlerts;
+
+  // Task 4: Count badge reflects only filtered alerts
+  const displayCount =
+    filteredLiveAlerts && filteredLiveAlerts.length > 0
+      ? filteredLiveAlerts.length
+      : unreadAlerts > 0
+        ? unreadAlerts
+        : liveAlerts.length;
+
+  const emptyMessage =
+    mode === "seller"
+      ? "No alerts yet. You'll see bid activity here."
+      : "No alerts yet. You'll see auction updates here.";
 
   return (
     <div className="px-4 pt-4 pb-6 bg-[#F8F9FA] min-h-screen">
@@ -167,7 +195,7 @@ export default function AlertsPage() {
       {liveAlerts.length === 0 ? (
         <div data-ocid="alerts.empty_state" className="text-center py-16">
           <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="font-bold text-gray-600">No alerts yet</p>
+          <p className="font-bold text-gray-600">{emptyMessage}</p>
         </div>
       ) : (
         <div className="space-y-3">

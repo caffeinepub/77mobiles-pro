@@ -96,6 +96,12 @@ class BidStoreClass {
     this.alerts = this.alerts.map((a) => ({ ...a, read: true }));
     for (const cb of this.alertListeners) cb(this.alerts);
   }
+
+  getHighestBidAmount(listingId: string): number {
+    const bids = this.bids.get(listingId) || [];
+    if (bids.length === 0) return 0;
+    return Math.max(...bids.map((b) => b.amount));
+  }
 }
 
 export const BidStore = new BidStoreClass();

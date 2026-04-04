@@ -89,6 +89,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (stored) {
         if (stored.createdAt) stored.createdAt = BigInt(stored.createdAt);
         setUser(stored);
+        // Restore localStorage backup keys
+        if (stored.userRole !== undefined) {
+          localStorage.setItem("77m_userRole", String(stored.userRole ?? ""));
+        }
+        if (stored.userId) {
+          // Ensure userId is set from profile
+          stored.userId = stored.userId || stored.mobileNumber || "";
+        }
         setLoaded(true);
         return;
       }
@@ -98,6 +106,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (ls) {
           const parsed = JSON.parse(ls);
           if (parsed.createdAt) parsed.createdAt = BigInt(parsed.createdAt);
+          // Ensure userId is populated
+          if (!parsed.userId) parsed.userId = parsed.mobileNumber || "";
           setUser(parsed);
           // Migrate to IndexedDB
           const toStore = { ...parsed, createdAt: parsed.createdAt.toString() };
@@ -109,11 +119,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = (profile: UserProfile) => {
-    setUser(profile);
+    // Ensure userId is always set
+    const enriched: UserProfile = {
+      ...profile,
+      userId: profile.userId || profile.mobileNumber || "",
+    };
+    setUser(enriched);
     // Store in both IndexedDB (primary) and localStorage (fallback)
-    const toStore = { ...profile, createdAt: profile.createdAt.toString() };
+    const toStore = { ...enriched, createdAt: enriched.createdAt.toString() };
     idbSet(IDB_KEY, toStore);
     localStorage.setItem(LS_FALLBACK_KEY, JSON.stringify(toStore));
+    // Task 3: localStorage backup for UI role/verification state
+    localStorage.setItem("77m_userRole", String(enriched.userRole ?? ""));
+    localStorage.setItem(
+      "77m_isVerified",
+      String((enriched as any).isVerified ?? false),
+    );
   };
 
   const logout = () => {
@@ -124,6 +145,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("77m_phone_session");
     localStorage.removeItem("77m_role");
     localStorage.removeItem("77m_mode");
+    // Task 3: clear backup keys
+    localStorage.removeItem("77m_userRole");
+    localStorage.removeItem("77m_isVerified");
   };
 
   // Don't render until session is loaded (prevents flash of logged-out state)

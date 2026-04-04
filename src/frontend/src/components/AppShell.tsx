@@ -142,6 +142,7 @@ export default function AppShell() {
         height: "100dvh",
         minHeight: "-webkit-fill-available",
         overflowY: "auto",
+        overscrollBehavior: "none",
       }}
     >
       {/* STICKY HEADER */}

@@ -857,20 +857,31 @@ export default function BuyerPortal() {
   }));
 
   /* Filtered bento items — filter by filterPill and search, dismiss swipes */
+  // Task 8: Combine and sort by createdAt DESC (newest first)
   const allBentoItems = [...sharedBentoItems, ...sellerBentoItems];
-  const filteredBento = allBentoItems.filter((item) => {
-    if (dismissedCards.has(item.id)) return false;
-    const q = searchQuery.toLowerCase();
-    if (
-      q &&
-      !item.model.toLowerCase().includes(q) &&
-      !item.brand.toLowerCase().includes(q)
-    )
-      return false;
-    if (filterPill === "live") return item.isLive;
-    if (filterPill === "7day") return !item.isLive;
-    return true;
-  });
+  const filteredBento = allBentoItems
+    .filter((item) => {
+      if (dismissedCards.has(item.id)) return false;
+      // Task 8: Only show Active/Live listings (not Sold, Draft, etc.)
+      const status = (item as any).status;
+      if (status && status !== "Active" && status !== "Live") return false;
+      const q = searchQuery.toLowerCase();
+      if (
+        q &&
+        !item.model.toLowerCase().includes(q) &&
+        !item.brand.toLowerCase().includes(q)
+      )
+        return false;
+      if (filterPill === "live") return item.isLive;
+      if (filterPill === "7day") return !item.isLive;
+      return true;
+    })
+    .sort((a, b) => {
+      // Task 8: Sort by createdAt DESC (newest first)
+      const ca = Number((a as any).createdAt ?? 0);
+      const cb = Number((b as any).createdAt ?? 0);
+      return cb - ca;
+    });
 
   const condColor = (c: string) => conditionColor(c);
 
@@ -1157,16 +1168,41 @@ export default function BuyerPortal() {
                               </span>
                             )}
                           </div>
-                          <p
-                            className="font-black text-[12px] mt-0.5"
-                            style={{ color: "#1D4ED8" }}
-                          >
-                            ₹{item.price.toLocaleString("en-IN")}
-                          </p>
-                          <p className="text-[8px] text-gray-400">
-                            {bidMap.get(item.id)?.count ?? item.bids} bids ·{" "}
-                            {item.timer}
-                          </p>
+                          {(() => {
+                            const bidData = bidMap.get(item.id);
+                            const hasBid = bidData && bidData.amount > 0;
+                            const displayPrice = hasBid
+                              ? new Intl.NumberFormat("en-IN", {
+                                  maximumFractionDigits: 0,
+                                }).format(bidData.amount / 100)
+                              : item.price.toLocaleString("en-IN");
+                            const priceColor = hasBid ? "#1D4ED8" : "#1E293B";
+                            const bidCount = bidData?.count ?? item.bids;
+                            return (
+                              <>
+                                {hasBid && (
+                                  <p
+                                    className="text-[8px] font-semibold"
+                                    style={{ color: "#1D4ED8" }}
+                                  >
+                                    Current Bid
+                                  </p>
+                                )}
+                                <p
+                                  className="font-black text-[12px] mt-0.5"
+                                  style={{ color: priceColor }}
+                                >
+                                  ₹{displayPrice}
+                                </p>
+                                <p className="text-[8px] text-gray-400">
+                                  {hasBid
+                                    ? `${bidCount} bid${bidCount !== 1 ? "s" : ""}`
+                                    : "No bids"}{" "}
+                                  · {item.timer}
+                                </p>
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
                     );

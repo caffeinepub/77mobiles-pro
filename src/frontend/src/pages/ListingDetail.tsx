@@ -792,7 +792,13 @@ export default function ListingDetail() {
   const specs = [
     { label: "Model", value: listing.model },
     { label: "Storage", value: `${listing.storage.toString()}GB` },
-    { label: "Battery", value: `${listing.batteryHealth.toString()}%` },
+    {
+      label: "Battery",
+      value:
+        Number(listing.batteryHealth) > 0
+          ? `${listing.batteryHealth.toString()}%`
+          : "N/A",
+    },
     {
       label: "Warranty",
       value: listing.warranty ? `${listing.warranty.toString()} mo` : "None",
@@ -932,7 +938,7 @@ export default function ListingDetail() {
                   Battery Health
                 </p>
                 {(() => {
-                  const pct = Number(listing.batteryHealth) || 87;
+                  const pct = Number(listing.batteryHealth) || 0;
                   const r = 20;
                   const circ = 2 * Math.PI * r;
                   const fill = circ - (pct / 100) * circ;
@@ -975,14 +981,20 @@ export default function ListingDetail() {
                           fontWeight="800"
                           fill={col}
                         >
-                          {pct}%
+                          {pct > 0 ? `${pct}%` : "N/A"}
                         </text>
                       </svg>
                       <span
                         className="text-[9px] font-semibold mt-1"
                         style={{ color: col }}
                       >
-                        {pct > 80 ? "Excellent" : pct > 60 ? "Good" : "Low"}
+                        {pct === 0
+                          ? "Not Set"
+                          : pct > 80
+                            ? "Excellent"
+                            : pct > 60
+                              ? "Good"
+                              : "Low"}
                       </span>
                     </div>
                   );
@@ -1003,7 +1015,8 @@ export default function ListingDetail() {
                 >
                   IMEI:{" "}
                   {(listing as any).imei ||
-                    (mode === "buyer" ? "354812093847561" : "35****3847561")}
+                    listing.serialNumberHash?.replace(/^imei:/, "") ||
+                    (mode === "buyer" ? "Not Provided" : "Not Provided")}
                 </span>
               </div>
             </div>

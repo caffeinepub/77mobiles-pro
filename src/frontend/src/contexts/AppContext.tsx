@@ -22,6 +22,17 @@ export interface CheckoutItem {
   price: number;
 }
 
+export interface MarketLead {
+  leadId: string;
+  buyerId: string;
+  brand: string;
+  model: string;
+  quantity: number;
+  budgetPerUnit: number;
+  status: "active" | "fulfilled";
+  createdAt: number;
+}
+
 interface AppContextType {
   mode: AppMode;
   setMode: (m: AppMode) => void;
@@ -35,6 +46,8 @@ interface AppContextType {
   addAlert: (a: AlertNotification) => void;
   showPostLead: boolean;
   setShowPostLead: (v: boolean) => void;
+  modalOpen: boolean;
+  setModalOpen: (v: boolean) => void;
   watchlist: Set<string>;
   toggleWatchlist: (id: string) => void;
   isWatchlisted: (id: string) => boolean;
@@ -44,6 +57,8 @@ interface AppContextType {
   addSharedListing: (listing: any) => void;
   isDemoMode: boolean;
   setIsDemoMode: (v: boolean) => void;
+  marketLeads: MarketLead[];
+  addMarketLead: (lead: MarketLead) => void;
 }
 
 const AppContext = createContext<AppContextType>({
@@ -59,6 +74,8 @@ const AppContext = createContext<AppContextType>({
   addAlert: () => {},
   showPostLead: false,
   setShowPostLead: () => {},
+  modalOpen: false,
+  setModalOpen: () => {},
   watchlist: new Set(),
   toggleWatchlist: () => {},
   isWatchlisted: () => false,
@@ -68,6 +85,8 @@ const AppContext = createContext<AppContextType>({
   addSharedListing: () => {},
   isDemoMode: true,
   setIsDemoMode: () => {},
+  marketLeads: [],
+  addMarketLead: () => {},
 });
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -80,6 +99,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [unreadAlerts, setUnreadAlerts] = useState(4);
   const [alerts, setAlerts] = useState<AlertNotification[]>([]);
   const [showPostLead, setShowPostLead] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState("smartphones");
   const [sharedListings, setSharedListings] = useState<any[]>([]);
   const [isDemoMode, setIsDemoModeState] = useState<boolean>(() => {
@@ -91,6 +111,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return new Set(stored ? JSON.parse(stored) : []);
     } catch {
       return new Set();
+    }
+  });
+  const [marketLeads, setMarketLeads] = useState<MarketLead[]>(() => {
+    try {
+      const stored = localStorage.getItem("77m_market_leads");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
     }
   });
 
@@ -150,7 +178,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const isWatchlisted = (id: string) => watchlistIds.has(id);
 
   const addSharedListing = (listing: any) => {
-    setSharedListings((prev) => [listing, ...prev]);
+    const withTs = listing.createdAt
+      ? listing
+      : { ...listing, createdAt: BigInt(Date.now()) * BigInt(1_000_000) };
+    setSharedListings((prev) => [withTs, ...prev]);
+  };
+
+  const addMarketLead = (lead: MarketLead) => {
+    setMarketLeads((prev) => {
+      const next = [lead, ...prev];
+      localStorage.setItem("77m_market_leads", JSON.stringify(next));
+      return next;
+    });
   };
 
   const addAlert = (a: AlertNotification) => {
@@ -185,6 +224,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         addAlert,
         showPostLead,
         setShowPostLead,
+        modalOpen,
+        setModalOpen,
         watchlist: watchlistIds,
         toggleWatchlist,
         isWatchlisted,
@@ -194,6 +235,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         addSharedListing,
         isDemoMode,
         setIsDemoMode,
+        marketLeads,
+        addMarketLead,
       }}
     >
       {children}

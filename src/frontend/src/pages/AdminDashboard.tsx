@@ -1184,7 +1184,6 @@ export default function AdminDashboard() {
                 (u) =>
                   u.role === "seller" ||
                   u.role === "Seller" ||
-                  !u.role ||
                   u.role === "Dealer",
               );
               const buyerItems = allKyc.filter(
@@ -1374,11 +1373,9 @@ export default function AdminDashboard() {
                         className="text-xs text-center text-gray-400 py-6"
                         data-ocid="admin.users.empty_state"
                       >
-                        No{" "}
                         {kycFilter === "All"
-                          ? ""
-                          : `${kycFilter.toLowerCase()} `}
-                        {userTab} users found
+                          ? `No ${userTab === "seller" ? "sellers" : "dealers/buyers"} found`
+                          : `No ${kycFilter.toLowerCase()} ${userTab === "seller" ? "sellers" : "dealers/buyers"} found`}
                       </p>
                     )}
                     {filtered.map((user, i) => (
@@ -1404,7 +1401,9 @@ export default function AdminDashboard() {
                             </p>
                             <p className="text-xs" style={{ color: "#9CA3AF" }}>
                               {user.phone} ·{" "}
-                              {userTab === "seller" ? "Dealer" : "Buyer"}
+                              {user.role?.toLowerCase() === "buyer"
+                                ? "Dealer"
+                                : "Seller"}
                             </p>
                           </div>
                           <span

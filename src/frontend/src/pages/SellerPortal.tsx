@@ -93,7 +93,7 @@ function conditionColor(c: string) {
 
 export default function SellerPortal() {
   const navigate = useNavigate();
-  const { searchQuery, sharedListings, setActiveTab } = useApp();
+  const { searchQuery, sharedListings, setActiveTab, marketLeads } = useApp();
 
   const [gridLoading, setGridLoading] = useState(true);
   const [listView, setListView] = useState<"list" | "grid">("list");
@@ -158,7 +158,7 @@ export default function SellerPortal() {
       l.title?.toLowerCase().includes(q)
     );
   });
-  const handleFulfillLead = (item: (typeof DEMAND_FEED)[0]) => {
+  const handleFulfillLead = (item: any) => {
     localStorage.setItem("77m_send_offer", JSON.stringify(item));
     navigate({ to: "/send-offer" });
   };
@@ -207,7 +207,8 @@ export default function SellerPortal() {
               className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white ml-1"
               style={{ background: "#F5F5F7", color: "#666" }}
             >
-              {DEMAND_FEED.length} Leads
+              {(marketLeads.length > 0 ? marketLeads : DEMAND_FEED).length}{" "}
+              Leads
             </span>
             {/* View All → */}
             <button
@@ -229,7 +230,19 @@ export default function SellerPortal() {
             className="flex gap-2.5 overflow-x-auto pb-1"
             style={{ scrollbarWidth: "none" }}
           >
-            {DEMAND_FEED.map((item, idx) => (
+            {(marketLeads.length > 0
+              ? marketLeads
+                  .filter((l) => l.status === "active")
+                  .map((lead) => ({
+                    id: lead.leadId,
+                    text: `Wanted: ${lead.quantity}x ${lead.brand} ${lead.model}`,
+                    budget: new Intl.NumberFormat("en-IN", {
+                      maximumFractionDigits: 0,
+                    }).format(lead.budgetPerUnit),
+                    dealer: `Buyer #${lead.buyerId.slice(-4).toUpperCase()}`,
+                  }))
+              : DEMAND_FEED
+            ).map((item, idx) => (
               <div
                 key={item.id}
                 data-ocid={`seller.demand.item.${idx + 1}`}

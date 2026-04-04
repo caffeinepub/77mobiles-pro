@@ -56,7 +56,7 @@ const FAQ_ITEMS = [
 ];
 
 export default function ProfilePage() {
-  const { mode, setMode, sharedListings } = useApp();
+  const { mode, setMode, sharedListings, setActiveTab } = useApp();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [view, setView] = useState<
@@ -386,7 +386,15 @@ export default function ProfilePage() {
   // ── Analytics sub-page ───────────────────────────────────────────────────────
   if (view === "analytics") {
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    const allListings = [...sharedListings, ...SELLER_LISTINGS];
+    // Only count THIS seller's listings — filter by user id
+    const currentUserId = user?.userId ?? user?.mobileNumber ?? "";
+    const allListings = sharedListings.filter(
+      (l) =>
+        !currentUserId ||
+        l.sellerId === currentUserId ||
+        l.createdBy === currentUserId ||
+        l.userId === currentUserId,
+    );
 
     // Time filter logic
     const now = Date.now();
@@ -399,7 +407,7 @@ export default function ProfilePage() {
 
     // Seller metrics
     const activeListings = allListings.filter(
-      (l) => l.status === "Active",
+      (l) => l.status === "Active" || l.status === "Live",
     ).length;
     const soldListings = allListings.filter((l) => {
       if (l.status !== "Sold") return false;
@@ -517,18 +525,21 @@ export default function ProfilePage() {
                 value: String(allListings.length),
                 icon: "📦",
                 color: "#1D4ED8",
+                navigateTo: () => setActiveTab("home"),
               },
               {
                 label: "Active Auctions",
                 value: String(activeListings),
                 icon: "🔥",
                 color: "#F97316",
+                navigateTo: () => setActiveTab("home"),
               },
               {
                 label: "Sold Items",
                 value: String(soldListings.length),
                 icon: "✅",
                 color: "#22C55E",
+                navigateTo: () => setActiveTab("home"),
               },
               {
                 label: "Total Revenue",
@@ -542,15 +553,21 @@ export default function ProfilePage() {
                     : "₹0",
                 icon: "💰",
                 color: "#8B5CF6",
+                navigateTo: () => setActiveTab("wallet"),
               },
             ].map((stat) => (
-              <div
+              <button
                 key={stat.label}
+                type="button"
                 data-ocid={`analytics.seller.${stat.label.toLowerCase().replace(/ /g, "_")}.card`}
-                className="bg-white rounded-2xl p-3.5"
+                className="bg-white rounded-2xl p-3.5 cursor-pointer active:scale-95 transition-transform text-left"
                 style={{
                   border: "1px solid #e5e7eb",
                   boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                }}
+                onClick={() => {
+                  stat.navigateTo();
+                  setView("profile");
                 }}
               >
                 <div className="flex items-center justify-between mb-1">
@@ -566,7 +583,7 @@ export default function ProfilePage() {
                 <p className="text-[10px] text-gray-500 font-medium">
                   {stat.label}
                 </p>
-              </div>
+              </button>
             ))}
           </div>
         ) : (
@@ -577,12 +594,14 @@ export default function ProfilePage() {
                 value: String(bidsPlaced),
                 icon: "🏷️",
                 color: "#1D4ED8",
+                navigateTo: () => setActiveTab("home"),
               },
               {
                 label: "Won",
                 value: String(wonAuctions),
                 icon: "🏆",
                 color: "#22C55E",
+                navigateTo: () => setActiveTab("home"),
               },
               {
                 label: "Spent",
@@ -596,15 +615,21 @@ export default function ProfilePage() {
                     : "₹0",
                 icon: "💳",
                 color: "#8B5CF6",
+                navigateTo: () => setActiveTab("wallet"),
               },
             ].map((stat) => (
-              <div
+              <button
                 key={stat.label}
+                type="button"
                 data-ocid={`analytics.buyer.${stat.label.toLowerCase().replace(/ /g, "_")}.card`}
-                className="bg-white rounded-2xl p-3"
+                className="bg-white rounded-2xl p-3 cursor-pointer active:scale-95 transition-transform text-left"
                 style={{
                   border: "1px solid #e5e7eb",
                   boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                }}
+                onClick={() => {
+                  stat.navigateTo();
+                  setView("profile");
                 }}
               >
                 <span className="text-xl">{stat.icon}</span>
@@ -617,7 +642,7 @@ export default function ProfilePage() {
                 <p className="text-[9px] text-gray-500 font-medium">
                   {stat.label}
                 </p>
-              </div>
+              </button>
             ))}
           </div>
         )}
