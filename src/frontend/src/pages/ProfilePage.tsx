@@ -25,6 +25,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { type AppMode, useApp } from "../contexts/AppContext";
 import { useAuth } from "../contexts/AuthContext";
+import { SELLER_LISTINGS } from "../data/demoListings";
+import { type Bid, BidStore } from "../stores/BidStore";
 
 const FAQ_ITEMS = [
   {
@@ -54,7 +56,7 @@ const FAQ_ITEMS = [
 ];
 
 export default function ProfilePage() {
-  const { mode, setMode } = useApp();
+  const { mode, setMode, sharedListings } = useApp();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [view, setView] = useState<
@@ -383,11 +385,81 @@ export default function ProfilePage() {
 
   // ── Analytics sub-page ───────────────────────────────────────────────────────
   if (view === "analytics") {
-    const CHART_HEIGHTS_SELLER = [40, 60, 35, 80, 55, 70, 90];
-    const CHART_HEIGHTS_BUYER = [30, 50, 65, 45, 75, 55, 40];
-    const heights =
-      mode === "seller" ? CHART_HEIGHTS_SELLER : CHART_HEIGHTS_BUYER;
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const allListings = [...sharedListings, ...SELLER_LISTINGS];
+
+    // Time filter logic
+    const now = Date.now();
+    const filterMs =
+      analyticsFilter === "7days"
+        ? 7 * 24 * 60 * 60 * 1000
+        : analyticsFilter === "30days"
+          ? 30 * 24 * 60 * 60 * 1000
+          : Number.POSITIVE_INFINITY;
+
+    // Seller metrics
+    const activeListings = allListings.filter(
+      (l) => l.status === "Active",
+    ).length;
+    const soldListings = allListings.filter((l) => {
+      if (l.status !== "Sold") return false;
+      if (filterMs === Number.POSITIVE_INFINITY) return true;
+      const ts = Number(l.createdAt) / 1_000_000 || 0;
+      return now - ts <= filterMs;
+    });
+    const totalEarned = soldListings.reduce(
+      (s, l) => s + Number(l.basePrice) / 100,
+      0,
+    );
+
+    // Buyer metrics — collect all bids from BidStore
+    // Collect via a snapshot approach
+    const allBidsSnap: Bid[] = (() => {
+      const collected: Bid[] = [];
+      // We need to iterate all bids; use subscribeAllBids momentarily
+      BidStore.subscribeAllBids((_listingId, bids) => {
+        for (const b of bids.filter((b) => b.dealerId === "demo-buyer"))
+          collected.push(b);
+      })(); // immediately unsubscribe after firing
+      return collected;
+    })();
+    const filteredBids = allBidsSnap.filter((b) => {
+      if (filterMs === Number.POSITIVE_INFINITY) return true;
+      return now - b.placedAt <= filterMs;
+    });
+    const bidsPlaced = filteredBids.length;
+    const wonAuctions = soldListings.length; // proxy for won
+    const totalSpent = filteredBids.reduce((s, b) => s + b.amount / 100, 0);
+
+    // Build daily bar chart from actual data (last 7 days per day of week)
+    const getActivityByDay = (): number[] => {
+      const counts = new Array(7).fill(0);
+      const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+      if (mode === "seller") {
+        for (const l of allListings) {
+          const ts = Number(l.createdAt) / 1_000_000 || 0;
+          if (ts > weekAgo) {
+            const day = new Date(ts).getDay(); // 0=Sun ... 6=Sat
+            const idx = day === 0 ? 6 : day - 1; // Mon=0
+            counts[idx]++;
+          }
+        }
+      } else {
+        for (const b of allBidsSnap) {
+          if (b.placedAt > weekAgo) {
+            const day = new Date(b.placedAt).getDay();
+            const idx = day === 0 ? 6 : day - 1;
+            counts[idx]++;
+          }
+        }
+      }
+      return counts;
+    };
+    const rawCounts = getActivityByDay();
+    const maxCount = Math.max(...rawCounts, 1);
+    const heights = rawCounts.map((c) =>
+      Math.max(4, Math.round((c / maxCount) * 90)),
+    );
 
     return (
       <div className="px-4 pt-4 pb-24 bg-[#F8F9FA] min-h-screen">
@@ -442,20 +514,32 @@ export default function ProfilePage() {
             {[
               {
                 label: "Total Listings",
-                value: "20",
+                value: String(allListings.length),
                 icon: "📦",
                 color: "#1D4ED8",
               },
               {
                 label: "Active Auctions",
-                value: "17",
+                value: String(activeListings),
                 icon: "🔥",
                 color: "#F97316",
               },
-              { label: "Sold Items", value: "3", icon: "✅", color: "#22C55E" },
+              {
+                label: "Sold Items",
+                value: String(soldListings.length),
+                icon: "✅",
+                color: "#22C55E",
+              },
               {
                 label: "Total Revenue",
-                value: "₹4,85,000",
+                value:
+                  totalEarned > 0
+                    ? new Intl.NumberFormat("en-IN", {
+                        style: "currency",
+                        currency: "INR",
+                        maximumFractionDigits: 0,
+                      }).format(totalEarned)
+                    : "₹0",
                 icon: "💰",
                 color: "#8B5CF6",
               },
@@ -490,14 +574,26 @@ export default function ProfilePage() {
             {[
               {
                 label: "Bids Placed",
-                value: "12",
+                value: String(bidsPlaced),
                 icon: "🏷️",
                 color: "#1D4ED8",
               },
-              { label: "Won", value: "3", icon: "🏆", color: "#22C55E" },
+              {
+                label: "Won",
+                value: String(wonAuctions),
+                icon: "🏆",
+                color: "#22C55E",
+              },
               {
                 label: "Spent",
-                value: "₹2,14,500",
+                value:
+                  totalSpent > 0
+                    ? new Intl.NumberFormat("en-IN", {
+                        style: "currency",
+                        currency: "INR",
+                        maximumFractionDigits: 0,
+                      }).format(totalSpent)
+                    : "₹0",
                 icon: "💳",
                 color: "#8B5CF6",
               },

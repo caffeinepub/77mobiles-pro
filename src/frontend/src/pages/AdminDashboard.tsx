@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { BidStore } from "../stores/BidStore";
 
 type AdminSection =
   | "dashboard"
@@ -117,6 +118,16 @@ export default function AdminDashboard() {
   );
   const feedRef = useRef<HTMLDivElement>(null);
   const feedIdxRef = useRef(0);
+  // Task 13D: Real-time live bid feed from BidStore
+  const [liveFeedBids, setLiveFeedBids] = useState<
+    Array<{
+      bidId: string;
+      dealerId: string;
+      listingId: string;
+      amount: number;
+      placedAt: number;
+    }>
+  >([]);
 
   // Task 11: Real-time pending verifications
   const [_pendingUsers, setPendingUsers] = useState([
@@ -263,7 +274,12 @@ export default function AdminDashboard() {
       if (e.key === "77m_kyc_submissions") loadKyc();
     };
     window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    // Task 2: Poll every 5s for new buyer/seller registrations
+    const pollInterval = setInterval(loadKyc, 5000);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      clearInterval(pollInterval);
+    };
   }, [authenticated]);
 
   // Task 11: Real-time new user listener simulation (like Firebase onSnapshot)
@@ -292,6 +308,24 @@ export default function AdminDashboard() {
       }
     }, 15000);
     return () => clearInterval(interval);
+  }, [authenticated]);
+
+  // Task 13D: Subscribe to BidStore for real-time live bid feed
+  useEffect(() => {
+    if (!authenticated) return;
+    const unsub = BidStore.subscribeAllBids((_listingId, bids) => {
+      if (bids.length === 0) return;
+      const latestBid = bids[0]; // most recent first (addBid prepends)
+      setLiveFeedBids((prev) => {
+        // Prepend and keep last 20
+        const next = [
+          { ...latestBid },
+          ...prev.filter((b) => b.bidId !== latestBid.bidId),
+        ];
+        return next.slice(0, 20);
+      });
+    });
+    return unsub;
   }, [authenticated]);
 
   // Live feed auto-scroll
@@ -705,60 +739,285 @@ export default function AdminDashboard() {
                     : "₹0";
                 return (
                   <div className="grid grid-cols-2 gap-3">
-                    <StatCard
-                      icon={
-                        <DollarSign
-                          className="w-5 h-5"
-                          style={{ color: "#22C55E" }}
-                        />
-                      }
-                      label="Total Revenue"
-                      value={fmtRevenue}
-                      sub="Escrow + Fees"
-                      accentColor="#22C55E"
-                    />
-                    <StatCard
-                      icon={
-                        <Zap className="w-5 h-5" style={{ color: "#1D4ED8" }} />
-                      }
-                      label="Active Auctions"
-                      value={
-                        activeAuctionCount > 0
-                          ? activeAuctionCount.toString()
-                          : "0"
-                      }
-                      sub="Live right now"
-                      accentColor="#3B82F6"
-                    />
-                    <StatCard
-                      icon={
-                        <Users
-                          className="w-5 h-5"
-                          style={{ color: "#A855F7" }}
-                        />
-                      }
-                      label="User Growth"
-                      value={userGrowthCount.toString()}
-                      sub="Registered dealers"
-                      accentColor="#A855F7"
-                    />
-                    <StatCard
-                      icon={
-                        <AlertTriangle
-                          className="w-5 h-5"
-                          style={{ color: "#F59E0B" }}
-                        />
-                      }
-                      label="Pending Verifications"
-                      value={pendingVerifCount.toString()}
-                      sub="Awaiting review"
-                      accentColor="#F59E0B"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setActiveSection("payments")}
+                      style={{
+                        cursor: "pointer",
+                        background: "none",
+                        border: "none",
+                        padding: 0,
+                        textAlign: "left",
+                        width: "100%",
+                      }}
+                    >
+                      <StatCard
+                        icon={
+                          <DollarSign
+                            className="w-5 h-5"
+                            style={{ color: "#22C55E" }}
+                          />
+                        }
+                        label="Total Revenue"
+                        value={fmtRevenue}
+                        sub="Escrow + Fees"
+                        accentColor="#22C55E"
+                      />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveSection("listings")}
+                      style={{
+                        cursor: "pointer",
+                        background: "none",
+                        border: "none",
+                        padding: 0,
+                        textAlign: "left",
+                        width: "100%",
+                      }}
+                    >
+                      <StatCard
+                        icon={
+                          <Zap
+                            className="w-5 h-5"
+                            style={{ color: "#1D4ED8" }}
+                          />
+                        }
+                        label="Active Auctions"
+                        value={
+                          activeAuctionCount > 0
+                            ? activeAuctionCount.toString()
+                            : "0"
+                        }
+                        sub="Live right now"
+                        accentColor="#3B82F6"
+                      />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveSection("users")}
+                      style={{
+                        cursor: "pointer",
+                        background: "none",
+                        border: "none",
+                        padding: 0,
+                        textAlign: "left",
+                        width: "100%",
+                      }}
+                    >
+                      <StatCard
+                        icon={
+                          <Users
+                            className="w-5 h-5"
+                            style={{ color: "#A855F7" }}
+                          />
+                        }
+                        label="User Growth"
+                        value={userGrowthCount.toString()}
+                        sub="Registered dealers"
+                        accentColor="#A855F7"
+                      />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveSection("users");
+                        setKycFilter("Pending");
+                      }}
+                      style={{
+                        cursor: "pointer",
+                        background: "none",
+                        border: "none",
+                        padding: 0,
+                        textAlign: "left",
+                        width: "100%",
+                      }}
+                    >
+                      <StatCard
+                        icon={
+                          <AlertTriangle
+                            className="w-5 h-5"
+                            style={{ color: "#F59E0B" }}
+                          />
+                        }
+                        label="Pending Verifications"
+                        value={pendingVerifCount.toString()}
+                        sub="Awaiting review"
+                        accentColor="#F59E0B"
+                      />
+                    </button>
                   </div>
                 );
               })()}
 
-              {/* Live Bid Feed */}
+              {/* Task 13B: Global Wallet Management */}
+              {(() => {
+                const totalBalance = Number(
+                  localStorage.getItem("77m_wallet_balance") || "342500",
+                );
+                const totalEscrow = Number(
+                  localStorage.getItem("77m_escrow") || "0",
+                );
+                let kycCount = 0;
+                try {
+                  kycCount = JSON.parse(
+                    localStorage.getItem("77m_kyc_submissions") || "[]",
+                  ).length;
+                } catch {}
+                const adminEarnings = Math.round(kycCount * 1500 * 1.18 * 1.01);
+                const fmt = (n: number) => `₹${n.toLocaleString("en-IN")}`;
+                return (
+                  <div
+                    className="rounded-2xl p-4"
+                    style={{
+                      background: "#EFF6FF",
+                      border: "1px solid #BFDBFE",
+                    }}
+                  >
+                    <h3 className="font-bold text-sm text-[#1E293B] mb-3 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />
+                      Global Wallet Management
+                    </h3>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        {
+                          label: "Platform Balance",
+                          value: fmt(totalBalance),
+                          color: "#1D4ED8",
+                        },
+                        {
+                          label: "Total Escrow",
+                          value: fmt(totalEscrow),
+                          color: "#F59E0B",
+                        },
+                        {
+                          label: "Admin Earnings",
+                          value: fmt(adminEarnings),
+                          color: "#22C55E",
+                        },
+                      ].map((stat) => (
+                        <div
+                          key={stat.label}
+                          className="bg-white rounded-xl p-2.5 text-center"
+                          style={{ border: "1px solid #DBEAFE" }}
+                        >
+                          <p
+                            className="font-black text-sm"
+                            style={{ color: stat.color }}
+                          >
+                            {stat.value}
+                          </p>
+                          <p className="text-[9px] text-gray-500 font-medium mt-0.5">
+                            {stat.label}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Task 13C: Recent Transactions Table */}
+              {(() => {
+                let txns: any[] = [];
+                try {
+                  txns = JSON.parse(
+                    localStorage.getItem("77m_global_transactions") || "[]",
+                  );
+                } catch {}
+                return (
+                  <div
+                    className="rounded-2xl p-4"
+                    style={{
+                      background: "#FFFFFF",
+                      border: "1px solid #E2E8F0",
+                    }}
+                  >
+                    <h3 className="font-bold text-sm text-[#1E293B] mb-3">
+                      Recent Transactions
+                    </h3>
+                    {txns.length === 0 ? (
+                      <p className="text-xs text-center text-gray-400 py-4">
+                        No transactions yet.
+                      </p>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr style={{ borderBottom: "1px solid #E2E8F0" }}>
+                              {["User", "Type", "Amount", "Time", "Status"].map(
+                                (h) => (
+                                  <th
+                                    key={h}
+                                    className="text-left pb-1.5 font-semibold text-gray-400 pr-2"
+                                  >
+                                    {h}
+                                  </th>
+                                ),
+                              )}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {txns.slice(0, 20).map((txn: any) => (
+                              <tr
+                                key={
+                                  txn.id || txn.timestamp || JSON.stringify(txn)
+                                }
+                                style={{ borderBottom: "1px solid #F1F5F9" }}
+                              >
+                                <td className="py-1.5 pr-2 text-gray-700 font-medium">
+                                  {txn.userName || "—"}
+                                </td>
+                                <td className="py-1.5 pr-2 text-gray-500">
+                                  {txn.type || "—"}
+                                </td>
+                                <td
+                                  className="py-1.5 pr-2 font-bold"
+                                  style={{ color: "#1D4ED8" }}
+                                >
+                                  ₹
+                                  {Number(txn.amount || 0).toLocaleString(
+                                    "en-IN",
+                                  )}
+                                </td>
+                                <td className="py-1.5 pr-2 text-gray-400">
+                                  {txn.timestamp
+                                    ? new Date(
+                                        txn.timestamp,
+                                      ).toLocaleTimeString("en-IN", {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })
+                                    : "—"}
+                                </td>
+                                <td className="py-1.5">
+                                  <span
+                                    className="px-1.5 py-0.5 rounded-full text-[9px] font-bold"
+                                    style={{
+                                      background:
+                                        txn.status === "success"
+                                          ? "#F0FDF4"
+                                          : "#FFF7ED",
+                                      color:
+                                        txn.status === "success"
+                                          ? "#16A34A"
+                                          : "#C2410C",
+                                    }}
+                                  >
+                                    {txn.status || "pending"}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {/* Task 13D: Live Bid Activity Feed (BidStore real-time) */}
               <div
                 className="rounded-2xl p-4"
                 style={{ background: "#FFFFFF", border: "1px solid #E2E8F0" }}
@@ -778,69 +1037,66 @@ export default function AdminDashboard() {
                     Real-time
                   </span>
                 </div>
-                {(() => {
-                  let liveBids: Array<{
-                    dealer: string;
-                    action: string;
-                    item: string;
-                    time: string;
-                  }> = [];
-                  try {
-                    const stored = localStorage.getItem("77m_bids");
-                    if (stored) liveBids = JSON.parse(stored);
-                  } catch {}
-                  return (
-                    <div
-                      ref={feedRef}
-                      className="space-y-2.5 overflow-y-auto"
-                      style={{ maxHeight: "280px" }}
+                <div
+                  ref={feedRef}
+                  className="space-y-2.5 overflow-y-auto"
+                  style={{ maxHeight: "280px" }}
+                >
+                  {liveFeedBids.length === 0 ? (
+                    <p
+                      className="text-xs text-center text-gray-400 py-8"
+                      data-ocid="admin.bids.empty_state"
                     >
-                      {liveBids.length === 0 ? (
-                        <p
-                          className="text-xs text-center text-gray-400 py-8"
-                          data-ocid="admin.bids.empty_state"
+                      No recent bids yet — bids placed in the app appear here
+                      instantly
+                    </p>
+                  ) : (
+                    liveFeedBids.map((bid, idx) => {
+                      const minsAgo = Math.floor(
+                        (Date.now() - bid.placedAt) / 60000,
+                      );
+                      const timeStr =
+                        minsAgo === 0 ? "just now" : `${minsAgo}m ago`;
+                      const dealerShort = `Dealer #${bid.dealerId.slice(-4).toUpperCase()}`;
+                      const listingShort = `${bid.listingId.slice(0, 8)}...`;
+                      return (
+                        <div
+                          key={`${bid.bidId}-${idx}`}
+                          className="bid-item flex items-center justify-between py-2 border-b"
+                          style={{ borderColor: "#E2E8F0" }}
                         >
-                          No recent bids yet
-                        </p>
-                      ) : (
-                        liveBids.map((bid, idx) => (
-                          <div
-                            key={`${bid.dealer}-${idx}`}
-                            className="bid-item flex items-center justify-between py-2 border-b"
-                            style={{ borderColor: "#E2E8F0" }}
-                          >
-                            <div className="flex items-center gap-2">
-                              <span
-                                className="text-xs font-bold px-2 py-0.5 rounded-full"
-                                style={{
-                                  background: "rgba(29,78,216,0.08)",
-                                  color: "#1D4ED8",
-                                }}
-                              >
-                                Dealer {bid.dealer}
-                              </span>
-                              <span
-                                className="text-xs"
-                                style={{ color: "#9CA3AF" }}
-                              >
-                                {bid.action} on{" "}
-                                <span className="text-[#1E293B] font-medium">
-                                  {bid.item}
-                                </span>
-                              </span>
-                            </div>
+                          <div className="flex items-center gap-2">
                             <span
-                              className="text-xs flex-shrink-0"
+                              className="text-xs font-bold px-2 py-0.5 rounded-full"
+                              style={{
+                                background: "rgba(29,78,216,0.08)",
+                                color: "#1D4ED8",
+                              }}
+                            >
+                              {dealerShort}
+                            </span>
+                            <span
+                              className="text-xs"
                               style={{ color: "#9CA3AF" }}
                             >
-                              {bid.time}
+                              bid ₹{(bid.amount / 100).toLocaleString("en-IN")}{" "}
+                              on{" "}
+                              <span className="text-[#1E293B] font-medium">
+                                {listingShort}
+                              </span>
                             </span>
                           </div>
-                        ))
-                      )}
-                    </div>
-                  );
-                })()}
+                          <span
+                            className="text-xs flex-shrink-0"
+                            style={{ color: "#9CA3AF" }}
+                          >
+                            {timeStr}
+                          </span>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -901,7 +1157,7 @@ export default function AdminDashboard() {
                   u.role === "Dealer",
               );
               const buyerItems = allKyc.filter(
-                (u) => u.role === "buyer" || u.role === "Buyer",
+                (u) => u.role?.toLowerCase() === "buyer",
               );
 
               const sellerPending = sellerItems.filter(

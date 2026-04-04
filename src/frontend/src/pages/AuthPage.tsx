@@ -230,7 +230,7 @@ export default function AuthPage() {
     navigate({ to: "/pending-verification" });
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!loginMobile || loginMobile.length < 10) {
       toast.error("Enter a valid mobile number");
       return;
@@ -239,31 +239,53 @@ export default function AuthPage() {
       toast.error("Enter your password");
       return;
     }
-    const result = verifyCredential(loginMobile, loginPassword);
-    if (!result) {
-      toast.error("Account not found. Please register first.");
-      return;
-    }
-    const roleEnum =
-      result.role === "seller" ? UserRole.sellerDealer : UserRole.businessBuyer;
-    const norm = loginMobile.replace(/^\+91/, "").replace(/^0+/, "");
-    const profile = {
-      userId: crypto.randomUUID(),
-      userRole: roleEnum,
-      businessName: result.business || "My Business",
-      verificationId: "AUTH",
-      mobileNumber: norm,
-      aadhaarNumber: "",
-      createdAt: BigInt(Date.now()) * 1_000_000n,
-    };
-    login(profile);
-    localStorage.setItem("77m_role", result.role);
-    localStorage.setItem("77m_mode", result.role);
-    if (result.status === "pending") {
-      navigate({ to: "/pending-verification" });
-    } else {
-      toast.success("Welcome back!");
-      goToApp(roleEnum);
+    setLoading(true);
+    try {
+      const result = verifyCredential(loginMobile, loginPassword);
+      if (!result) {
+        toast.error("Account not found. Please register first.");
+        return;
+      }
+      const roleEnum =
+        result.role === "seller"
+          ? UserRole.sellerDealer
+          : UserRole.businessBuyer;
+      const norm = loginMobile.replace(/^\+91/, "").replace(/^0+/, "");
+      const profile = {
+        userId: crypto.randomUUID(),
+        userRole: roleEnum,
+        businessName: result.business || "My Business",
+        verificationId: "AUTH",
+        mobileNumber: norm,
+        aadhaarNumber: "",
+        createdAt: BigInt(Date.now()) * 1_000_000n,
+      };
+      login(profile);
+      localStorage.setItem("77m_role", result.role);
+      localStorage.setItem("77m_mode", result.role);
+      // Save session with 30-day TTL
+      localStorage.setItem(
+        "77m_phone_session",
+        JSON.stringify({
+          phone: loginMobile,
+          role: result.role,
+          token: Date.now(),
+        }),
+      );
+      console.log("[77mobiles] Login success for role:", result.role);
+      if (result.status === "pending") {
+        navigate({ to: "/pending-verification" });
+      } else {
+        toast.success("Welcome back!");
+        goToApp(roleEnum);
+      }
+    } catch (err) {
+      console.error("[77mobiles] Login error:", err);
+      toast.error(
+        "Login failed. Please check your credentials or contact support.",
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -354,7 +376,14 @@ export default function AuthPage() {
                 onClick={handleLogin}
                 disabled={loading}
               >
-                {loading ? "Logging in..." : "Login"}
+                {loading ? (
+                  <span className="flex items-center gap-2 justify-center">
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
+                    Logging in...
+                  </span>
+                ) : (
+                  "Login"
+                )}
               </Button>
             </div>
           </div>

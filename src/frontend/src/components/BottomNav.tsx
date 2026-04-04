@@ -61,10 +61,9 @@ export default function BottomNav() {
         background: "rgba(255,255,255,0.88)",
         borderTop: "1px solid rgba(229,231,235,0.7)",
         boxShadow: "0 -2px 12px rgba(0,0,0,0.06)",
-        height: "80px",
+        height: "calc(80px + env(safe-area-inset-bottom, 0px))",
         boxSizing: "content-box",
-        paddingBottom: "env(safe-area-inset-bottom, 20px)",
-        // No margin-bottom — fixed position handles placement
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
       }}
     >
       <div
@@ -99,7 +98,7 @@ export default function BottomNav() {
           );
         })}
 
-        {/* Center POST/SELL button */}
+        {/* Center POST/SELL button — lifted 30px above toolbar */}
         <button
           type="button"
           data-ocid="nav.post.primary_button"
@@ -107,7 +106,7 @@ export default function BottomNav() {
           className="w-14 h-14 rounded-full flex flex-col items-center justify-center flex-shrink-0"
           style={{
             background: "#1D4ED8",
-            marginTop: "-24px",
+            marginTop: "-30px",
             boxShadow: "0 4px 16px rgba(29,78,216,0.4)",
           }}
         >

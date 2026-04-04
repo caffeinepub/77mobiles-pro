@@ -102,7 +102,9 @@ export default function SellerPortal() {
   });
 
   // Task 5+6: Track current high bid per listing
-  const [bidMap, setBidMap] = useState<Record<string, number>>({});
+  const [bidMap, setBidMap] = useState<
+    Record<string, { amount: number; count: number }>
+  >({});
 
   useEffect(() => {
     const t = setTimeout(() => setGridLoading(false), 1200);
@@ -114,9 +116,12 @@ export default function SellerPortal() {
     const unsub = BidStore.subscribeAllBids((listingId, bids) => {
       if (bids.length === 0) return;
       const highest = Math.max(...bids.map((b) => b.amount));
+      const count = bids.length;
       setBidMap((prev) => {
-        if (prev[listingId] === highest) return prev;
-        return { ...prev, [listingId]: highest };
+        const existing = prev[listingId];
+        if (existing?.amount === highest && existing?.count === count)
+          return prev;
+        return { ...prev, [listingId]: { amount: highest, count } };
       });
     });
     return unsub;
@@ -160,16 +165,26 @@ export default function SellerPortal() {
 
   // Task 6: Get formatted bid/price string for a listing card
   const getListingPriceLabel = (listingId: string, basePrice: number) => {
-    const currentBid = bidMap[listingId];
-    if (currentBid && currentBid > 0) {
+    const bidData = bidMap[listingId];
+    if (bidData && bidData.amount > 0) {
       const inr = new Intl.NumberFormat("en-IN", {
         style: "currency",
         currency: "INR",
         maximumFractionDigits: 0,
-      }).format(currentBid / 100);
-      return { label: "Current Bid", value: inr, isBid: true };
+      }).format(bidData.amount / 100);
+      return {
+        label: "Current Bid",
+        value: inr,
+        isBid: true,
+        count: bidData.count,
+      };
     }
-    return { label: "Base", value: formatINR(basePrice), isBid: false };
+    return {
+      label: "Base",
+      value: formatINR(basePrice),
+      isBid: false,
+      count: 0,
+    };
   };
 
   return (

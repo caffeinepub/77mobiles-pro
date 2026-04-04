@@ -1,75 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
-import { CheckCircle } from "lucide-react";
 import { Smartphone } from "lucide-react";
 import { useApp } from "../contexts/AppContext";
 import { SELLER_LISTINGS } from "../data/demoListings";
-
-const STATIC_RECENT_SALES = [
-  {
-    id: "1",
-    model: "iPhone 15 Pro",
-    storage: "256GB",
-    condition: "Mint Condition",
-    age: "3 months old",
-    price: 68000,
-  },
-  {
-    id: "2",
-    model: "Samsung S24 Ultra",
-    storage: "512GB",
-    condition: "Like New",
-    age: "5 months old",
-    price: 92000,
-  },
-  {
-    id: "3",
-    model: "iPad Pro M4",
-    storage: "128GB",
-    condition: "Excellent",
-    age: "2 months old",
-    price: 95000,
-  },
-  {
-    id: "4",
-    model: "MacBook Pro M3",
-    storage: "512GB",
-    condition: "Good",
-    age: "8 months old",
-    price: 145000,
-  },
-  {
-    id: "5",
-    model: "OnePlus 13",
-    storage: "256GB",
-    condition: "Mint Condition",
-    age: "1 month old",
-    price: 42000,
-  },
-  {
-    id: "6",
-    model: "Pixel 9 Pro",
-    storage: "128GB",
-    condition: "Excellent",
-    age: "4 months old",
-    price: 68000,
-  },
-  {
-    id: "7",
-    model: "iPhone 16",
-    storage: "128GB",
-    condition: "Mint Condition",
-    age: "2 months old",
-    price: 72000,
-  },
-  {
-    id: "8",
-    model: "Redmi Note 13 Pro",
-    storage: "256GB",
-    condition: "Like New",
-    age: "6 months old",
-    price: 18500,
-  },
-];
 
 export default function RecentSalesSlider() {
   const navigate = useNavigate();
@@ -98,9 +30,18 @@ export default function RecentSalesSlider() {
     }),
   );
 
-  const derivedSales = [...soldFromShared, ...soldFromStatic];
-  const displaySales =
-    derivedSales.length > 0 ? derivedSales : STATIC_RECENT_SALES;
+  const displaySales = [...soldFromShared, ...soldFromStatic];
+
+  // Task 11: Show empty state if no sold items
+  if (displaySales.length === 0) {
+    return (
+      <div style={{ padding: "16px", textAlign: "center" }}>
+        <p style={{ fontSize: "12px", color: "#9CA3AF" }}>
+          No items sold yet. Start an auction today!
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -231,20 +172,6 @@ export default function RecentSalesSlider() {
                 }}
               >
                 Sold: ₹{sale.price.toLocaleString("en-IN")}
-              </span>
-              <CheckCircle
-                className="w-3 h-3"
-                style={{ color: "#16A34A", flexShrink: 0 }}
-              />
-              <span
-                style={{
-                  fontSize: "9px",
-                  color: "#16A34A",
-                  fontWeight: 600,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                Verified
               </span>
             </div>
           </button>

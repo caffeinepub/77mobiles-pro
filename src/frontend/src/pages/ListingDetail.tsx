@@ -223,6 +223,113 @@ function ImageCarousel({ images }: { images: string[] }) {
   );
 }
 
+// ─── Seller Bid Panel (Real-time) ──────────────────────────────────────────────────────
+function SellerBidPanel({ listing }: { listing: Listing }) {
+  const [liveBids, setLiveBids] = useState<import("../stores/BidStore").Bid[]>(
+    [],
+  );
+  const [sellerHighBid, setSellerHighBid] = useState(0);
+  const [sellerPulse, setSellerPulse] = useState(false);
+
+  useEffect(() => {
+    const unsub = BidStore.subscribeBids(listing.listingId, (bids) => {
+      const sorted = [...bids].sort((a, b) => b.amount - a.amount);
+      setLiveBids(sorted);
+      if (sorted.length > 0) {
+        const newHigh = sorted[0].amount;
+        setSellerHighBid((prev) => {
+          if (newHigh > prev && prev > 0) {
+            setSellerPulse(true);
+            setTimeout(() => setSellerPulse(false), 2000);
+          }
+          return newHigh;
+        });
+      }
+    });
+    return unsub;
+  }, [listing.listingId]);
+
+  const bidCount = liveBids.length;
+  const highBid =
+    sellerHighBid > 0
+      ? sellerHighBid
+      : (DEMO_BIDS[listing.listingId] ?? Number(listing.basePrice));
+
+  return (
+    <div
+      className="rounded-2xl p-4"
+      style={{ background: "#EFF6FF", border: "1px solid #bfdbfe" }}
+    >
+      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+        Current Bids
+      </p>
+      {/* Current High Bid with pulse animation */}
+      <div
+        className="rounded-xl px-3 py-2 mb-3 transition-all"
+        style={{
+          background: sellerPulse ? "#DCFCE7" : "transparent",
+          transition: "background-color 0.3s ease",
+        }}
+      >
+        <p
+          className="font-black text-2xl"
+          style={{
+            color: sellerPulse ? "#16A34A" : "#1D4ED8",
+            transition: "color 0.3s ease",
+          }}
+        >
+          {bidCount === 0
+            ? "0 Bids"
+            : `${bidCount} Bid${bidCount > 1 ? "s" : ""}`}
+        </p>
+        {highBid > 0 && bidCount > 0 && (
+          <p
+            className="text-xs font-semibold mt-0.5"
+            style={{ color: sellerPulse ? "#16A34A" : "#1D4ED8" }}
+          >
+            Highest: {formatINR(highBid)}
+          </p>
+        )}
+        {bidCount === 0 && (
+          <p className="text-xs text-gray-400 mt-1">Waiting for first bid...</p>
+        )}
+      </div>
+      {liveBids.length > 0 && (
+        <div className="space-y-2">
+          {liveBids.slice(0, 5).map((bid, idx) => {
+            const minsAgo = Math.floor((Date.now() - bid.placedAt) / 60000);
+            const timeStr = minsAgo === 0 ? "just now" : `${minsAgo}m ago`;
+            const dealerShort = `Dealer #${bid.dealerId.slice(-4).toUpperCase()}`;
+            return (
+              <div
+                key={bid.bidId}
+                className="bg-white rounded-xl px-3 py-2 flex items-center justify-between"
+                style={{
+                  border:
+                    idx === 0 ? "1.5px solid #1D4ED8" : "1px solid #bfdbfe",
+                }}
+              >
+                <div>
+                  <p className="text-xs font-bold text-gray-700">
+                    {dealerShort}
+                  </p>
+                  <p className="text-[9px] text-gray-400">{timeStr}</p>
+                </div>
+                <p
+                  className="font-black text-sm"
+                  style={{ color: idx === 0 ? "#1D4ED8" : "#374151" }}
+                >
+                  {formatINR(bid.amount)}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Bidding Card ────────────────────────────────────────────────────────────────────
 function BiddingCard({
   listing,
@@ -280,10 +387,29 @@ function BiddingCard({
     liveBid > Number(listing.basePrice) ? liveBid / 100 + 500 : basePrice;
   const [bidValid, setBidValid] = useState(true);
 
+  // Task 12: Wallet balance validation
+  const walletBalance = Number(
+    localStorage.getItem("77m_wallet_balance") || "342500",
+  );
+  const bidAmt = Number(bidAmount) || 0;
+  const platformFee = 1500;
+  const gstOnFee = Math.round(platformFee * 0.18);
+  const tcsOnFee = Math.round(platformFee * 0.01);
+  const totalRequired = bidAmt + gstOnFee + tcsOnFee;
+  const hasEnoughBalance = bidAmt <= 0 || walletBalance >= totalRequired;
+  const shortfall = Math.max(0, totalRequired - walletBalance);
+
   const handleBid = async () => {
     const amount = Number.parseFloat(bidAmount);
     if (!amount || amount * 100 <= liveBid) {
       toast.error("Minimum bid increment is ₹500");
+      return;
+    }
+    // Task 12: Check wallet balance
+    if (!hasEnoughBalance) {
+      toast.error(
+        `Insufficient Balance. Please add ₹${shortfall.toLocaleString("en-IN")} to your wallet.`,
+      );
       return;
     }
     setPlacing(true);
@@ -310,6 +436,20 @@ function BiddingCard({
       // Task 6B: Haptic feedback on successful bid
       if (typeof navigator.vibrate === "function")
         navigator.vibrate([100, 50, 100]);
+      // Task 12: Move bid amount to escrow, deduct from wallet
+      const amountForEscrow = Math.round(amount * 100) / 100;
+      const currentEscrow = Number(localStorage.getItem("77m_escrow") || "0");
+      localStorage.setItem(
+        "77m_escrow",
+        String(currentEscrow + amountForEscrow),
+      );
+      const currentBalance = Number(
+        localStorage.getItem("77m_wallet_balance") || "342500",
+      );
+      localStorage.setItem(
+        "77m_wallet_balance",
+        String(currentBalance - amountForEscrow),
+      );
       setBidAmount("");
     } catch {
       const amountPaise = Math.round(amount * 100);
@@ -324,6 +464,20 @@ function BiddingCard({
       // Task 6B: Haptic feedback on successful bid
       if (typeof navigator.vibrate === "function")
         navigator.vibrate([100, 50, 100]);
+      // Task 12: Move bid amount to escrow on fallback path too
+      const amountForEscrow = Math.round(amount * 100) / 100;
+      const currentEscrow = Number(localStorage.getItem("77m_escrow") || "0");
+      localStorage.setItem(
+        "77m_escrow",
+        String(currentEscrow + amountForEscrow),
+      );
+      const currentBalance = Number(
+        localStorage.getItem("77m_wallet_balance") || "342500",
+      );
+      localStorage.setItem(
+        "77m_wallet_balance",
+        String(currentBalance - amountForEscrow),
+      );
       setBidAmount("");
     } finally {
       setPlacing(false);
@@ -398,6 +552,12 @@ function BiddingCard({
           Minimum bid increment is ₹500
         </p>
       )}
+      {bidAmt > 0 && !hasEnoughBalance && (
+        <p className="text-[10px] mb-2" style={{ color: "#EF4444" }}>
+          Insufficient Balance. Please add ₹{shortfall.toLocaleString("en-IN")}{" "}
+          to your wallet to place this bid.
+        </p>
+      )}
       {/* Increment buttons */}
       <div className="flex gap-2 mb-3">
         {[500, 1000, 2000].map((inc) => (
@@ -426,7 +586,7 @@ function BiddingCard({
         type="button"
         data-ocid="listing.bid.submit_button"
         onClick={handleBid}
-        disabled={placing || !bidValid}
+        disabled={placing || !bidValid || (bidAmt > 0 && !hasEnoughBalance)}
         className="w-full py-3 rounded-xl text-white font-black text-sm"
         style={{ background: placing ? "#6b7280" : "#1D4ED8" }}
       >
@@ -699,79 +859,7 @@ export default function ListingDetail() {
 
           {/* 2. Bidding Card or Seller Management Panel */}
           {listing.status === "Active" && mode === "seller" && (
-            <div
-              className="rounded-2xl p-4"
-              style={{ background: "#EFF6FF", border: "1px solid #bfdbfe" }}
-            >
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                Current Bids
-              </p>
-              {bidCount === 0 ? (
-                <div className="text-center py-3">
-                  <p
-                    className="font-black text-2xl"
-                    style={{ color: "#1D4ED8" }}
-                  >
-                    0 Bids
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Waiting for first bid...
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <p
-                    className="font-black text-2xl mb-2"
-                    style={{ color: "#1D4ED8" }}
-                  >
-                    {bidCount} Bids
-                  </p>
-                  <div className="space-y-2">
-                    {[
-                      {
-                        dealer: "Dealer #402",
-                        amount: currentBid / 100,
-                        time: "2m ago",
-                      },
-                      {
-                        dealer: "Dealer #217",
-                        amount: currentBid / 100 - 500,
-                        time: "5m ago",
-                      },
-                      {
-                        dealer: "Dealer #85",
-                        amount: currentBid / 100 - 1200,
-                        time: "9m ago",
-                      },
-                    ]
-                      .sort((a, b) => b.amount - a.amount)
-                      .slice(0, Math.min(bidCount, 3))
-                      .map((bid) => (
-                        <div
-                          key={bid.dealer}
-                          className="bg-white rounded-xl px-3 py-2 flex items-center justify-between"
-                          style={{ border: "1px solid #bfdbfe" }}
-                        >
-                          <div>
-                            <p className="text-xs font-bold text-gray-700">
-                              {bid.dealer}
-                            </p>
-                            <p className="text-[9px] text-gray-400">
-                              {bid.time}
-                            </p>
-                          </div>
-                          <p
-                            className="font-black text-sm"
-                            style={{ color: "#1D4ED8" }}
-                          >
-                            ₹{bid.amount.toLocaleString("en-IN")}
-                          </p>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            <SellerBidPanel listing={listing} />
           )}
           {listing.status === "Active" && mode !== "seller" && (
             <BiddingCard listing={listing} currentBid={currentBid} />
@@ -909,49 +997,9 @@ export default function ListingDetail() {
                   className="text-xs font-bold"
                   style={{ color: "#16A34A" }}
                 >
-                  IMEI Valid
-                </span>
-                <span className="text-[9px] font-mono text-gray-500">
-                  {mode === "buyer" ? "354812093847561" : "35****3847561"}
-                </span>
-              </div>
-              {/* Cosmetic Grade */}
-              <div
-                className="p-3 rounded-xl flex flex-col gap-1.5"
-                style={{ border: "1px solid #e5e7eb", borderRadius: "12px" }}
-              >
-                <p className="text-[9px] font-semibold text-gray-400 uppercase">
-                  Cosmetic Grade
-                </p>
-                <span
-                  className="text-xs font-black px-2 py-1 rounded-full w-fit"
-                  style={{ background: "#D1FAE5", color: "#065F46" }}
-                >
-                  {listing.condition === "Like New" ||
-                  listing.condition === "Excellent"
-                    ? "Grade A – Like New"
-                    : listing.condition === "Good"
-                      ? "Grade B – Good"
-                      : "Grade C – Fair"}
-                </span>
-              </div>
-              {/* Functional Check */}
-              <div
-                className="p-3 rounded-xl flex flex-col gap-1.5"
-                style={{ border: "1px solid #e5e7eb", borderRadius: "12px" }}
-              >
-                <p className="text-[9px] font-semibold text-gray-400 uppercase">
-                  Functional Check
-                </p>
-                <CheckCircle className="w-6 h-6" style={{ color: "#16A34A" }} />
-                <span
-                  className="text-xs font-bold"
-                  style={{ color: "#16A34A" }}
-                >
-                  55/55 Pass
-                </span>
-                <span className="text-[9px] text-gray-500">
-                  All Systems Nominal
+                  IMEI:{" "}
+                  {(listing as any).imei ||
+                    (mode === "buyer" ? "354812093847561" : "35****3847561")}
                 </span>
               </div>
             </div>

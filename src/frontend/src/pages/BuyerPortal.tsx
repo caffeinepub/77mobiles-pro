@@ -27,6 +27,7 @@ import {
   SELLER_LISTINGS,
   getDeviceImage,
 } from "../data/demoListings";
+import { BidStore } from "../stores/BidStore";
 import { formatINR } from "../utils/format";
 
 type CategoryTab = "live" | "ending";
@@ -751,24 +752,23 @@ export default function BuyerPortal() {
 
   const [heartAnim, setHeartAnim] = useState<string | null>(null);
   // Task 11: Real-time bid count state
-  const [liveBidCounts, setLiveBidCounts] = useState<Record<string, number>>(
-    Object.fromEntries(SELLER_LISTINGS.map((l) => [l.listingId, 0])),
-  );
+  // Task 4: Real-time bid map { amount, count } from BidStore
+  const [bidMap, setBidMap] = useState<
+    Map<string, { amount: number; count: number }>
+  >(new Map());
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setLiveBidCounts((prev) => {
-        const next = { ...prev };
-        // Randomly increment a few active listings
-        for (const id of Object.keys(next)) {
-          if (Math.random() < 0.15) {
-            next[id] = (next[id] || 0) + 1;
-          }
-        }
+    const unsub = BidStore.subscribeAllBids((listingId, bids) => {
+      if (bids.length === 0) return;
+      const highest = Math.max(...bids.map((b) => b.amount));
+      const count = bids.length;
+      setBidMap((prev) => {
+        const next = new Map(prev);
+        next.set(listingId, { amount: highest, count });
         return next;
       });
-    }, 9000);
-    return () => clearInterval(interval);
+    });
+    return unsub;
   }, []);
   const [showWatchlistToast, setShowWatchlistToast] = useState(false);
   const [pressedCard, setPressedCard] = useState<string | null>(null);
@@ -833,7 +833,7 @@ export default function BuyerPortal() {
     condition: l.condition,
     price: Number(l.basePrice) / 100,
     originalPrice: Number(l.basePrice) / 100,
-    bids: liveBidCounts[l.listingId] ?? 0,
+    bids: bidMap.get(l.listingId)?.count ?? 0,
     timer: l.auctionType === "Live20min" ? "20:00" : "7d",
     isLive: l.auctionType === "Live20min",
     warrantyMonths: Number(l.warranty ?? 0n),
@@ -1164,7 +1164,7 @@ export default function BuyerPortal() {
                             ₹{item.price.toLocaleString("en-IN")}
                           </p>
                           <p className="text-[8px] text-gray-400">
-                            {liveBidCounts[item.id] ?? item.bids} bids ·{" "}
+                            {bidMap.get(item.id)?.count ?? item.bids} bids ·{" "}
                             {item.timer}
                           </p>
                         </div>
@@ -1330,7 +1330,7 @@ export default function BuyerPortal() {
                                 {item.price.toLocaleString("en-IN")}
                               </p>
                               <p className="text-[10px] text-gray-400">
-                                {liveBidCounts[item.id] ?? item.bids} bids
+                                {bidMap.get(item.id)?.count ?? item.bids} bids
                               </p>
                             </div>
                           </div>
@@ -1413,7 +1413,9 @@ export default function BuyerPortal() {
               .sort((a, b) => Number(a.endsAt - b.endsAt))
               .map((listing, idx) => {
                 const currentBid =
-                  DEMO_BIDS[listing.listingId] ?? Number(listing.basePrice);
+                  bidMap.get(listing.listingId)?.amount ??
+                  DEMO_BIDS[listing.listingId] ??
+                  Number(listing.basePrice);
                 const cond = condColor(listing.condition);
                 const isPressed = pressedCard === listing.listingId;
                 return (

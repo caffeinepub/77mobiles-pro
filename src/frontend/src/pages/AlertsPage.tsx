@@ -1,6 +1,8 @@
 import { useNavigate } from "@tanstack/react-router";
 import { Bell, CheckCircle, Package, ShoppingBag, Zap } from "lucide-react";
+import { useEffect } from "react";
 import { useApp } from "../contexts/AppContext";
+import { BidStore } from "../stores/BidStore";
 
 const SELLER_ALERTS = [
   {
@@ -93,30 +95,83 @@ const AlertIcon = ({ type }: { type: AlertType }) => {
 };
 
 export default function AlertsPage() {
-  const { mode } = useApp();
+  const {
+    mode,
+    alerts: contextAlerts,
+    unreadAlerts,
+    setUnreadAlerts,
+  } = useApp();
   const navigate = useNavigate();
-  const alerts = mode === "seller" ? SELLER_ALERTS : BUYER_ALERTS;
+
+  // Task 6: Mark all read on mount
+  useEffect(() => {
+    BidStore.markAllRead();
+    setUnreadAlerts(0);
+  }, [setUnreadAlerts]);
+
+  // Use context alerts if available, else fall back to static
+  const staticAlerts = mode === "seller" ? SELLER_ALERTS : BUYER_ALERTS;
+  const liveAlerts =
+    contextAlerts.length > 0
+      ? contextAlerts.map((a) => ({
+          id: a.id,
+          type: (a.type === "new_bid"
+            ? "bid"
+            : a.type === "approved"
+              ? "sold"
+              : "info") as AlertType,
+          text: a.message,
+          time: new Date(a.timestamp).toLocaleTimeString("en-IN", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          action: "View Auction",
+          route: `/listing/${a.listingId}`,
+        }))
+      : staticAlerts;
+
+  const displayCount = unreadAlerts > 0 ? unreadAlerts : liveAlerts.length;
 
   return (
     <div className="px-4 pt-4 pb-6 bg-[#F8F9FA] min-h-screen">
       <div className="flex items-center justify-between mb-4">
         <h1 className="font-black text-lg text-gray-900">Alerts</h1>
-        <span
-          className="text-[10px] font-bold text-white px-2 py-0.5 rounded-full"
-          style={{ background: "#007AFF" }}
-        >
-          {alerts.length} New
-        </span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            data-ocid="alerts.mark_all_read.button"
+            onClick={() => {
+              BidStore.markAllRead();
+              setUnreadAlerts(0);
+            }}
+            className="text-[11px] font-semibold px-3 py-1 rounded-full"
+            style={{
+              background: "#EFF6FF",
+              color: "#1D4ED8",
+              border: "1px solid #bfdbfe",
+            }}
+          >
+            Mark All Read
+          </button>
+          {displayCount > 0 && (
+            <span
+              className="text-[10px] font-bold text-white px-2 py-0.5 rounded-full"
+              style={{ background: "#007AFF" }}
+            >
+              {displayCount} New
+            </span>
+          )}
+        </div>
       </div>
 
-      {alerts.length === 0 ? (
+      {liveAlerts.length === 0 ? (
         <div data-ocid="alerts.empty_state" className="text-center py-16">
           <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
           <p className="font-bold text-gray-600">No alerts yet</p>
         </div>
       ) : (
         <div className="space-y-3">
-          {alerts.map((alert, idx) => (
+          {liveAlerts.map((alert, idx) => (
             <div
               key={alert.id}
               data-ocid={`alerts.item.${idx + 1}`}

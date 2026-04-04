@@ -1,8 +1,9 @@
 import { useNavigate } from "@tanstack/react-router";
-import { CheckCircle, Clock, Download, Package, X } from "lucide-react";
-import { useState } from "react";
+import { CheckCircle, Clock, Download, Package, X, Zap } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useApp } from "../contexts/AppContext";
+import { type AlertNotification, BidStore } from "../stores/BidStore";
 
 const PENDING_SALES = [
   {
@@ -62,6 +63,7 @@ const BUYER_ACTIVITY = [
 
 export default function ActivityPage() {
   const { mode } = useApp();
+  const [liveAlerts, setLiveAlerts] = useState<AlertNotification[]>([]);
   const [pendingStates, setPendingStates] = useState<
     Record<string, "pending" | "accepted" | "declined">
   >({});
@@ -69,6 +71,12 @@ export default function ActivityPage() {
     "activity",
   );
   const navigate = useNavigate();
+
+  // Task 6: Real-time alerts from BidStore
+  useEffect(() => {
+    const unsub = BidStore.subscribeAlerts(setLiveAlerts);
+    return unsub;
+  }, []);
 
   const handleAccept = (id: string) => {
     setPendingStates((prev) => ({ ...prev, [id]: "accepted" }));
@@ -199,42 +207,88 @@ export default function ActivityPage() {
           <h2 className="font-bold text-sm text-gray-700 mt-2">
             Recent Activity
           </h2>
-          {SELLER_ACTIVITY.map((item, idx) => (
-            <div
-              key={item.id}
-              data-ocid={`activity.seller.item.${idx + 1}`}
-              className="bg-white rounded-2xl p-3.5 flex items-center gap-3"
-              style={{ border: "1px solid #e5e7eb" }}
-            >
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{
-                  background:
-                    item.type === "bid"
-                      ? "#eff6ff"
-                      : item.type === "sold"
-                        ? "#f0fdf4"
-                        : "#fff7ed",
-                }}
-              >
-                {item.type === "bid" && (
-                  <Clock className="w-4 h-4" style={{ color: "#007AFF" }} />
-                )}
-                {item.type === "sold" && (
-                  <CheckCircle className="w-4 h-4 text-green-600" />
-                )}
-                {item.type === "lead" && (
-                  <Package className="w-4 h-4 text-orange-500" />
-                )}
-              </div>
-              <div className="flex-1">
-                <p className="text-xs text-gray-800">{item.text}</p>
-              </div>
-              <span className="text-[10px] text-gray-400 flex-shrink-0">
-                {item.time}
-              </span>
-            </div>
-          ))}
+
+          {/* Live alerts from BidStore first, then static fallback */}
+          {liveAlerts.length > 0
+            ? liveAlerts.map((alert, idx) => (
+                <div
+                  key={alert.id}
+                  data-ocid={`activity.live.item.${idx + 1}`}
+                  className="bg-white rounded-2xl p-3.5 flex items-center gap-3"
+                  style={{ border: "1px solid #e5e7eb" }}
+                >
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{
+                      background:
+                        alert.type === "new_bid" ? "#eff6ff" : "#f0fdf4",
+                    }}
+                  >
+                    {alert.type === "new_bid" ? (
+                      <Zap className="w-4 h-4" style={{ color: "#1D4ED8" }} />
+                    ) : (
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-800">{alert.message}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="text-[10px] text-gray-400">just now</span>
+                    <button
+                      type="button"
+                      data-ocid={`activity.view_auction.button.${idx + 1}`}
+                      onClick={() =>
+                        navigate({ to: `/listing/${alert.listingId}` as any })
+                      }
+                      className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                      style={{
+                        background: "#eff6ff",
+                        color: "#1D4ED8",
+                        border: "1px solid #bfdbfe",
+                      }}
+                    >
+                      View Auction
+                    </button>
+                  </div>
+                </div>
+              ))
+            : SELLER_ACTIVITY.map((item, idx) => (
+                <div
+                  key={item.id}
+                  data-ocid={`activity.seller.item.${idx + 1}`}
+                  className="bg-white rounded-2xl p-3.5 flex items-center gap-3"
+                  style={{ border: "1px solid #e5e7eb" }}
+                >
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{
+                      background:
+                        item.type === "bid"
+                          ? "#eff6ff"
+                          : item.type === "sold"
+                            ? "#f0fdf4"
+                            : "#fff7ed",
+                    }}
+                  >
+                    {item.type === "bid" && (
+                      <Clock className="w-4 h-4" style={{ color: "#007AFF" }} />
+                    )}
+                    {item.type === "sold" && (
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                    )}
+                    {item.type === "lead" && (
+                      <Package className="w-4 h-4 text-orange-500" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-800">{item.text}</p>
+                  </div>
+                  <span className="text-[10px] text-gray-400 flex-shrink-0">
+                    {item.time}
+                  </span>
+                </div>
+              ))}
         </div>
       )}
 
@@ -305,25 +359,46 @@ export default function ActivityPage() {
           <h2 className="font-bold text-sm text-gray-700 mt-2">
             Recent Activity
           </h2>
-          {BUYER_ACTIVITY.map((item, idx) => (
-            <div
-              key={item.id}
-              data-ocid={`activity.buyer.item.${idx + 1}`}
-              className="bg-white rounded-2xl p-3.5 flex items-center gap-3"
-              style={{ border: "1px solid #e5e7eb" }}
-            >
-              <Clock
-                className="w-4 h-4 flex-shrink-0"
-                style={{ color: "#007AFF" }}
-              />
-              <div className="flex-1">
-                <p className="text-xs text-gray-800">{item.text}</p>
-              </div>
-              <span className="text-[10px] text-gray-400 flex-shrink-0">
-                {item.time}
-              </span>
-            </div>
-          ))}
+          {/* Live alerts for buyer */}
+          {liveAlerts.length > 0
+            ? liveAlerts.map((alert, idx) => (
+                <div
+                  key={alert.id}
+                  data-ocid={`activity.live_buyer.item.${idx + 1}`}
+                  className="bg-white rounded-2xl p-3.5 flex items-center gap-3"
+                  style={{ border: "1px solid #e5e7eb" }}
+                >
+                  <Zap
+                    className="w-4 h-4 flex-shrink-0"
+                    style={{ color: "#007AFF" }}
+                  />
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-800">{alert.message}</p>
+                  </div>
+                  <span className="text-[10px] text-gray-400 flex-shrink-0">
+                    just now
+                  </span>
+                </div>
+              ))
+            : BUYER_ACTIVITY.map((item, idx) => (
+                <div
+                  key={item.id}
+                  data-ocid={`activity.buyer.item.${idx + 1}`}
+                  className="bg-white rounded-2xl p-3.5 flex items-center gap-3"
+                  style={{ border: "1px solid #e5e7eb" }}
+                >
+                  <Clock
+                    className="w-4 h-4 flex-shrink-0"
+                    style={{ color: "#007AFF" }}
+                  />
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-800">{item.text}</p>
+                  </div>
+                  <span className="text-[10px] text-gray-400 flex-shrink-0">
+                    {item.time}
+                  </span>
+                </div>
+              ))}
         </div>
       )}
 

@@ -138,7 +138,11 @@ export default function AppShell() {
     <div
       ref={scrollRef}
       className="scroll-container"
-      style={{ height: "100dvh", overflowY: "auto" }}
+      style={{
+        height: "100dvh",
+        minHeight: "-webkit-fill-available",
+        overflowY: "auto",
+      }}
     >
       {/* STICKY HEADER */}
       {!isWalletTab && (
